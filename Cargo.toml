@@ -1,0 +1,16 @@
+[package]
+name = "doctor-syn"
+version = "0.1.0"
+authors = [
+    "andy-thomason <andy@andythomason.com>",
+    "Claus O. Wilke <wilke@austin.utexas.edu>"
+]
+edition = "2018"
+
+[lib]
+proc_macro = true
+
+[dependencies]
+syn = { version = "1.0", features = ["full", "extra-traits"] }
+quote = "1.0"
+proc-macro2 = "1.0"
