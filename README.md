@@ -2,7 +2,7 @@
 
 ## rationale
 
-A set of mathematical syntax transformation tools.
+A computer algebra system for rust.
 
 This crate is mostly for generating mathematical code at compile time.
 The focus is largely on numerical apprimation of transcendental and
@@ -13,7 +13,7 @@ domain `0..2π`, we can use the approx! macro to transform a lambda:
 
 ```
 fn my_sin(x: f64) -> f64 {
-    approx!(x=0..2*f64::PI, terms=6, |x| x.sin())
+    approx!(|#[min="0"] #[max="2*f64::const::PI"] #[terms="7"] x| x.sin())
 }
 ```
 

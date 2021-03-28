@@ -1,139 +1,164 @@
 //! Very simple interpreter for single expression functions.
 //! This may become unneccessary if const functions are upgraded.
 
-use quote::quote;
-// use syn::punctuated::Punctuated;
-// use syn::Token;
-use syn::{BinOp, Block, Expr, ExprBinary, ExprLit, ExprMethodCall, ExprPath, Lit, Stmt};
+use syn::{BinOp, Block, Expr, ExprBinary, ExprLit, ExprMethodCall, ExprPath, Lit, Stmt, Path};
+use crate::error::Error;
+use syn::spanned::Spanned;
+use proc_macro2::Span;
 
-#[derive(Debug)]
-pub enum Error {
-    UnsupportedExpr(String),
-    UnsupportedMethod(String),
-    UnsupportedLiteral(String),
-    UnsupportedVariable(String),
-    UnsupportedStatement(String),
-    BlockMustHaveOneStatement(String),
+pub fn from_any<T : std::fmt::Debug>(value: T) -> Result<Expr, Error> {
+    let s = format!("{:?}", value);
+    parse_str(s.as_str())
 }
 
-type Value = f64;
+pub fn as_number<T>(expr: &Expr) -> Result<T, Error>
+where
+    T : std::str::FromStr,
+    T::Err : std::fmt::Display
+{
+    if let Expr::Lit(ref lit) = expr {
+        match &lit.lit {
+            Lit::Float(f) => f.base10_parse().map_err(|_| Error::TriedToConvertLiteralToNumber(lit.lit.span())),
+            Lit::Int(i) => i.base10_parse().map_err(|_| Error::TriedToConvertLiteralToNumber(lit.lit.span())),
+            _ => return Err(Error::TriedToConvertLiteralToNumber(lit.lit.span()))
+        }
+    } else {
+        Err(Error::TriedToConvertLiteralToNumber(expr.span()))
+    }
+}
+
+pub fn parse_str<T : syn::parse::Parse>(s: &str) -> Result<T, Error> {
+    syn::parse_str(s).map_err(|_| Error::CouldNotParse(Span::call_site()))
+}
 
 #[derive(Debug, Default)]
 pub struct Domain {
-    pub min: Option<Value>,
-    pub max: Option<Value>,
-    pub terms: Option<usize>,
+    pub min: Option<Expr>,
+    pub max: Option<Expr>,
+    pub terms: Option<Expr>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Variable {
-    pub name: String,
-    pub value: Value,
+    pub path: Path,
+    pub value: Expr,
     pub domain: Domain,
 }
 
+impl Variable {
+    pub fn new() -> Self {
+        Self {
+            path: syn::parse_str("x").unwrap(),
+            value: syn::parse_str("0").unwrap(),
+            domain: Domain { min: None, max: None, terms: None }
+        }
+    }
+}
+
 // A *very* basic Rust interpreter.
-// It has only one variable, "x".
+// TODO: make this a trait.
+// Split this into subst(expr, variables) and approx(expr).
 #[derive(Debug, Default)]
 pub struct Interpreter {
-    x: f64,
     variables: Vec<Variable>,
 }
 
-fn unsupported(expr: &Expr) -> Result<f64, Error> {
-    Err(Error::UnsupportedExpr(quote!(#expr).to_string()))
-}
+// Evaluate in an empty context.
+// pub fn eval(expr: &Expr) -> Result<Expr, Error> {
+//     let ctxt = Interpreter::new();
+//     ctxt.expr(expr)
+// }
 
+#[allow(dead_code)]
 impl Interpreter {
-    pub fn new_x(x: f64) -> Self {
-        Self { x, ..Self::default() }
+    pub fn new() -> Self {
+        Self::from_variables(Vec::new())
     }
 
-    pub fn method_call(&self, expr: &ExprMethodCall) -> Result<f64, Error> {
-        let reciever = self.expr(&expr.receiver)?;
+    pub fn from_variables(variables: Vec<Variable>) -> Self {
+        Self { variables }
+    }
+
+    pub fn method_call(&self, expr: &ExprMethodCall) -> Result<Expr, Error> {
+        let reciever = self.expr(&expr.receiver).and_then(|e| as_number::<f64>(&e))?;
         let id = &expr.method;
-        let args = expr
+        let args : Vec<f64> = expr
             .args
             .iter()
-            .map(|a| self.expr(a))
-            .collect::<Result<Vec<_>, Error>>()?;
+            // self.expr(a).map(|e| as_number::<f64>(&e))
+            .map(|a| as_number(&a))
+            .collect::<Result<Vec<f64>, Error>>()?;
+        
         match id.to_string().as_str() {
-            "sin" => Ok(reciever.sin()),
-            "cos" => Ok(reciever.cos()),
-            "exp" => Ok(reciever.exp()),
-            "sqrt" => Ok(reciever.sqrt()),
-            "ln" => Ok(reciever.ln()),
-            "powf" => Ok(reciever.powf(args[0])),
-            method => Err(Error::UnsupportedMethod(method.to_string())),
+            "sin" => from_any(reciever.sin()),
+            "cos" => from_any(reciever.cos()),
+            "exp" => from_any(reciever.exp()),
+            "sqrt" => from_any(reciever.sqrt()),
+            "ln" => from_any(reciever.ln()),
+            "powf" => from_any(reciever.powf(args[0])),
+            method => Err(Error::UnsupportedMethod(method.span())),
         }
+    }
+
+    /// eg. set_var(Path::parse("x")?);
+    pub fn set_var(&mut self, path: &Path, value: Expr) -> Result<(), Error> {
+        self.variables.iter_mut().find(|v| &v.path == path).map(|v| v.value = value);
+        Ok(())
+    }
+
+    /// eg. get_var(Path::parse("x")?);
+    pub fn get_var(&self, path: &Path) -> Result<Expr, Error> {
+        self.variables.iter().find(|v| &v.path == path)
+            .map(|v| v.value.clone())
+            .ok_or_else(|| Error::NotFound(path.span()))
     }
 
     // eg. "1.0"
-    pub fn lit(&self, expr: &ExprLit) -> Result<f64, Error> {
-        match &expr.lit {
-            Lit::Float(litfloat) => {
-                if let Ok(res) = litfloat.base10_parse() {
-                    Ok(res)
-                } else {
-                    Err(Error::UnsupportedLiteral(quote!(#expr).to_string()))
-                }
-            }
-            lit => Err(Error::UnsupportedLiteral(quote!(#lit).to_string())),
-        }
+    pub fn lit(&self, expr: &ExprLit) -> Result<Expr, Error> {
+        Ok(expr.clone().into())
     }
 
-    pub fn path(&self, exprpath: &ExprPath) -> Result<f64, Error> {
-        if let Some(id) = exprpath.path.get_ident() {
-            if id.to_string() == "x" {
-                return Ok(self.x);
-            }
-        }
-        Err(Error::UnsupportedVariable(quote!(#exprpath).to_string()))
+    pub fn path(&self, exprpath: &ExprPath) -> Result<Expr, Error> {
+        self.get_var(&exprpath.path)
     }
 
-    pub fn stmt(&self, stmt: &Stmt) -> Result<f64, Error> {
+    pub fn stmt(&self, stmt: &Stmt) -> Result<Expr, Error> {
         match stmt {
-            // A local (let) binding.
-            //Local(local),
-
-            // An item definition.
-            //Item(item),
-
-            // Expr without trailing semicolon.
             Stmt::Expr(expr) => self.expr(expr),
-
-            // Expression with trailing semicolon.
-            //Semi(expr, _),
-            _ => Err(Error::UnsupportedStatement(quote!(#stmt).to_string())),
+            _ => Err(Error::UnsupportedStatement(stmt.span())),
         }
     }
 
-    pub fn block(&self, block: &Block) -> Result<f64, Error> {
+    pub fn block(&self, block: &Block) -> Result<Expr, Error> {
         if block.stmts.len() != 1 {
-            return Err(Error::BlockMustHaveOneStatement(quote!(#block).to_string()));
+            return Err(Error::BlockMustHaveOneStatement(block.span()));
         }
         self.stmt(&block.stmts[0])
     }
 
-    pub fn binary(&self, exprbinary: &ExprBinary) -> Result<f64, Error> {
+    pub fn binary(&self, exprbinary: &ExprBinary) -> Result<Expr, Error> {
         let left = self.expr(&exprbinary.left)?;
         let right = self.expr(&exprbinary.right)?;
+
+        // As a spike, just use f64.
+        let left : f64 = as_number(&left)?;
+        let right : f64 = as_number(&right)?;
         match exprbinary.op {
             // The `+` operator (addition)
-            BinOp::Add(_) => Ok(left + right),
+            BinOp::Add(_) => from_any(left + right),
             // The `-` operator (subtraction)
-            BinOp::Sub(_) => Ok(left - right),
+            BinOp::Sub(_) => from_any(left - right),
             // The `*` operator (multiplication)
-            BinOp::Mul(_) => Ok(left * right),
+            BinOp::Mul(_) => from_any(left * right),
             // The `/` operator (division)
-            BinOp::Div(_) => Ok(left / right),
+            BinOp::Div(_) => from_any(left / right),
 
-            _ => Err(Error::UnsupportedExpr(quote!(#exprbinary).to_string())),
+            _ => Err(Error::UnsupportedExpr(exprbinary.op.span())),
         }
     }
 
-    // expruate simple expressions like (x+1.0).sin()
-    pub fn expr(&self, expr: &Expr) -> Result<f64, Error> {
+    // Evaluate simple expressions like (x+1.0).sin()
+    pub fn expr(&self, expr: &Expr) -> Result<Expr, Error> {
         use Expr::*;
         match expr {
             // A binary operation: `a + b`, `a * b`.
@@ -147,13 +172,9 @@ impl Interpreter {
 
             Lit(exprlit) => self.lit(&exprlit),
 
-            // A path like `std::mem::replace` possibly containing generic
-            // parameters and a qualified self-type.
-            //
-            // A plain identifier like `x` is a path of length 1.
             Path(exprpath) => self.path(exprpath),
 
-            _ => unsupported(&expr),
+            _ => Err(Error::UnsupportedExpr(expr.span()))
         }
     }
 }
