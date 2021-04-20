@@ -1,7 +1,7 @@
 //! Mathematical function generation.
 #![allow(dead_code)]
 
-use super::interpreter::{from_any, as_number, parse_str, Interpreter, Variable};
+use super::context::{from_any, as_number, parse_str, Context, Variable};
 use super::polynomial::Polynomial;
 
 use syn::{parse_quote, Lit, Meta, MetaNameValue, Stmt, ExprClosure};

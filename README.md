@@ -13,7 +13,7 @@ domain `0..2π`, we can use the approx! macro to transform a lambda:
 
 ```
 fn my_sin(x: f64) -> f64 {
-    approx!(|#[min="0"] #[max="2*f64::const::PI"] #[terms="7"] x| x.sin())
+    approx!(|#[min="0"] #[max="2*PI"] #[terms="7"] x| x.sin())
 }
 ```
 
