@@ -1,5 +1,5 @@
 pub mod subst;
-pub mod fold;
+pub mod eval;
 
 pub use subst::Subst;
-pub use fold::Fold;
+pub use eval::Eval;

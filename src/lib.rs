@@ -4,13 +4,16 @@ pub mod polynomial;
 pub mod error;
 pub mod visitor;
 pub mod transformation;
-pub mod util;
+// pub mod util;
 pub mod expression;
 pub mod variablelist;
-pub mod path;
+pub mod name;
+
+#[cfg(test)]
+mod tests;
 
 pub use expression::Expression;
-pub use path::Path;
+pub use name::Name;
 pub use variablelist::VariableList;
 
 // #[cfg(test)]

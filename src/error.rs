@@ -10,8 +10,10 @@ pub enum Error {
     // BlockMustHaveOneStatement(Span),
     // BadAttribute(Span),
     NotFound(Span),
-    CouldNotConvert(Span),
+    CouldNotConvertToExpression(Span),
+    CouldNotConvertFromExpression(Span),
     CouldNotParse(Span),
+    CouldNotEvaulate(Span),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

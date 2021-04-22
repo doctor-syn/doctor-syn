@@ -1,21 +1,30 @@
 
-use crate::Expression;
-use quote::quote;
+use crate::{Expression, Name};
 
 #[derive(Clone, PartialEq)]
 pub struct VariableList {
-    pub (crate) inner: Vec<(syn::Path, Expression)>,
+    pub (crate) inner: Vec<(Name, Expression)>,
 }
 
-impl From<Vec<(syn::Path, crate::Expression)>> for VariableList {
-    fn from(vec: Vec<(syn::Path, crate::Expression)>) -> VariableList {
+impl From<Vec<(Name, Expression)>> for VariableList {
+    fn from(vec: Vec<(Name, Expression)>) -> VariableList {
         VariableList { inner: vec.into_iter().collect() }
     }
 }
 
 impl VariableList {
-    pub fn find(&self, path: &syn::Path) -> Option<Expression> {
-        if let Some((_, e)) = self.inner.iter().find(|(p, _)| p == path) {
+    pub fn new() -> Self {
+        Self { inner: Vec::new() }
+    }
+
+    pub fn add_var(&mut self, name: Name, value: Expression) -> usize {
+        let res = self.inner.len();
+        self.inner.push((name, value));
+        res
+    }
+
+    pub fn find(&self, name: &Name) -> Option<Expression> {
+        if let Some((_, e)) = self.inner.iter().find(|(p, _)| p == name) {
             Some(e.clone())
         } else {
             None
@@ -26,7 +35,19 @@ impl VariableList {
 #[macro_export]
 macro_rules! vars {
     ($($i : ident = $e : expr),*) => {
-        $crate::VariableList::from(vec![$((syn::parse_quote!($i), $crate::expr!($e))),*])
+        $crate::VariableList::from(vec![$(($crate::name!($i), $crate::expr!($e))),*])
+    }
+}
+
+impl std::fmt::Display for VariableList {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "vars!(")?;
+        let mut comma = "";
+        for (p,e) in self.inner.iter() {
+            write!(f, "{}{} = {}", comma, p, e)?;
+            comma = ", ";
+        }
+        write!(f, ")")
     }
 }
 
@@ -35,7 +56,7 @@ impl std::fmt::Debug for VariableList {
         write!(f, "vars!(")?;
         let mut comma = "";
         for (p,e) in self.inner.iter() {
-            write!(f, "{}{} = {}", comma, quote!(#p).to_string(), e)?;
+            write!(f, "{}{} = {}", comma, p, e)?;
             comma = ", ";
         }
         write!(f, ")")

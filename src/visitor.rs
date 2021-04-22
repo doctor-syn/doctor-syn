@@ -1,5 +1,5 @@
 
-use syn::{Expr, ExprBinary, ExprLit, ExprMethodCall, ExprPath, punctuated::Punctuated, Token};
+use syn::{Expr, ExprBinary, ExprLit, ExprMethodCall, ExprPath, ExprField, punctuated::Punctuated, Token};
 use crate::error::Error;
 use syn::spanned::Spanned;
 // use proc_macro2::Span;
@@ -29,6 +29,11 @@ pub trait Visitor {
     /// eg. "x" or "f64::const::PI"
     fn visit_path(&self, exprpath: &ExprPath) -> Result<Expr, Error> {
         Ok(exprpath.clone().into())
+    }
+
+    /// eg. "x.y"
+    fn visit_field(&self, exprfield: &ExprField) -> Result<Expr, Error> {
+        Ok(exprfield.clone().into())
     }
 
     /// eg. "let x = 1;" "fn x();" "x * 2" or "x * 2;"
@@ -64,6 +69,8 @@ pub trait Visitor {
 
     // Evaluate simple expressions like (x+1.0).sin()
     fn visit_expr(&self, expr: &Expr) -> Result<Expr, Error> {
+        println!("visit_expr {:?}", expr);
+
         use Expr::*;
         match expr {
             // A binary operation: `a + b`, `a * b`.
@@ -78,6 +85,8 @@ pub trait Visitor {
             Lit(exprlit) => self.visit_lit(&exprlit),
 
             Path(exprpath) => self.visit_path(exprpath),
+
+            Field(exprfield) => self.visit_field(exprfield),
 
             _ => Err(Error::UnsupportedExpr(expr.span()))
         }
