@@ -1,7 +1,8 @@
 use crate::error::Error;
 use syn::spanned::Spanned;
 use syn::{
-    punctuated::Punctuated, Expr, ExprBinary, ExprField, ExprLit, ExprMethodCall, ExprPath, Token,
+    punctuated::Punctuated, Expr, ExprBinary, ExprField, ExprLit, ExprMethodCall, ExprPath,
+    ExprUnary, Token,
 };
 // use proc_macro2::Span;
 
@@ -74,27 +75,29 @@ pub trait Visitor {
         .into())
     }
 
+    fn visit_unary(&self, exprunary: &ExprUnary) -> Result<Expr, Error> {
+        let expr = self.visit_expr(&exprunary.expr)?;
+        Ok(ExprUnary {
+            attrs: exprunary.attrs.clone(),
+            op: exprunary.op,
+            expr: Box::new(expr),
+        }
+        .into())
+    }
+
     // Evaluate simple expressions like (x+1.0).sin()
     fn visit_expr(&self, expr: &Expr) -> Result<Expr, Error> {
         println!("visit_expr {:?}", expr);
 
         use Expr::*;
         match expr {
-            // A binary operation: `a + b`, `a * b`.
+            Unary(exprunary) => self.visit_unary(exprunary),
             Binary(exprbinary) => self.visit_binary(&exprbinary),
-
-            // A method call expression: `x.foo::<T>(a, b)`.
             MethodCall(exprmethodcall) => self.visit_method_call(exprmethodcall),
-
-            // A parenthesized expression: `(a + b)`.
             Paren(exprparen) => self.visit_expr(&exprparen.expr),
-
             Lit(exprlit) => self.visit_lit(&exprlit),
-
             Path(exprpath) => self.visit_path(exprpath),
-
             Field(exprfield) => self.visit_field(exprfield),
-
             _ => Err(Error::UnsupportedExpr(expr.span())),
         }
     }

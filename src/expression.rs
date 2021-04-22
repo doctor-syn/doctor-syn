@@ -8,7 +8,7 @@ use proc_macro2::Span;
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{Expr, ExprUnary, Lit, UnOp};
+use syn::{Expr, ExprLit, Lit};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expression {
@@ -26,9 +26,11 @@ impl TryFrom<f64> for Expression {
 
     fn try_from(val: f64) -> Result<Self> {
         let s = format!("{}", val);
-        let inner =
+        let inner: ExprLit =
             syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
-        Ok(Self { inner })
+        Ok(Self {
+            inner: inner.into(),
+        })
     }
 }
 
@@ -43,13 +45,6 @@ fn expr_to_f64(expr: &syn::Expr) -> Result<f64> {
                 .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
             _ => return Err(Error::CouldNotConvertFromExpression(lit.lit.span())),
         }
-    } else if let Expr::Unary(ExprUnary {
-        op: UnOp::Neg(_),
-        ref expr,
-        ..
-    }) = expr
-    {
-        Ok(-expr_to_f64(expr)?)
     } else {
         Err(Error::CouldNotConvertFromExpression(expr.span()))
     }

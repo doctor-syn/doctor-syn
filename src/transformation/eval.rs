@@ -12,7 +12,7 @@ use crate::Expression;
 use num_traits::Float;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{BinOp, Expr, ExprBinary, ExprMethodCall};
+use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, ExprUnary, UnOp};
 
 #[derive(Debug, Clone)]
 pub struct Eval<T: TryFrom<Expression> + TryInto<Expression>> {
@@ -59,6 +59,16 @@ impl<T: TryFrom<Expression, Error = Error> + TryInto<Expression, Error = Error> 
             BinOp::Mul(_) => Ok((left * right).try_into()?.into()),
             BinOp::Div(_) => Ok((left / right).try_into()?.into()),
             _ => Err(Error::CouldNotEvaulate(exprbinary.span())),
+        }
+    }
+
+    fn visit_unary(&self, exprunary: &ExprUnary) -> Result<Expr> {
+        let expr = T::try_from(self.visit_expr(&exprunary.expr)?.into())?;
+        match exprunary.op {
+            // UnOp::Deref(_) => (),
+            // UnOp::Not(_) => (),
+            UnOp::Neg(_) => Ok((-expr).try_into()?.into()),
+            _ => Err(Error::CouldNotEvaulate(exprunary.span())),
         }
     }
 }
