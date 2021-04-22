@@ -1,13 +1,13 @@
 //! Doctor Syn a computer algebra system for rust macros.
 
-pub mod polynomial;
 pub mod error;
-pub mod visitor;
+pub mod polynomial;
 pub mod transformation;
+pub mod visitor;
 // pub mod util;
 pub mod expression;
-pub mod variablelist;
 pub mod name;
+pub mod variablelist;
 
 #[cfg(test)]
 mod tests;

@@ -1,7 +1,8 @@
-
-use syn::{Expr, ExprBinary, ExprLit, ExprMethodCall, ExprPath, ExprField, punctuated::Punctuated, Token};
 use crate::error::Error;
 use syn::spanned::Spanned;
+use syn::{
+    punctuated::Punctuated, Expr, ExprBinary, ExprField, ExprLit, ExprMethodCall, ExprPath, Token,
+};
 // use proc_macro2::Span;
 
 /// A visitor trait for a subset of expressions.
@@ -9,7 +10,11 @@ use syn::spanned::Spanned;
 pub trait Visitor {
     fn visit_method_call(&self, expr: &ExprMethodCall) -> Result<Expr, Error> {
         let receiver = self.visit_expr(&expr.receiver)?;
-        let args : Punctuated<Expr, Token![,]> = expr.args.iter().map(|a| self.visit_expr(a)).collect::<Result<Punctuated<Expr, Token![,]>, Error>>()?;
+        let args: Punctuated<Expr, Token![,]> =
+            expr.args
+                .iter()
+                .map(|a| self.visit_expr(a))
+                .collect::<Result<Punctuated<Expr, Token![,]>, Error>>()?;
         Ok(ExprMethodCall {
             attrs: expr.attrs.clone(),
             receiver: Box::new(receiver),
@@ -18,7 +23,8 @@ pub trait Visitor {
             turbofish: expr.turbofish.clone(),
             paren_token: expr.paren_token.clone(),
             args: args,
-        }.into())
+        }
+        .into())
     }
 
     // eg. "1.0"
@@ -64,7 +70,8 @@ pub trait Visitor {
             left: Box::new(left),
             op: exprbinary.op.clone(),
             right: Box::new(right),
-        }.into())
+        }
+        .into())
     }
 
     // Evaluate simple expressions like (x+1.0).sin()
@@ -88,7 +95,7 @@ pub trait Visitor {
 
             Field(exprfield) => self.visit_field(exprfield),
 
-            _ => Err(Error::UnsupportedExpr(expr.span()))
+            _ => Err(Error::UnsupportedExpr(expr.span())),
         }
     }
 }

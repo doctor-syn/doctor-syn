@@ -2,13 +2,13 @@ use crate::error::{Error, Result};
 use crate::transformation::Eval;
 use crate::transformation::Subst;
 use crate::visitor::Visitor;
-use crate::{VariableList, Name};
+use crate::{Name, VariableList};
+use num_traits::Float;
 use proc_macro2::Span;
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{Expr, Lit, ExprUnary, UnOp};
-use num_traits::Float;
+use syn::{Expr, ExprUnary, Lit, UnOp};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expression {
@@ -26,7 +26,8 @@ impl TryFrom<f64> for Expression {
 
     fn try_from(val: f64) -> Result<Self> {
         let s = format!("{}", val);
-        let inner = syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+        let inner =
+            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
         Ok(Self { inner })
     }
 }
@@ -42,7 +43,12 @@ fn expr_to_f64(expr: &syn::Expr) -> Result<f64> {
                 .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
             _ => return Err(Error::CouldNotConvertFromExpression(lit.lit.span())),
         }
-    } else if let Expr::Unary(ExprUnary { op: UnOp::Neg(_), ref expr, .. }) = expr {
+    } else if let Expr::Unary(ExprUnary {
+        op: UnOp::Neg(_),
+        ref expr,
+        ..
+    }) = expr
+    {
         Ok(-expr_to_f64(expr)?)
     } else {
         Err(Error::CouldNotConvertFromExpression(expr.span()))
@@ -163,8 +169,12 @@ impl Expression {
     ///
     /// assert_eq!(expr!(1 + 1).eval_float::<f64>().unwrap(), 2.0);
     /// ```
-    pub fn eval_float<T: TryFrom<Expression, Error=Error> + TryInto<Expression, Error=Error> + Float>(&self) -> Result<T> {
-        let expr : Expr = Eval::<T> {
+    pub fn eval_float<
+        T: TryFrom<Expression, Error = Error> + TryInto<Expression, Error = Error> + Float,
+    >(
+        &self,
+    ) -> Result<T> {
+        let expr: Expr = Eval::<T> {
             datatype: std::marker::PhantomData,
         }
         .visit_expr(&self.inner)?;
@@ -198,7 +208,7 @@ impl Expression {
             vars.add_var(variable.clone(), x.try_into()?);
             let subst = self.subst(vars)?;
             println!("subst={}", subst);
-            let y : f64 = subst.eval_float()?;
+            let y: f64 = subst.eval_float()?;
             xvalues.push(x);
             yvalues.push(y);
         }

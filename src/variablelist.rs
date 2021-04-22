@@ -1,14 +1,15 @@
-
 use crate::{Expression, Name};
 
 #[derive(Clone, PartialEq)]
 pub struct VariableList {
-    pub (crate) inner: Vec<(Name, Expression)>,
+    pub(crate) inner: Vec<(Name, Expression)>,
 }
 
 impl From<Vec<(Name, Expression)>> for VariableList {
     fn from(vec: Vec<(Name, Expression)>) -> VariableList {
-        VariableList { inner: vec.into_iter().collect() }
+        VariableList {
+            inner: vec.into_iter().collect(),
+        }
     }
 }
 
@@ -43,7 +44,7 @@ impl std::fmt::Display for VariableList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "vars!(")?;
         let mut comma = "";
-        for (p,e) in self.inner.iter() {
+        for (p, e) in self.inner.iter() {
             write!(f, "{}{} = {}", comma, p, e)?;
             comma = ", ";
         }
@@ -55,7 +56,7 @@ impl std::fmt::Debug for VariableList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "vars!(")?;
         let mut comma = "";
-        for (p,e) in self.inner.iter() {
+        for (p, e) in self.inner.iter() {
             write!(f, "{}{} = {}", comma, p, e)?;
             comma = ", ";
         }
@@ -66,6 +67,6 @@ impl std::fmt::Debug for VariableList {
 #[test]
 fn test_vars() {
     use crate::vars;
-    let v = vars!(x=1, y=2);
+    let v = vars!(x = 1, y = 2);
     assert_eq!(format!("{:?}", v), "vars!(x = 1, y = 2)");
 }

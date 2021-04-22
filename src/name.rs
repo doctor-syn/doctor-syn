@@ -1,9 +1,8 @@
-
 use quote::quote;
 
 #[derive(Clone, PartialEq, Hash, Eq)]
 pub struct Name {
-    pub (crate) inner: syn::Path,
+    pub(crate) inner: syn::Path,
 }
 
 impl From<syn::Path> for Name {
@@ -40,10 +39,8 @@ impl std::fmt::Debug for Name {
 
 #[macro_export]
 macro_rules! name {
-    ($e : expr) => {
-        {
-            let path : syn::Path = syn::parse_quote!($e);
-            $crate::Name::from(path)
-        }
-    }
+    ($e : expr) => {{
+        let path: syn::Path = syn::parse_quote!($e);
+        $crate::Name::from(path)
+    }};
 }

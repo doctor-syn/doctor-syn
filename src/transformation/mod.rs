@@ -1,5 +1,5 @@
-pub mod subst;
 pub mod eval;
+pub mod subst;
 
-pub use subst::Subst;
 pub use eval::Eval;
+pub use subst::Subst;
