@@ -184,7 +184,7 @@ impl Expression {
         Ok(Expression::from(expr).try_into()?)
     }
 
-    /// Return an approximation of a single variable expression.
+    /// Return a polynomial approximation of a single variable expression.
     /// ```
     /// use doctor_syn::{expr, name};
     /// use std::f64::consts::PI;
