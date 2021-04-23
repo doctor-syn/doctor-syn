@@ -1,4 +1,5 @@
 use crate::error::{Error, Result};
+use crate::transformation::approx;
 use crate::transformation::Eval;
 use crate::transformation::Subst;
 use crate::visitor::Visitor;
@@ -10,7 +11,7 @@ use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
 use syn::{Expr, ExprLit, Lit};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Expression {
     pub(crate) inner: Expr,
 }
@@ -79,6 +80,13 @@ impl AsRef<syn::Expr> for Expression {
 }
 
 impl std::fmt::Display for Expression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let inner = &self.inner;
+        write!(f, "{}", quote!(#inner).to_string())
+    }
+}
+
+impl std::fmt::Debug for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let inner = &self.inner;
         write!(f, "{}", quote!(#inner).to_string())
@@ -185,30 +193,11 @@ impl Expression {
     /// ```
     pub fn approx(
         &self,
-        num_terms: u32,
+        num_terms: usize,
         xmin: f64,
         xmax: f64,
         variable: Name,
     ) -> Result<Expression> {
-        use std::f64::consts::PI;
-        let a = (xmax + xmin) * 0.5;
-        let b = PI / (num_terms - 1) as f64;
-        let c = (xmax - xmin) * 0.5;
-        let mut xvalues = Vec::new();
-        let mut yvalues = Vec::new();
-        for i in 0..num_terms {
-            // *almost* Chebyshev nodes.
-            let x = a - c * (i as f64 * b).cos();
-            let mut vars = VariableList::new();
-            vars.add_var(variable.clone(), x.try_into()?);
-            let subst = self.subst(vars)?;
-            println!("subst={}", subst);
-            let y: f64 = subst.eval_float()?;
-            xvalues.push(x);
-            yvalues.push(y);
-        }
-        println!("{:?}", xvalues);
-        println!("{:?}", yvalues);
-        Ok(expr!(1))
+        approx(self, num_terms, xmin, xmax, variable)
     }
 }
