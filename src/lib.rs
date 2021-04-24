@@ -16,6 +16,17 @@ pub use name::Name;
 pub use std::convert::{TryFrom, TryInto};
 pub use variablelist::VariableList;
 
+use num_traits::Float;
+
+pub trait Evaluateable:
+    TryFrom<Expression, Error = error::Error> + TryInto<Expression, Error = error::Error> + Float
+{
+}
+
+impl Evaluateable for f64 {}
+
+impl Evaluateable for f32 {}
+
 // #[cfg(test)]
 // mod test;
 

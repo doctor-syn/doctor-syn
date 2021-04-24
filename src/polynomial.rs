@@ -11,12 +11,7 @@ pub(crate) fn divided_differences(x: &[f64], y: &mut [f64]) {
     for i in 0..k - 1 {
         for j in (i..k - 1).rev() {
             y[j + 1] = (y[j + 1] - y[j]) / (x[j + 1] - x[j - i]);
-            // println!("{} {} ({}-{})/({}-{}) {}", i, j, j-i+1, j-i, j+1, j-i, y[j+1]);
         }
-        // for z in 0..k {
-        //     print!("{}/{} ", z, y[z]);
-        // }
-        // println!("");
     }
 }
 
@@ -33,13 +28,8 @@ impl Polynomial {
 
         divided_differences(x, &mut *dd);
 
-        // println!("x= {:?}", x);
-        // println!("y= {:?}", y);
-        // println!("dd={:?}", dd);
-
         let k = y.len();
         for i in 0..k {
-            // println!("n={:?}", newton);
             for j in 0..k {
                 terms[j] += newton[j] * dd[i];
             }
@@ -50,7 +40,6 @@ impl Polynomial {
                 newton[i] = newton[i] * c + newton[i - 1];
             }
             newton[0] *= c;
-            // println!("t={:?}", terms);
         }
         Self { terms }
     }
@@ -88,7 +77,6 @@ mod test {
 
         let p = Polynomial::from_points(x, y);
         let y2 = (0..x.len()).map(|i| p.eval(x[i])).collect::<Vec<_>>();
-        println!("x={:?} y={:?} y2={:?}", x, y, y2);
 
         let err = (0..x.len())
             .map(|i| (y2[i] - y[i]).abs())
@@ -100,7 +88,6 @@ mod test {
 
         let p = Polynomial::from_points(x, y);
         let y2 = (0..x.len()).map(|i| p.eval(x[i])).collect::<Vec<_>>();
-        println!("x={:?} y={:?} y2={:?}", x, y, y2);
 
         let err = (0..x.len())
             .map(|i| (y2[i] - y[i]).abs())

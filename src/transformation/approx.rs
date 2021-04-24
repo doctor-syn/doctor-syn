@@ -1,20 +1,23 @@
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::polynomial::Polynomial;
-use crate::{Expression, Name, VariableList};
-pub use std::convert::{TryFrom, TryInto};
-use syn::{parse_quote, Expr, Stmt};
+use crate::{Evaluateable, Expression, Name, VariableList};
+use proc_macro2::TokenStream;
+use quote::quote;
+use std::convert::TryInto;
+use syn::{parse_quote, Expr};
 
-pub fn approx(
+pub fn approx<T: Evaluateable>(
     expr: &Expression,
     num_terms: usize,
-    xmin: f64,
-    xmax: f64,
+    xmin: T,
+    xmax: T,
     variable: Name,
 ) -> Result<Expression> {
+    let err_fn = || Error::CouldNotEvaulate(expr.span());
     use std::f64::consts::PI;
-    let a = (xmax + xmin) * 0.5;
+    let a = (xmax + xmin).to_f64().ok_or_else(err_fn)? * 0.5;
     let b = PI / (num_terms - 1) as f64;
-    let c = (xmax - xmin) * 0.5;
+    let c = (xmax - xmin).to_f64().ok_or_else(err_fn)? * 0.5;
     let mut xvalues = Vec::new();
     let mut yvalues = Vec::new();
     for i in 0..num_terms {
@@ -23,32 +26,24 @@ pub fn approx(
         let mut vars = VariableList::new();
         vars.add_var(variable.clone(), x.try_into()?);
         let subst = expr.subst(vars)?;
-        println!("subst={}", subst);
         let y: f64 = subst.eval_float()?;
         xvalues.push(x);
         yvalues.push(y);
     }
-    println!("{:?}", xvalues);
-    println!("{:?}", yvalues);
 
     let poly = Polynomial::from_points(xvalues.as_slice(), yvalues.as_slice());
     let k = num_terms;
     let terms = poly.terms();
-    let mut stmts: Vec<Stmt> = Vec::new();
-    let tk = terms[k - 1];
-    stmts.push(parse_quote!(let y = #tk;));
-    for i in (0..k - 1).rev() {
-        let ti = terms[i];
-        stmts.push(parse_quote!(let y = y.mul_add(x, #ti);));
-    }
+    let highest_coeff = terms[k - 1];
+    let mul_adds: Vec<TokenStream> = (0..k - 1)
+        .rev()
+        .map(|i| {
+            let ti = terms[i];
+            quote!(mul_add(x, #ti))
+        })
+        .collect();
 
-    let res: Expr = parse_quote!(
-        {
-            #( #stmts )*
-            y
-        }
-    );
-    println!("{:?}", res);
+    let expr: Expr = parse_quote!( #highest_coeff #( .#mul_adds )* );
 
-    Ok(res.into())
+    Ok(expr.into())
 }

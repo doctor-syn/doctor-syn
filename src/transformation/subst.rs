@@ -11,7 +11,7 @@ pub struct Subst {
 impl Visitor for Subst {
     /// eg. "x" or "f64::const::PI"
     fn visit_path(&self, exprpath: &ExprPath) -> Result<Expr, Error> {
-        println!("visit_path {:?}", self);
+        //println!("visit_path {:?}", self);
         let name: Name = exprpath.path.clone().into();
         if let Some(res) = self.variables.find(&name) {
             // Substitute.

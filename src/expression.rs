@@ -3,8 +3,8 @@ use crate::transformation::approx;
 use crate::transformation::Eval;
 use crate::transformation::Subst;
 use crate::visitor::Visitor;
+use crate::Evaluateable;
 use crate::{Name, VariableList};
-use num_traits::Float;
 use proc_macro2::Span;
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
@@ -35,7 +35,36 @@ impl TryFrom<f64> for Expression {
     }
 }
 
+impl TryFrom<f32> for Expression {
+    type Error = Error;
+
+    fn try_from(val: f32) -> Result<Self> {
+        let s = format!("{}", val);
+        let inner: ExprLit =
+            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+        Ok(Self {
+            inner: inner.into(),
+        })
+    }
+}
+
 fn expr_to_f64(expr: &syn::Expr) -> Result<f64> {
+    if let Expr::Lit(ref lit) = expr {
+        match &lit.lit {
+            Lit::Float(f) => f
+                .base10_parse()
+                .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
+            Lit::Int(i) => i
+                .base10_parse()
+                .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
+            _ => return Err(Error::CouldNotConvertFromExpression(lit.lit.span())),
+        }
+    } else {
+        Err(Error::CouldNotConvertFromExpression(expr.span()))
+    }
+}
+
+fn expr_to_f32(expr: &syn::Expr) -> Result<f32> {
     if let Expr::Lit(ref lit) = expr {
         match &lit.lit {
             Lit::Float(f) => f
@@ -64,6 +93,22 @@ impl TryFrom<Expression> for f64 {
 
     fn try_from(expr: Expression) -> Result<Self> {
         expr_to_f64(&expr.inner)
+    }
+}
+
+impl TryFrom<&Expression> for f32 {
+    type Error = Error;
+
+    fn try_from(expr: &Expression) -> Result<Self> {
+        expr_to_f32(&expr.inner)
+    }
+}
+
+impl TryFrom<Expression> for f32 {
+    type Error = Error;
+
+    fn try_from(expr: Expression) -> Result<Self> {
+        expr_to_f32(&expr.inner)
     }
 }
 
@@ -102,46 +147,9 @@ macro_rules! expr {
 }
 
 impl Expression {
-    // /// Generate an expression from a number.
-    // ///
-    // /// ```
-    // /// use doctor_syn::{Expression, expr};
-    // /// let e = Expression::from_number(1).unwrap();
-    // /// assert!(e.is_lit());
-    // /// assert_eq!(e, expr!(1));
-    // /// ```
-    // pub fn from_number<T: std::fmt::Display>(value: T) -> Result<Self> {
-    //     let s = format!("{}", value);
-    //     Ok(Self {
-    //         inner: parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?,
-    //     })
-    // }
-
-    // /// Generate a number from a literal expression.
-    // /// ```
-    // /// use doctor_syn::{Expression, expr};
-    // /// let one : u32 = expr!(1).as_number().unwrap();
-    // /// assert_eq!(one, 1);
-    // /// ```
-    // pub fn as_number<T>(&self) -> Result<T>
-    // where
-    //     T: std::str::FromStr,
-    //     T::Err: std::fmt::Display,
-    // {
-    //     if let Expr::Lit(ref lit) = self.inner {
-    //         match &lit.lit {
-    //             Lit::Float(f) => f
-    //                 .base10_parse()
-    //                 .map_err(|_| Error::CouldNotConvert(lit.lit.span())),
-    //             Lit::Int(i) => i
-    //                 .base10_parse()
-    //                 .map_err(|_| Error::CouldNotConvert(lit.lit.span())),
-    //             _ => return Err(Error::CouldNotConvert(lit.lit.span())),
-    //         }
-    //     } else {
-    //         Err(Error::CouldNotConvert(self.inner.span()))
-    //     }
-    // }
+    pub fn span(&self) -> Span {
+        self.inner.span()
+    }
 
     /// Generate a number from a literal expression.
     /// ```
@@ -162,7 +170,6 @@ impl Expression {
     /// assert_eq!(expr!(x + 1).subst(vars!(x=1)).unwrap(), expr!(1 + 1));
     /// ```
     pub fn subst(&self, variables: VariableList) -> Result<Expression> {
-        println!("subst");
         Ok(Subst { variables }.visit_expr(&self.inner)?.into())
     }
 
@@ -172,11 +179,7 @@ impl Expression {
     ///
     /// assert_eq!(expr!(1 + 1).eval_float::<f64>().unwrap(), 2.0);
     /// ```
-    pub fn eval_float<
-        T: TryFrom<Expression, Error = Error> + TryInto<Expression, Error = Error> + Float,
-    >(
-        &self,
-    ) -> Result<T> {
+    pub fn eval_float<T: Evaluateable>(&self) -> Result<T> {
         let expr: Expr = Eval::<T> {
             datatype: std::marker::PhantomData,
         }
@@ -185,17 +188,20 @@ impl Expression {
     }
 
     /// Return a polynomial approximation of a single variable expression.
+    /// The polynomial is in a canonical form t[k] . mul_add( x, t[k-1]) ...  . mul_add( x, t[0])
+    /// This is the most accurate and highest throughput form on most processors.
+    ///
     /// ```
     /// use doctor_syn::{expr, name};
     /// use std::f64::consts::PI;
     ///
-    /// assert_eq!(expr!(x.sin()).approx(2, 0.0, PI*2.0, name!(x)).unwrap(), expr!(2.0));
+    /// assert_eq!(expr!(x).approx(4, 0.0, 1.0, name!(x)).unwrap(), expr!(1f64 . mul_add (x , 0f64)));
     /// ```
-    pub fn approx(
+    pub fn approx<T: Evaluateable>(
         &self,
         num_terms: usize,
-        xmin: f64,
-        xmax: f64,
+        xmin: T,
+        xmax: T,
         variable: Name,
     ) -> Result<Expression> {
         approx(self, num_terms, xmin, xmax, variable)

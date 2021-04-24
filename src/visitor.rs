@@ -85,9 +85,9 @@ pub trait Visitor {
         .into())
     }
 
-    // Evaluate simple expressions like (x+1.0).sin()
+    // Visit a generalised expression.
     fn visit_expr(&self, expr: &Expr) -> Result<Expr, Error> {
-        println!("visit_expr {:?}", expr);
+        //println!("visit_expr {}", Expression::from(expr.clone()));
 
         use Expr::*;
         match expr {
