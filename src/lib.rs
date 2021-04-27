@@ -15,6 +15,7 @@ pub use expression::Expression;
 pub use name::Name;
 pub use std::convert::{TryFrom, TryInto};
 pub use variablelist::VariableList;
+pub use error::*;
 
 use num_traits::Float;
 

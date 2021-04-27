@@ -1,7 +1,5 @@
 use crate::error::{Error, Result};
-use crate::transformation::approx;
-use crate::transformation::Eval;
-use crate::transformation::Subst;
+use crate::transformation::{approx::approx, eval::Eval, subst::Subst, expand::Expand, paren::Paren};
 use crate::visitor::Visitor;
 use crate::Evaluateable;
 use crate::{Name, VariableList};
@@ -48,7 +46,11 @@ impl TryFrom<f32> for Expression {
     }
 }
 
-fn expr_to_f64(expr: &syn::Expr) -> Result<f64> {
+fn expr_to<N>(expr: &syn::Expr) -> Result<N>
+where
+    N: std::str::FromStr,
+    N::Err: std::fmt::Display,
+{
     if let Expr::Lit(ref lit) = expr {
         match &lit.lit {
             Lit::Float(f) => f
@@ -64,27 +66,12 @@ fn expr_to_f64(expr: &syn::Expr) -> Result<f64> {
     }
 }
 
-fn expr_to_f32(expr: &syn::Expr) -> Result<f32> {
-    if let Expr::Lit(ref lit) = expr {
-        match &lit.lit {
-            Lit::Float(f) => f
-                .base10_parse()
-                .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
-            Lit::Int(i) => i
-                .base10_parse()
-                .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
-            _ => return Err(Error::CouldNotConvertFromExpression(lit.lit.span())),
-        }
-    } else {
-        Err(Error::CouldNotConvertFromExpression(expr.span()))
-    }
-}
 
 impl TryFrom<&Expression> for f64 {
     type Error = Error;
 
     fn try_from(expr: &Expression) -> Result<Self> {
-        expr_to_f64(&expr.inner)
+        expr_to::<f64>(&expr.inner)
     }
 }
 
@@ -92,7 +79,7 @@ impl TryFrom<Expression> for f64 {
     type Error = Error;
 
     fn try_from(expr: Expression) -> Result<Self> {
-        expr_to_f64(&expr.inner)
+        expr_to::<f64>(&expr.inner)
     }
 }
 
@@ -100,7 +87,7 @@ impl TryFrom<&Expression> for f32 {
     type Error = Error;
 
     fn try_from(expr: &Expression) -> Result<Self> {
-        expr_to_f32(&expr.inner)
+        expr_to::<f32>(&expr.inner)
     }
 }
 
@@ -108,7 +95,7 @@ impl TryFrom<Expression> for f32 {
     type Error = Error;
 
     fn try_from(expr: Expression) -> Result<Self> {
-        expr_to_f32(&expr.inner)
+        expr_to::<f32>(&expr.inner)
     }
 }
 
@@ -135,6 +122,7 @@ impl std::fmt::Debug for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let inner = &self.inner;
         write!(f, "{}", quote!(#inner).to_string())
+        // write!(f, "{:?}", quote!(#inner))
     }
 }
 
@@ -177,9 +165,9 @@ impl Expression {
     /// ```
     /// use doctor_syn::{expr};
     ///
-    /// assert_eq!(expr!(1 + 1).eval_float::<f64>().unwrap(), 2.0);
+    /// assert_eq!(expr!(1 + 1).eval::<f64>().unwrap(), 2.0);
     /// ```
-    pub fn eval_float<T: Evaluateable>(&self) -> Result<T> {
+    pub fn eval<T: Evaluateable>(&self) -> Result<T> {
         let expr: Expr = Eval::<T> {
             datatype: std::marker::PhantomData,
         }
@@ -193,9 +181,8 @@ impl Expression {
     ///
     /// ```
     /// use doctor_syn::{expr, name};
-    /// use std::f64::consts::PI;
     ///
-    /// assert_eq!(expr!(x).approx(4, 0.0, 1.0, name!(x)).unwrap(), expr!(1f64 . mul_add (x , 0f64)));
+    /// assert_eq!(expr!(x).approx(2, 0.0, 1.0, name!(x)).unwrap(), expr!(1f64 . mul_add (x , 0f64)));
     /// ```
     pub fn approx<T: Evaluateable>(
         &self,
@@ -205,5 +192,36 @@ impl Expression {
         variable: Name,
     ) -> Result<Expression> {
         approx(self, num_terms, xmin, xmax, variable)
+    }
+
+    /// Expand an expression.
+    ///
+    /// ```
+    /// use doctor_syn::{expr, Result};
+    /// || -> Result<()> {
+    ///     assert_eq!(expr!(-(x+1)).expand()?, expr!(-x - 1));
+    ///     assert_eq!(expr!((x+1)+(x+1)).expand()?.paren()?, expr!(((x+1)+x)+1));
+    ///     //assert_eq!(expr!((x+1)*(x+1)).expand()?, expr!(x*x + 2*x + 1));
+    ///     Ok(())
+    /// }();
+    ///
+    /// ```
+    pub fn expand(&self) -> Result<Expression> {
+        Ok(Expand { }.visit_expr(&self.inner)?.into())
+    }
+
+    /// Parenthesise operators of operators.
+    ///
+    /// ```
+    /// use doctor_syn::{expr};
+    ///
+    /// assert_eq!(expr!(-x).paren().unwrap(), expr!(-x));
+    /// assert_eq!(expr!(x+1).paren().unwrap(), expr!(x+1));
+    /// assert_eq!(expr!(x+1+1).paren().unwrap(), expr!((x+1)+1));
+    /// assert_eq!(expr!(x+1+1+1).paren().unwrap(), expr!(((x+1)+1)+1));
+    /// assert_eq!(expr!(2*x+y).paren().unwrap(), expr!((2*x)+y));
+    /// ```
+    pub fn paren(&self) -> Result<Expression> {
+        Ok(Paren { }.visit_expr(&self.inner)?.into())
     }
 }

@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::Result;
 use crate::visitor::Visitor;
 use crate::{Name, VariableList};
 use syn::{Expr, ExprPath};
@@ -10,7 +10,7 @@ pub struct Subst {
 
 impl Visitor for Subst {
     /// eg. "x" or "f64::const::PI"
-    fn visit_path(&self, exprpath: &ExprPath) -> Result<Expr, Error> {
+    fn visit_path(&self, exprpath: &ExprPath) -> Result<Expr> {
         //println!("visit_path {:?}", self);
         let name: Name = exprpath.path.clone().into();
         if let Some(res) = self.variables.find(&name) {

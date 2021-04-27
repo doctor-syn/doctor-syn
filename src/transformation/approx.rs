@@ -26,7 +26,7 @@ pub fn approx<T: Evaluateable>(
         let mut vars = VariableList::new();
         vars.add_var(variable.clone(), x.try_into()?);
         let subst = expr.subst(vars)?;
-        let y: f64 = subst.eval_float()?;
+        let y: f64 = subst.eval()?;
         xvalues.push(x);
         yvalues.push(y);
     }
