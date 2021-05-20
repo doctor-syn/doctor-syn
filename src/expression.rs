@@ -1,9 +1,11 @@
 use crate::error::{Error, Result};
-use crate::transformation::{approx::approx, eval::Eval, subst::Subst, expand::Expand, paren::Paren};
+use crate::transformation::{
+    approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst,
+};
 use crate::visitor::Visitor;
 use crate::Evaluateable;
 use crate::{Name, VariableList};
-use proc_macro2::Span;
+use proc_macro2::{Span};
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
@@ -65,7 +67,6 @@ where
         Err(Error::CouldNotConvertFromExpression(expr.span()))
     }
 }
-
 
 impl TryFrom<&Expression> for f64 {
     type Error = Error;
@@ -134,6 +135,15 @@ macro_rules! expr {
     }};
 }
 
+impl std::str::FromStr for Expression {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        let inner : Expr = syn::parse_str(s)
+            .map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+        Ok(Self { inner })
+    }
+}
+
 impl Expression {
     pub fn span(&self) -> Span {
         self.inner.span()
@@ -199,15 +209,41 @@ impl Expression {
     /// ```
     /// use doctor_syn::{expr, Result};
     /// || -> Result<()> {
-    ///     assert_eq!(expr!(-(x+1)).expand()?, expr!(-x - 1));
-    ///     assert_eq!(expr!((x+1)+(x+1)).expand()?.paren()?, expr!(((x+1)+x)+1));
-    ///     //assert_eq!(expr!((x+1)*(x+1)).expand()?, expr!(x*x + 2*x + 1));
-    ///     Ok(())
-    /// }();
+    ///    // Unary
+    ///    assert_eq!(expr!(- - x).expand()?, expr!(x));
+    ///    assert_eq!(expr!(-(x+1)).expand()?, expr!(-x-1));
     ///
+    ///    // Binary add/sub
+    ///    assert_eq!(expr!((x+1)+(x+1)).expand()?, expr!(x + 1 + x + 1));
+    ///    assert_eq!(expr!((x+1)+((x+1)+(x+1))).expand()?, expr!(x + 1 + x + 1 + x + 1));
+    ///    assert_eq!(expr!((x+1)-(x+1)).expand()?, expr!(x + 1 - x - 1));
+    ///    assert_eq!(expr!((x+1)-((x+1)-(x+1))).expand()?, expr!(x + 1 - x - 1 + x + 1));
+    ///    assert_eq!(expr!((x+1)-((x+1)-(-x+1))).expand()?, expr!(x + 1 - x - 1 - x + 1));
+    ///
+    ///    // Binary mul
+    ///    assert_eq!(expr!(x*x).expand()?, expr!(x * x));
+    ///    assert_eq!(expr!(x*(x+1)).expand()?, expr!(x * x + x * 1));
+    ///    assert_eq!(expr!((x+1)*x).expand()?, expr!(x * x + 1 * x));
+    ///    assert_eq!(expr!((x+1)*(x+1)).expand()?, expr!(x * x + x * 1 + 1 * x + 1 * 1));
+    ///    assert_eq!(expr!((x+1)*(x+1)*(x+1)).expand()?, expr!(x * x * x + x * x * 1 + x * 1 * x + x * 1 * 1 + 1 * x * x + 1 * x * 1 + 1 * 1 * x + 1 * 1 * 1));
+    ///    Ok(())
+    /// }();
     /// ```
     pub fn expand(&self) -> Result<Expression> {
-        Ok(Expand { }.visit_expr(&self.inner)?.into())
+        Ok(Expand {}.visit_expr(&self.inner)?.into())
+    }
+
+    /// Collect terms assuming commutativity.
+    ///
+    /// ```
+    /// use doctor_syn::{expr, Result};
+    /// || -> Result<()> {
+    ///    
+    ///    Ok(())
+    /// }();
+    /// ```
+    pub fn collect_terms(&self, variable: Name) -> Result<Expression> {
+        Ok(Collect { variable }.visit_expr(&self.inner)?.into())
     }
 
     /// Parenthesise operators of operators.
@@ -222,6 +258,6 @@ impl Expression {
     /// assert_eq!(expr!(2*x+y).paren().unwrap(), expr!((2*x)+y));
     /// ```
     pub fn paren(&self) -> Result<Expression> {
-        Ok(Paren { }.visit_expr(&self.inner)?.into())
+        Ok(Paren {}.visit_expr(&self.inner)?.into())
     }
 }

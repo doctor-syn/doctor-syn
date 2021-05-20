@@ -3,6 +3,7 @@ pub mod eval;
 pub mod subst;
 pub mod expand;
 pub mod paren;
+pub mod collect;
 
 mod tools;
 
