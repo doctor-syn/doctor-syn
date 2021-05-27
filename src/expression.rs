@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
 use crate::transformation::{
-    approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst,
+    approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst, use_suffix::UseSuffix
 };
 use crate::visitor::Visitor;
 use crate::Evaluateable;
@@ -10,6 +10,12 @@ use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
 use syn::{Expr, ExprLit, Lit};
+
+pub enum Parity {
+    Odd,
+    Even,
+    Neither,
+}
 
 #[derive(Clone, PartialEq)]
 pub struct Expression {
@@ -149,6 +155,10 @@ impl Expression {
         self.inner.span()
     }
 
+    pub fn into_inner(self) -> Expr {
+        self.inner
+    }
+
     /// Generate a number from a literal expression.
     /// ```
     /// use doctor_syn::{Expression, expr};
@@ -182,6 +192,7 @@ impl Expression {
             datatype: std::marker::PhantomData,
         }
         .visit_expr(&self.inner)?;
+        println!("expr={:?}", expr);
         Ok(Expression::from(expr).try_into()?)
     }
 
@@ -190,9 +201,9 @@ impl Expression {
     /// This is the most accurate and highest throughput form on most processors.
     ///
     /// ```
-    /// use doctor_syn::{expr, name};
+    /// use doctor_syn::{expr, name, Parity};
     ///
-    /// assert_eq!(expr!(x).approx(2, 0.0, 1.0, name!(x)).unwrap(), expr!(1f64 . mul_add (x , 0f64)));
+    /// assert_eq!(expr!(x).approx(2, 0.0, 1.0, name!(x)).unwrap(), expr!(1f64 . mul_add (x , 0f64), Parity::Neither));
     /// ```
     pub fn approx<T: Evaluateable>(
         &self,
@@ -200,8 +211,9 @@ impl Expression {
         xmin: T,
         xmax: T,
         variable: Name,
+        parity: Parity,
     ) -> Result<Expression> {
-        approx(self, num_terms, xmin, xmax, variable)
+        approx(self, num_terms, xmin, xmax, variable, parity)
     }
 
     /// Expand an expression.
@@ -259,5 +271,16 @@ impl Expression {
     /// ```
     pub fn paren(&self) -> Result<Expression> {
         Ok(Paren {}.visit_expr(&self.inner)?.into())
+    }
+
+    /// Change the suffix of floatng point numbers.
+    ///
+    /// ```
+    /// use doctor_syn::{expr};
+    ///
+    /// assert_eq!(expr!(1.0f64).use_suffix(Some("f32".to_string())).unwrap(), expr!(1.0_f32));
+    /// ```
+    pub fn use_suffix(&self, float_suffix: Option<String>) -> Result<Expression> {
+        Ok(UseSuffix { float_suffix }.visit_expr(&self.inner)?.into())
     }
 }

@@ -11,7 +11,7 @@ pub mod visitor;
 #[cfg(test)]
 mod tests;
 
-pub use expression::Expression;
+pub use expression::{Expression, Parity};
 pub use name::Name;
 pub use std::convert::{TryFrom, TryInto};
 pub use variablelist::VariableList;

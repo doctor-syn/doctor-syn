@@ -1,3 +1,4 @@
+#[cfg(test)]
 use crate::error::Result;
 use crate::visitor::Visitor;
 // use syn::{Expr, ExprUnary, ExprBinary, UnOp, BinOp};
@@ -14,7 +15,7 @@ impl Visitor for Collect {}
 
 #[test]
 fn collect() -> Result<()> {
-    use crate::{expr, name};
+    // use crate::{expr, name};
 
     // // Powers
     // assert_eq!(expr!(x * x).collect_terms(name!(x))?, expr!(x.pow(2)));

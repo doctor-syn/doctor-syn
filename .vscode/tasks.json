@@ -6,7 +6,7 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "clear; cargo test",
+            "command": "clear; cargo run",
             "group": {
                 "kind": "build",
                 "isDefault": true

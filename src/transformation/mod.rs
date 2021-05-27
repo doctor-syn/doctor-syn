@@ -4,6 +4,7 @@ pub mod subst;
 pub mod expand;
 pub mod paren;
 pub mod collect;
+pub mod use_suffix;
 
 mod tools;
 

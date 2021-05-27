@@ -13,6 +13,7 @@ pub enum Error {
     CouldNotConvertFromExpression(Span),
     CouldNotParse(Span),
     CouldNotEvaulate(Span),
+    WrongNumberOfTerms(Span),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
