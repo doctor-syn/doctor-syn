@@ -1,8 +1,8 @@
 use crate::error::{Error, Result};
 use crate::polynomial::Polynomial;
-use crate::{Evaluateable, Expression, Name, VariableList, Parity};
-use proc_macro2::{TokenStream, Span};
-use quote::{ToTokens, quote};
+use crate::{Evaluateable, Expression, Name, Parity, VariableList};
+use proc_macro2::{Span, TokenStream};
+use quote::quote;
 use std::convert::TryInto;
 use syn::{parse_quote, Expr};
 
@@ -12,22 +12,24 @@ fn mul_add_polynomial(terms: &[f64], parity: Parity, span: Span) -> Result<Expr>
     match parity {
         Parity::Odd => {
             if k % 2 != 0 {
-                return Err(Error::WrongNumberOfTerms(span))
+                return Err(Error::WrongNumberOfTerms(span));
             }
-            let mul_adds: Vec<TokenStream> = (1..k - 1).step_by(2)
+            let mul_adds: Vec<TokenStream> = (1..k - 1)
+                .step_by(2)
                 .rev()
                 .map(|i| {
                     let ti = terms[i];
                     quote!(mul_add(x*x, #ti))
                 })
                 .collect();
-                Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* * x ))
-            }
+            Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* * x ))
+        }
         Parity::Even => {
             if k % 2 == 0 {
-                return Err(Error::WrongNumberOfTerms(span))
+                return Err(Error::WrongNumberOfTerms(span));
             }
-            let mul_adds: Vec<TokenStream> = (0..k - 1).step_by(2)
+            let mul_adds: Vec<TokenStream> = (0..k - 1)
+                .step_by(2)
                 .rev()
                 .map(|i| {
                     let ti = terms[i];

@@ -1,7 +1,7 @@
 use doctor_syn::Parity;
 use doctor_syn::{expr, name};
 // use std::io::prelude::*;
-use quote::{quote, ToTokens};
+use quote::quote;
 
 fn sin(x: f32) -> f32 {
     let x = x * (1.0 / (std::f32::consts::PI * 2.0));
@@ -200,7 +200,7 @@ fn generate_libm() {
     println!("\n{}\n", gen_exp());
     println!("\n{}\n", gen_ln());
 
-    println!("1 ulp = {}", f32::from_bits(0x3f800001) - 1.0);
+    /*eprintln!("1 ulp = {}", f32::from_bits(0x3f800001) - 1.0);
     test_sin();
     test_cos();
     test_exp();
@@ -223,7 +223,7 @@ fn generate_libm() {
         //     y2,
         //     ulp_diff2(y1, y2)
         // );
-        println!(
+        eprintln!(
             "test i={:4} x={:20.7} y1={:20.7} y2={:20.7} ulp={:5.2} {:8x} {:8x}",
             i,
             x,
@@ -235,7 +235,7 @@ fn generate_libm() {
             (y2 as f32).to_bits()
         );
     }
-    println!("me={}", max_error);
+    println!("me={}", max_error);*/
 }
 
 fn main() {

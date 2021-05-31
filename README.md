@@ -42,3 +42,14 @@ https://en.wikipedia.org/wiki/Doctor_Syn
 
 Doctor Syn was both a priest and a smuggler of the parish of Dymchurch
 on the Romney marshes.
+
+## libmgen
+
+You can install the `libmgen` binary with:
+
+```
+cargo install --path . --bin libmgen
+```
+
+This can then be run as `libmgen` to generate
+a libm for various precisions, languages and data types.

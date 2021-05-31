@@ -6,6 +6,8 @@ authors = [
     "Claus O. Wilke <wilke@austin.utexas.edu>"
 ]
 edition = "2018"
+license = "MIT"
+description = "Computer algebra system for Rust expressions."
 
 [lib]
 
