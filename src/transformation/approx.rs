@@ -52,7 +52,7 @@ pub fn approx<T: Evaluateable>(
                     quote!(mul_add(x*x, #ti))
                 })
                 .collect();
-            parse_quote!( (#highest_coeff #( .#mul_adds )* * x) )
+            parse_quote!( (#highest_coeff) #( .#mul_adds )* * x )
         }
         Parity::Even => {
             let highest_coeff = terms[k - 1];

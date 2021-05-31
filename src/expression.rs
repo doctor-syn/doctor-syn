@@ -192,7 +192,6 @@ impl Expression {
             datatype: std::marker::PhantomData,
         }
         .visit_expr(&self.inner)?;
-        println!("expr={:?}", expr);
         Ok(Expression::from(expr).try_into()?)
     }
 
