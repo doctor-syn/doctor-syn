@@ -8,12 +8,28 @@ This crate is mostly for generating mathematical code at compile time.
 The focus is largely on numerical apprimation of transcendental and
 statistical functions to make them vectorisable.
 
-For example, say we want to make an approximation to `sin(x)` over the
-domain `0..2π`, we can use the approx! macro to transform a lambda:
+For example, say we want to make an approximation to `-cos(x*2π)` over the
+domain `-0.5..0.5`, we can use the approx function to transform an expression.
 
 ```
-fn my_sin(x: f64) -> f64 {
-    approx!(|#[min="0"] #[max="2*PI"] #[terms="7"] x| x.sin())
+fn gen_cos() -> proc_macro2::TokenStream {
+    let xmin = -0.5;
+    let xmax = 0.5;
+
+    let approx = expr!((x * 3.1415926535897932384626433 * 2.0).cos() * -1.0)
+        .approx(13, xmin, xmax, name!(x), Parity::Even)
+        .unwrap()
+        .use_suffix(Some("f32".to_string()))
+        .unwrap()
+        .into_inner();
+
+    quote!(
+        fn cos(x: f32) -> f32 {
+            let x = x * (1.0 / (std::f32::consts::PI * 2.0));
+            let x = x - x.floor() - 0.5;
+            #approx
+        }
+    )
 }
 ```
 
