@@ -1,12 +1,12 @@
 use doctor_syn::Parity;
 use doctor_syn::{expr, name};
 // use std::io::prelude::*;
-use quote::quote;
+use quote::{quote, ToTokens};
 
 fn sin(x: f32) -> f32 {
     let x = x * (1.0 / (std::f32::consts::PI * 2.0));
     let x = x - x.floor() - 0.5;
-    12.268859941019306_f32
+    (12.268859941019306_f32)
         .mul_add(x * x, -41.216241051002875_f32)
         .mul_add(x * x, 76.58672703334098_f32)
         .mul_add(x * x, -81.59746095374902_f32)
@@ -31,7 +31,7 @@ fn exp(x: f32) -> f32 {
     let x = x * std::f32::consts::LOG2_E;
     let mul = f32::from_bits((x.floor() * 0x00800000 as f32 + 0x3f800000 as f32) as u32);
     let x = x - x.floor() - 0.5;
-    0.00021877504780304022_f32
+    (0.00021877504780304022_f32)
         .mul_add(x, 0.0018964605237938004_f32)
         .mul_add(x, 0.01360194957589631_f32)
         .mul_add(x, 0.07849305736942819_f32)
@@ -87,8 +87,6 @@ fn gen_cos() -> proc_macro2::TokenStream {
         .unwrap()
         .into_inner();
 
-    //println!("cos={:?}", approx);
-
     quote!(
         fn cos(x: f32) -> f32 {
             let x = x * (1.0 / (std::f32::consts::PI * 2.0));
@@ -135,8 +133,6 @@ fn gen_ln() -> proc_macro2::TokenStream {
             let exponent = (x.to_bits() >> 23) as i32 - 0x7f;
             let x = f32::from_bits((x.to_bits() & 0x7fffff) | 0x3f800000) - 1.5;
             let y: f32 = #approx;
-            println!("exp={} x={} y={}", exponent, x, y);
-
             (y + (exponent as f32)) * (1.0 / std::f32::consts::LOG2_E)
         }
     )
@@ -243,9 +239,5 @@ fn generate_libm() {
 }
 
 fn main() {
-    let ts = quote!( (-1).exp() );
-    let expr : syn::Expr = syn::parse_quote!( (-1).exp() ); 
-    println!("{}", ts);
-    println!("{:?}", expr);
-    // generate_libm();
+    generate_libm();
 }

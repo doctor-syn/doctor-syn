@@ -11,7 +11,7 @@ use crate::Expression;
 use crate::Evaluateable;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, ExprUnary, UnOp};
+use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, ExprUnary, UnOp, ExprParen};
 
 #[derive(Debug, Clone)]
 pub struct Eval<T: TryFrom<Expression> + TryInto<Expression>> {
@@ -19,6 +19,11 @@ pub struct Eval<T: TryFrom<Expression> + TryInto<Expression>> {
 }
 
 impl<T: Evaluateable> Visitor for Eval<T> {
+    /// eg. "(x)"
+    fn visit_paren(&self, exprparen: &ExprParen) -> Result<Expr> {
+        self.visit_expr(&exprparen.expr)
+    }
+
     fn visit_method_call(&self, expr: &ExprMethodCall) -> Result<Expr> {
         // println!("visit_method_call {:?}", expr);
         let receiver: Expression = self.visit_expr(&expr.receiver)?.into();

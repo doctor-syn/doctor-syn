@@ -1,10 +1,59 @@
 use crate::error::{Error, Result};
 use crate::polynomial::Polynomial;
 use crate::{Evaluateable, Expression, Name, VariableList, Parity};
-use proc_macro2::TokenStream;
-use quote::quote;
+use proc_macro2::{TokenStream, Span};
+use quote::{ToTokens, quote};
 use std::convert::TryInto;
 use syn::{parse_quote, Expr};
+
+fn mul_add_polynomial(terms: &[f64], parity: Parity, span: Span) -> Result<Expr> {
+    let k = terms.len();
+    let highest_coeff = terms[k - 1];
+    match parity {
+        Parity::Odd => {
+            if k % 2 != 0 {
+                return Err(Error::WrongNumberOfTerms(span))
+            }
+            let mul_adds: Vec<TokenStream> = (1..k - 1).step_by(2)
+                .rev()
+                .map(|i| {
+                    let ti = terms[i];
+                    quote!(mul_add(x*x, #ti))
+                })
+                .collect();
+                Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* * x ))
+            }
+        Parity::Even => {
+            if k % 2 == 0 {
+                return Err(Error::WrongNumberOfTerms(span))
+            }
+            let mul_adds: Vec<TokenStream> = (0..k - 1).step_by(2)
+                .rev()
+                .map(|i| {
+                    let ti = terms[i];
+                    quote!(mul_add(x*x, #ti))
+                })
+                .collect();
+            // let ts = quote!( (#highest_coeff) #( .#mul_adds )* ).to_string();
+            // println!("ts={}", ts);
+            // let e : Expr = syn::parse_str(ts.as_str()).unwrap();
+            // println!("e={}", e.to_token_stream());
+
+            // Ok(syn::parse_str(ts.as_str()).unwrap())
+            Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* ))
+        }
+        Parity::Neither => {
+            let mul_adds: Vec<TokenStream> = (0..k - 1)
+                .rev()
+                .map(|i| {
+                    let ti = terms[i];
+                    quote!(mul_add(x, #ti))
+                })
+                .collect();
+            Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* ))
+        }
+    }
+}
 
 pub fn approx<T: Evaluateable>(
     expr: &Expression,
@@ -35,62 +84,5 @@ pub fn approx<T: Evaluateable>(
 
     let poly = Polynomial::from_points(xvalues.as_slice(), yvalues.as_slice());
 
-    let k = num_terms;
-    let terms = poly.terms();
-    // println!("terms={:?}", terms);
-
-    let expr: Expr = match parity {
-        Parity::Odd => {
-            let highest_coeff = terms[k - 1];
-            if k % 2 != 0 {
-                return Err(Error::WrongNumberOfTerms(expr.span()))
-            }
-            let mul_adds: Vec<TokenStream> = (1..k - 1).step_by(2)
-                .rev()
-                .map(|i| {
-                    let ti = terms[i];
-                    quote!(mul_add(x*x, #ti))
-                })
-                .collect();
-            parse_quote!( (#highest_coeff) #( .#mul_adds )* * x )
-        }
-        Parity::Even => {
-            let highest_coeff = terms[k - 1];
-            if k % 2 == 0 {
-                return Err(Error::WrongNumberOfTerms(expr.span()))
-            }
-            let mul_adds: Vec<TokenStream> = (0..k - 1).step_by(2)
-                .rev()
-                .map(|i| {
-                    let ti = terms[i];
-                    quote!(mul_add(x*x, #ti))
-                })
-                .collect();
-            parse_quote!( (#highest_coeff) #( .#mul_adds )* )
-        }
-        Parity::Neither => {
-            let highest_coeff = terms[k - 1];
-            let mul_adds: Vec<TokenStream> = (0..k - 1)
-                .rev()
-                .map(|i| {
-                    let ti = terms[i];
-                    quote!(mul_add(x, #ti))
-                })
-                .collect();
-            parse_quote!( (#highest_coeff) #( .#mul_adds )* )
-        }
-    };
-
-    // println!("zero error points: -----------------");
-    // let e : Expression = expr.clone().into();
-    // for (x, y) in xvalues.iter().cloned().zip(yvalues) {
-    //     let mut vars = VariableList::new();
-    //     vars.add_var(variable.clone(), x.try_into()?);
-    //     let subst = e.subst(vars)?;
-    //     let yp: f64 = subst.eval()?;
-
-    //     println!("x={:16} y={:16} s={:16} pe={:16} yp={:16}", x, y, x.sin(), poly.eval(x), yp);
-    // }
-
-    Ok(expr.into())
+    mul_add_polynomial(poly.terms(), parity, expr.span()).map(|e| e.into())
 }

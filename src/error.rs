@@ -17,3 +17,9 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl From<syn::Error> for Error {
+    fn from(_: syn::Error) -> Self {
+        Error::CouldNotParse(Span::call_site())
+    }
+}

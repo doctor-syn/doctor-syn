@@ -1,9 +1,12 @@
 use crate::error::{Error, Result};
+use quote::ToTokens;
 use syn::spanned::Spanned;
 use syn::{
     punctuated::Punctuated, Expr, ExprBinary, ExprField, ExprLit, ExprMethodCall, ExprParen,
     ExprPath, ExprUnary, Token,
 };
+
+const TRACING : bool = false;
 // use proc_macro2::Span;
 
 /// A visitor trait for a subset of expressions.
@@ -105,7 +108,14 @@ pub trait Visitor {
 
     // Visit a generalised expression.
     fn visit_expr(&self, expr: &Expr) -> Result<Expr> {
-        self.visit_expr_core(&expr)
+        if TRACING {
+            println!("visit_expr: {}", expr.to_token_stream());
+            let expr = self.visit_expr_core(&expr).unwrap();
+            println!("..visit_expr: {}", expr.to_token_stream());
+            Ok(expr)
+        } else {
+            self.visit_expr_core(&expr)
+        }
     }
 
     fn visit_expr_core(&self, expr: &Expr) -> Result<Expr> {
@@ -114,7 +124,7 @@ pub trait Visitor {
             Unary(exprunary) => self.visit_unary(exprunary),
             Binary(exprbinary) => self.visit_binary(&exprbinary),
             MethodCall(exprmethodcall) => self.visit_method_call(exprmethodcall),
-            Paren(exprparen) => self.visit_expr(&exprparen.expr),
+            Paren(exprparen) => self.visit_paren(&exprparen),
             Lit(exprlit) => self.visit_lit(&exprlit),
             Path(exprpath) => self.visit_path(exprpath),
             Field(exprfield) => self.visit_field(exprfield),
