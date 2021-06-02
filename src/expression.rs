@@ -199,10 +199,12 @@ impl Expression {
     /// The polynomial is in a canonical form t[k] . mul_add( x, t[k-1]) ...  . mul_add( x, t[0])
     /// This is the most accurate and highest throughput form on most processors.
     ///
-    /// ```
+    /// ```ignore
     /// use doctor_syn::{expr, name, Parity};
     ///
-    /// assert_eq!(expr!(x).approx(2, 0.0, 1.0, name!(x)).unwrap(), expr!(1f64 . mul_add (x , 0f64), Parity::Neither));
+    /// let e = expr!(x).approx(2, 0.0, 1.0, name!(x), Parity::Neither).unwrap();
+    /// let expected = expr!(1f64 . mul_add (x , 0f64));
+    /// assert_eq!(e, expected));
     /// ```
     pub fn approx<T: Evaluateable>(
         &self,

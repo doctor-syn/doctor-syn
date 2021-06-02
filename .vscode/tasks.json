@@ -6,7 +6,7 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "clear; cargo run --bin libmgen",
+            "command": "clear; cargo run --bin libmgen; rustfmt tests/libm.rs; cargo test",
             "group": {
                 "kind": "build",
                 "isDefault": true
