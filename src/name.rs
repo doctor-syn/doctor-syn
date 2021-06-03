@@ -40,7 +40,7 @@ impl std::fmt::Debug for Name {
 #[macro_export]
 macro_rules! name {
     ($e : expr) => {{
-        let path: syn::Path = syn::parse_quote!($e);
+        let path: $crate::syn::Path = $crate::syn::parse_quote!($e);
         $crate::Name::from(path)
     }};
 }

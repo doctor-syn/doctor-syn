@@ -136,7 +136,7 @@ impl std::fmt::Debug for Expression {
 #[macro_export]
 macro_rules! expr {
     ($e : expr) => {{
-        let synexpr: syn::Expr = syn::parse_quote!($e);
+        let synexpr: $crate::syn::Expr = $crate::syn::parse_quote!($e);
         $crate::Expression::from(synexpr)
     }};
 }

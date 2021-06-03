@@ -36,7 +36,7 @@ impl VariableList {
 #[macro_export]
 macro_rules! vars {
     ($($i : ident = $e : expr),*) => {
-        $crate::VariableList::from(vec![$(($crate::name!($i), $crate::expr!($e))),*])
+        $crate::VariableList::from(::std::vec![$(($crate::name!($i), $crate::expr!($e))),*])
     }
 }
 
