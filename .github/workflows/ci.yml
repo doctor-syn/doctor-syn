@@ -53,7 +53,7 @@ jobs:
       - run: cargo check --workspace --all-targets --verbose
       - name: Regenerate libm
         run: |
-          cargo run libmgen
+          cargo run --bin libmgen
           rustfmt --emit=stdout tests/libm.rs
           rustfmt tests/libm.rs
       # See if the new libm has warnings
