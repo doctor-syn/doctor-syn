@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::visitor::Visitor;
-use syn::{Expr, ExprLit, LitFloat, Lit};
+use syn::{Expr, ExprLit, LitFloat, LitInt, Lit};
 use syn::spanned::Spanned;
 
 #[derive(Debug)]
@@ -16,6 +16,16 @@ impl Visitor for UseSuffix {
                 if let Some(float_suffix) = self.float_suffix.as_ref() {
                     let repr = format!("{}_{}", litfloat.base10_digits(), float_suffix);
                     let lit : Lit = LitFloat::new(repr.as_str(), expr.span()).into();
+                    let attrs = Vec::new();
+                    Ok(Expr::Lit(ExprLit { attrs, lit}))
+                } else {
+                    Ok(expr.clone().into())
+                }
+            }
+            Lit::Int(litint) => {
+                if let Some(float_suffix) = self.float_suffix.as_ref() {
+                    let repr = format!("{}_{}", litint.base10_digits(), float_suffix);
+                    let lit : Lit = LitInt::new(repr.as_str(), expr.span()).into();
                     let attrs = Vec::new();
                     Ok(Expr::Lit(ExprLit { attrs, lit}))
                 } else {
