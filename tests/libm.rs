@@ -26,6 +26,22 @@ fn cos(x: f32) -> f32 {
         .mul_add(x * x, 0.9999999999999996_f32)
 }
 
+fn tan(x: f32) -> f32 {
+    let x = x * (1.0 / (std::f32::consts::PI));
+    let x = x - x.round();
+    let recip = 1.0 / (x * x - 0.25);
+    let y = (0.003724279591527462_f32)
+        .mul_add(x * x, 0.0033400372042702393_f32)
+        .mul_add(x * x, 0.010160277239937699_f32)
+        .mul_add(x * x, 0.02247279470368399_f32)
+        .mul_add(x * x, 0.05263967271784766_f32)
+        .mul_add(x * x, 0.1347692905516595_f32)
+        .mul_add(x * x, 0.5577362650687226_f32)
+        .mul_add(x * x, -0.7853981634007947_f32)
+        * x;
+    y * recip
+}
+
 fn exp(x: f32) -> f32 {
     exp2(x * std::f32::consts::LOG2_E)
 }
@@ -102,26 +118,6 @@ fn log10(x: f32) -> f32 {
     log2(x) * (1.0 / std::f32::consts::LOG2_10)
 }
 
-fn sin_cos(x: f32) -> (f32, f32) {
-    (sin(x), cos(x))
-}
-
-fn tan(x: f32) -> f32 {
-    let x = x * (1.0 / (std::f32::consts::PI));
-    let x = x - x.round();
-    let recip = 1.0 / (x * x - 0.25);
-    let y = (0.003724279591527462_f32)
-        .mul_add(x * x, 0.0033400372042702393_f32)
-        .mul_add(x * x, 0.010160277239937699_f32)
-        .mul_add(x * x, 0.02247279470368399_f32)
-        .mul_add(x * x, 0.05263967271784766_f32)
-        .mul_add(x * x, 0.1347692905516595_f32)
-        .mul_add(x * x, 0.5577362650687226_f32)
-        .mul_add(x * x, -0.7853981634007947_f32)
-        * x;
-    y * recip
-}
-
 fn sinh(x: f32) -> f32 {
     let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
     let b = x.mul_add(-std::f32::consts::LOG2_E, -1.0);
@@ -132,6 +128,54 @@ fn cosh(x: f32) -> f32 {
     let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
     let b = x.mul_add(-std::f32::consts::LOG2_E, -1.0);
     exp2(a) + exp2(b)
+}
+
+fn tanh(x: f32) -> f32 {
+    let exp2x = exp2(x * (std::f32::consts::LOG2_E * 2.0));
+    (exp2x - 1.0) / (exp2x + 1.0)
+}
+
+fn asinh(x: f32) -> f32 {
+    ln(x + (x * x + 1.0).sqrt())
+}
+
+fn acosh(x: f32) -> f32 {
+    ln(x + (x * x - 1.0).sqrt())
+}
+
+fn atanh(x: f32) -> f32 {
+    (ln(1.0 + x) - ln(1.0 - x)) * 0.5
+}
+
+fn sin_cos(x: f32) -> (f32, f32) {
+    (sin(x), cos(x))
+}
+
+fn atan2(y: f32, x: f32) -> f32 {
+    use std::f32::consts::PI;
+    let offset180 = if y < 0.0 { -PI } else { PI };
+    let (x, y, offset) = if x < 0.0 {
+        (-x, -y, offset180)
+    } else {
+        (x, y, 0.0)
+    };
+    let offset90 = if y < 0.0 { -PI / 2.0 } else { PI / 2.0 };
+    let (x, y, offset) = if y.abs() > x {
+        (y, -x, offset + offset90)
+    } else {
+        (x, y, offset)
+    };
+    let x = y / x;
+    let y = (-0.003960257232989522_f32)
+        .mul_add(x * x, 0.02165913793056782_f32)
+        .mul_add(x * x, -0.055874572113835966_f32)
+        .mul_add(x * x, 0.09664150837900513_f32)
+        .mul_add(x * x, -0.13930208322722726_f32)
+        .mul_add(x * x, 0.1995446828536437_f32)
+        .mul_add(x * x, -0.33331004869942993_f32)
+        .mul_add(x * x, 0.9999997955077145_f32)
+        * x;
+    y + offset
 }
 
 #[test]
@@ -149,7 +193,7 @@ fn test_sin() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("sin me={:20}", max_error);
+    println!("sin(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000007152557373046875);
 }
 
@@ -168,7 +212,7 @@ fn test_cos() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("cos me={:20}", max_error);
+    println!("cos(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.00000035762786865234375);
 }
 
@@ -187,7 +231,7 @@ fn test_tan_a() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("tan me={:20}", max_error);
+    println!("tan(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
 }
 
@@ -206,7 +250,7 @@ fn test_tan_b() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("tan me={:20}", max_error);
+    println!("tan(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000008344650268554688);
 }
 
@@ -225,7 +269,7 @@ fn test_exp_a() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp me={:20}", max_error);
+    println!("exp(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.00000035762786865234375);
 }
 
@@ -244,7 +288,7 @@ fn test_exp_b() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp me={:20}", max_error);
+    println!("exp(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000011920928955078125);
 }
 
@@ -263,7 +307,7 @@ fn test_exp_m1() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp_m1 me={:20}", max_error);
+    println!("exp_m1(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.00000035762786865234375);
 }
 
@@ -282,7 +326,7 @@ fn test_exp2() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp2 me={:20}", max_error);
+    println!("exp2(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
 }
 
@@ -301,7 +345,7 @@ fn test_ln() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("ln me={:20}", max_error);
+    println!("ln(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
 }
 
@@ -320,7 +364,7 @@ fn test_ln_1p_a() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("ln_1p me={:20}", max_error);
+    println!("ln_1p(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
 }
 
@@ -339,7 +383,7 @@ fn test_ln_1p_b() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("ln_1p me={:20}", max_error);
+    println!("ln_1p(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.00000035762786865234375);
 }
 
@@ -358,7 +402,7 @@ fn test_log2() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("log2 me={:20}", max_error);
+    println!("log2(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
 }
 
@@ -377,7 +421,7 @@ fn test_log10() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("log10 me={:20}", max_error);
+    println!("log10(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
 }
 
@@ -396,7 +440,7 @@ fn test_cosh() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("cosh me={:20}", max_error);
+    println!("cosh(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
 }
 
@@ -415,6 +459,196 @@ fn test_sinh() {
             println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("sinh me={:20}", max_error);
+    println!("sinh(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000002384185791015625);
+}
+
+#[test]
+fn test_tanh() {
+    const N: i32 = 0x100000;
+    let tmin = -1.0000000000000000;
+    let tmax = 1.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.tanh();
+        let y2 = tanh(x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("tanh(x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.0000002384185791015625);
+}
+
+#[test]
+fn test_acosh() {
+    const N: i32 = 0x100000;
+    let tmin = -1.0000000000000000;
+    let tmax = 1.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.acosh();
+        let y2 = acosh(x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("acosh(x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.0000002384185791015625);
+}
+
+#[test]
+fn test_asinh() {
+    const N: i32 = 0x100000;
+    let tmin = -1.0000000000000000;
+    let tmax = 1.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.asinh();
+        let y2 = asinh(x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("asinh(x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.00000035762786865234375);
+}
+
+#[test]
+fn test_atanh() {
+    const N: i32 = 0x100000;
+    let tmin = -0.9000000000000000;
+    let tmax = 0.9000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.atanh();
+        let y2 = atanh(x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("atanh(x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.00000035762786865234375);
+}
+
+#[test]
+fn test_sin_cos_s() {
+    const N: i32 = 0x100000;
+    let tmin = -3.1415926535897931;
+    let tmax = 3.1415926535897931;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.sin_cos().0;
+        let y2 = sin_cos(x as f32).0 as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("sin_cos(x as f32).0 as f64 me={:20}", max_error);
+    assert!(max_error < 0.0000007152557373046875);
+}
+
+#[test]
+fn test_sin_cos_c() {
+    const N: i32 = 0x100000;
+    let tmin = -3.1415926535897931;
+    let tmax = 3.1415926535897931;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.sin_cos().1;
+        let y2 = sin_cos(x as f32).1 as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("sin_cos(x as f32).1 as f64 me={:20}", max_error);
+    assert!(max_error < 0.00000035762786865234375);
+}
+
+#[test]
+fn test_atan2_a() {
+    const N: i32 = 0x100000;
+    let tmin = -1.0000000000000000;
+    let tmax = 1.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.atan2(1.0);
+        let y2 = atan2(x as f32, 1.0) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("atan2(x as f32, 1.0) as f64 me={:20}", max_error);
+    assert!(max_error < 0.00000035762786865234375);
+}
+
+#[test]
+fn test_atan2_b() {
+    const N: i32 = 0x100000;
+    let tmin = -1.0000000000000000;
+    let tmax = 1.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.atan2(-1.0);
+        let y2 = atan2(x as f32, -1.0) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("atan2(x as f32, -1.0) as f64 me={:20}", max_error);
+    assert!(max_error < 0.00000035762786865234375);
+}
+
+#[test]
+fn test_atan2_c() {
+    const N: i32 = 0x100000;
+    let tmin = -1.0000000000000000;
+    let tmax = 1.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = (1.0_f64).atan2(x);
+        let y2 = atan2(1.0, x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("atan2(1.0, x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.00000035762786865234375);
+}
+
+#[test]
+fn test_atan2_d() {
+    const N: i32 = 0x100000;
+    let tmin = -1.0000000000000000;
+    let tmax = 1.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = (-1.0_f64).atan2(x);
+        let y2 = atan2(-1.0, x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("atan2(-1.0, x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.00000035762786865234375);
 }

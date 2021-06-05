@@ -6,21 +6,15 @@ use quote::quote;
 // TODO:
 //
 // acos
-// acosh
 // asin
-// asinh
 // atan
-// atan2
-// atanh
 // cbrt
 // hypot
 // log
-// log10
 // powf
 // powi
 // recip
 // sqrt
-// tanh
 
 
 fn gen_sin(num_terms: usize) -> proc_macro2::TokenStream {
@@ -93,6 +87,32 @@ fn gen_tan(num_terms: usize) -> proc_macro2::TokenStream {
             let recip = 1.0 / (x*x - 0.25);
             let y = #approx ;
             y * recip
+        }
+    )
+}
+
+fn gen_atan2(num_terms: usize) -> proc_macro2::TokenStream {
+    let xmin = -1.0;
+    let xmax = 1.0;
+
+    let approx = expr!( x.atan() )
+        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
+        .unwrap()
+        .use_suffix(Some("f32".to_string()))
+        .unwrap()
+        .into_inner();
+
+    // TODO: calculate the recipocal without a divide.
+    quote!(
+        fn atan2(y: f32, x: f32) -> f32 {
+            use std::f32::consts::PI;
+            let offset180 = if y < 0.0 { -PI } else { PI };
+            let (x, y, offset) = if x < 0.0 { (-x, -y, offset180) } else { (x, y, 0.0) };
+            let offset90 = if y < 0.0 { -PI/2.0 } else { PI/2.0 };
+            let (x, y, offset) = if y.abs() > x { (y, -x, offset + offset90) } else { (x, y, offset) };
+            let x = y / x;
+            let y = #approx ;
+            y + offset
         }
     )
 }
@@ -206,8 +226,8 @@ fn gen_log10(_num_terms: usize) -> proc_macro2::TokenStream {
     )
 }
 
+// https://en.wikipedia.org/wiki/Hyperbolic_functions
 fn gen_sinh(_num_terms: usize) -> proc_macro2::TokenStream {
-    // This could be done better with and explicit pair of polynomials.
     quote!(
         fn sinh(x: f32) -> f32 {
             let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
@@ -217,8 +237,8 @@ fn gen_sinh(_num_terms: usize) -> proc_macro2::TokenStream {
     )
 }
 
+// https://en.wikipedia.org/wiki/Hyperbolic_functions
 fn gen_cosh(_num_terms: usize) -> proc_macro2::TokenStream {
-    // This could be done better with and explicit pair of polynomials.
     quote!(
         fn cosh(x: f32) -> f32 {
             let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
@@ -228,7 +248,44 @@ fn gen_cosh(_num_terms: usize) -> proc_macro2::TokenStream {
     )
 }
 
-fn gen_test(test_name: &str, name: &str, accuracy: f64, tmin: f64, tmax: f64) -> String {
+// https://en.wikipedia.org/wiki/Hyperbolic_functions
+fn gen_tanh(_num_terms: usize) -> proc_macro2::TokenStream {
+    quote!(
+        fn tanh(x: f32) -> f32 {
+            let exp2x = exp2(x*(std::f32::consts::LOG2_E*2.0));
+            (exp2x - 1.0) / (exp2x + 1.0)
+        }
+    )
+}
+
+// https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
+fn gen_asinh(_num_terms: usize) -> proc_macro2::TokenStream {
+    quote!(
+        fn asinh(x: f32) -> f32 {
+            ln(x + (x*x+1.0).sqrt())
+        }
+    )
+}
+
+// https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
+fn gen_acosh(_num_terms: usize) -> proc_macro2::TokenStream {
+    quote!(
+        fn acosh(x: f32) -> f32 {
+            ln(x + (x*x-1.0).sqrt())
+        }
+    )
+}
+
+// https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
+fn gen_atanh(_num_terms: usize) -> proc_macro2::TokenStream {
+    quote!(
+        fn atanh(x: f32) -> f32 {
+            (ln(1.0 + x) - ln(1.0 - x)) * 0.5
+        }
+    )
+}
+
+fn gen_test(test_name: &str, refexpr: &str, expr: &str, accuracy: f64, tmin: f64, tmax: f64) -> String {
     let mut res = Vec::new();
 
     writeln!(res, "#[test]").unwrap();
@@ -239,12 +296,12 @@ fn gen_test(test_name: &str, name: &str, accuracy: f64, tmin: f64, tmax: f64) ->
     writeln!(res, "    let mut max_error = 0.0_f64;").unwrap();
     writeln!(res, "    for i in 0..=N {{").unwrap();
     writeln!(res, "        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;").unwrap();
-    writeln!(res, "        let y1 = x.{}();", name).unwrap();
-    writeln!(res, "        let y2 = {}(x as f32) as f64;", name).unwrap();
+    writeln!(res, "        let y1 = {};", refexpr).unwrap();
+    writeln!(res, "        let y2 = {};", expr).unwrap();
     writeln!(res, "        max_error = max_error.max((y1 - y2).abs());").unwrap();
     writeln!(res, "        if i % (N/16) == 0 {{ println!(\"y1={{:20.16}}\\ny2={{:20.16}} e={{:20.16}}\", y1, y2, y2-y1); }}").unwrap();
     writeln!(res, "    }}").unwrap();
-    writeln!(res, "    println!(\"{} me={{:20}}\", max_error);", name).unwrap();
+    writeln!(res, "    println!(\"{} me={{:20}}\", max_error);", expr).unwrap();
     writeln!(res, "    assert!(max_error < {});", accuracy).unwrap();
     writeln!(res, "}}").unwrap();
 
@@ -256,34 +313,60 @@ fn generate_libm(path: &str) -> std::io::Result<()> {
 
     write!(file, "\n{}\n", gen_sin(16))?;
     write!(file, "\n{}\n", gen_cos(17))?;
+    write!(file, "\n{}\n", gen_tan(16))?;
+
     write!(file, "\n{}\n", gen_exp(7))?;
     write!(file, "\n{}\n", gen_exp2(7))?;
     write!(file, "\n{}\n", gen_exp_m1(7))?;
+
     write!(file, "\n{}\n", gen_ln(9))?;
     write!(file, "\n{}\n", gen_ln_1p(9))?;
     write!(file, "\n{}\n", gen_log2(9))?;
     write!(file, "\n{}\n", gen_log10(9))?;
-    write!(file, "\n{}\n", gen_sin_cos(9))?;
-    write!(file, "\n{}\n", gen_tan(16))?;
+
     write!(file, "\n{}\n", gen_sinh(7))?;
     write!(file, "\n{}\n", gen_cosh(7))?;
+    write!(file, "\n{}\n", gen_tanh(7))?;
+
+    write!(file, "\n{}\n", gen_asinh(7))?;
+    write!(file, "\n{}\n", gen_acosh(7))?;
+    write!(file, "\n{}\n", gen_atanh(7))?;
+
+    write!(file, "\n{}\n", gen_sin_cos(9))?;
+    write!(file, "\n{}\n", gen_atan2(16))?;
 
     let ulp = (2.0_f64).powi(-23);
-    write!(file, "\n{}\n", gen_test("sin", "sin", ulp*6.0, -std::f64::consts::PI, std::f64::consts::PI))?;
-    write!(file, "\n{}\n", gen_test("cos", "cos", ulp*3.0, -std::f64::consts::PI, std::f64::consts::PI))?;
-    write!(file, "\n{}\n", gen_test("tan_a", "tan", ulp*2.0, -std::f64::consts::PI/4.0, std::f64::consts::PI/4.0))?;
-    write!(file, "\n{}\n", gen_test("tan_b", "tan", ulp*7.0, -std::f64::consts::PI/3.0, std::f64::consts::PI/3.0))?;
-    write!(file, "\n{}\n", gen_test("exp_a", "exp", ulp*3.0, 0.0, 1.0))?;
-    write!(file, "\n{}\n", gen_test("exp_b", "exp", ulp*10.0, 1.0, 2.0))?;
-    write!(file, "\n{}\n", gen_test("exp_m1", "exp_m1", ulp*3.0, 0.0, 1.0))?;
-    write!(file, "\n{}\n", gen_test("exp2", "exp2", ulp*2.0, 0.0, 1.0))?;
-    write!(file, "\n{}\n", gen_test("ln", "ln", ulp*2.0, 1.0, std::f64::consts::E))?;
-    write!(file, "\n{}\n", gen_test("ln_1p_a", "ln_1p", ulp*2.0, 0.0, 1.0))?;
-    write!(file, "\n{}\n", gen_test("ln_1p_b", "ln_1p", ulp*3.0, 1.0, std::f64::consts::E*3.0-1.0))?;
-    write!(file, "\n{}\n", gen_test("log2", "log2", ulp*2.0, 0.25, 4.25))?;
-    write!(file, "\n{}\n", gen_test("log10", "log10", ulp*2.0, 0.1, 10.1))?;
-    write!(file, "\n{}\n", gen_test("cosh", "cosh", ulp*2.0, -1.0, 1.0))?;
-    write!(file, "\n{}\n", gen_test("sinh", "sinh", ulp*2.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("sin", "x.sin()", "sin(x as f32) as f64", ulp*6.0, -std::f64::consts::PI, std::f64::consts::PI))?;
+    write!(file, "\n{}\n", gen_test("cos", "x.cos()", "cos(x as f32) as f64", ulp*3.0, -std::f64::consts::PI, std::f64::consts::PI))?;
+    write!(file, "\n{}\n", gen_test("tan_a", "x.tan()", "tan(x as f32) as f64", ulp*2.0, -std::f64::consts::PI/4.0, std::f64::consts::PI/4.0))?;
+    write!(file, "\n{}\n", gen_test("tan_b", "x.tan()", "tan(x as f32) as f64", ulp*7.0, -std::f64::consts::PI/3.0, std::f64::consts::PI/3.0))?;
+
+    write!(file, "\n{}\n", gen_test("exp_a", "x.exp()", "exp(x as f32) as f64", ulp*3.0, 0.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("exp_b", "x.exp()", "exp(x as f32) as f64", ulp*10.0, 1.0, 2.0))?;
+    write!(file, "\n{}\n", gen_test("exp_m1", "x.exp_m1()", "exp_m1(x as f32) as f64", ulp*3.0, 0.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("exp2", "x.exp2()", "exp2(x as f32) as f64", ulp*2.0, 0.0, 1.0))?;
+
+    write!(file, "\n{}\n", gen_test("ln", "x.ln()", "ln(x as f32) as f64", ulp*2.0, 1.0, std::f64::consts::E))?;
+    write!(file, "\n{}\n", gen_test("ln_1p_a", "x.ln_1p()", "ln_1p(x as f32) as f64", ulp*2.0, 0.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("ln_1p_b", "x.ln_1p()", "ln_1p(x as f32) as f64", ulp*3.0, 1.0, std::f64::consts::E*3.0-1.0))?;
+    write!(file, "\n{}\n", gen_test("log2", "x.log2()", "log2(x as f32) as f64", ulp*2.0, 0.25, 4.25))?;
+    write!(file, "\n{}\n", gen_test("log10", "x.log10()", "log10(x as f32) as f64", ulp*2.0, 0.1, 10.1))?;
+
+    write!(file, "\n{}\n", gen_test("cosh", "x.cosh()", "cosh(x as f32) as f64", ulp*2.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("sinh", "x.sinh()", "sinh(x as f32) as f64", ulp*2.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("tanh", "x.tanh()", "tanh(x as f32) as f64", ulp*2.0, -1.0, 1.0))?;
+
+    write!(file, "\n{}\n", gen_test("acosh", "x.acosh()", "acosh(x as f32) as f64", ulp*2.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("asinh", "x.asinh()", "asinh(x as f32) as f64", ulp*3.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("atanh", "x.atanh()", "atanh(x as f32) as f64", ulp*3.0, -0.9, 0.9))?;
+
+    write!(file, "\n{}\n", gen_test("sin_cos_s", "x.sin_cos().0", "sin_cos(x as f32).0 as f64", ulp*6.0, -std::f64::consts::PI, std::f64::consts::PI))?;
+    write!(file, "\n{}\n", gen_test("sin_cos_c", "x.sin_cos().1", "sin_cos(x as f32).1 as f64", ulp*3.0, -std::f64::consts::PI, std::f64::consts::PI))?;
+
+    write!(file, "\n{}\n", gen_test("atan2_a", "x.atan2(1.0)", "atan2(x as f32, 1.0) as f64", ulp*3.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("atan2_b", "x.atan2(-1.0)", "atan2(x as f32, -1.0) as f64", ulp*3.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("atan2_c", "(1.0_f64).atan2(x)", "atan2(1.0, x as f32) as f64", ulp*3.0, -1.0, 1.0))?;
+    write!(file, "\n{}\n", gen_test("atan2_d", "(-1.0_f64).atan2(x)", "atan2(-1.0, x as f32) as f64", ulp*3.0, -1.0, 1.0))?;
 
     Ok(())
 }
