@@ -1,4 +1,5 @@
 # doctor-syn
+[![Build Status](https://github.com/extendr/doctor-syn/workflows/CI/badge.svg)](https://github.com/extendr/doctor-syn/actions)
 
 ## rationale
 
