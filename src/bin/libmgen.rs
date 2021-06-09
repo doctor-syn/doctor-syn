@@ -5,7 +5,6 @@ use quote::quote;
 
 // TODO:
 //
-// acos
 // atan
 // cbrt
 // hypot
@@ -127,12 +126,56 @@ fn gen_asin(num_terms: usize) -> proc_macro2::TokenStream {
 
     quote!(
         fn asin(x: f32) -> f32 {
+            use std::f32::consts::PI;
+            let c = if x < 0.0 { -PI/2.0 } else { PI/2.0 };
+            let s = if x < 0.0 { -1.0 } else { 1.0  };
             let x0 = x;
             let x = if x * x < #LIM * #LIM { x } else { (1.0-x*x).sqrt() };
             let y = #approx ;
-            let c = if x0 < 0.0 { -std::f32::consts::PI/2.0 } else { std::f32::consts::PI/2.0 };
-            let s = if x0 < 0.0 { -1.0 } else { 1.0  };
             if x0*x0 < #LIM*#LIM { y } else { c - y * s }
+        }
+    )
+}
+
+fn gen_acos(num_terms: usize) -> proc_macro2::TokenStream {
+    const LIM : f32 = 0.9;
+    let approx = expr!( x.asin() )
+        .approx(num_terms, -LIM, LIM, name!(x), Parity::Odd)
+        .unwrap()
+        .use_suffix(Some("f32".to_string()))
+        .unwrap()
+        .into_inner();
+
+    quote!(
+        fn acos(x: f32) -> f32 {
+            use std::f32::consts::PI;
+            let c = if x < 0.0 { PI } else { 0.0 };
+            let s = if x < 0.0 { 1.0 } else { -1.0  };
+            let x0 = x;
+            let x = if x * x < #LIM * #LIM { x } else { (1.0-x*x).sqrt() };
+            let y = #approx ;
+            if x0*x0 < #LIM*#LIM { PI/2.0 - y } else { c - y * s }
+        }
+    )
+}
+
+fn gen_atan(num_terms: usize) -> proc_macro2::TokenStream {
+    const LIM : f32 = 1.0;
+    let approx = expr!( x.atan() )
+        .approx(num_terms, -LIM, LIM, name!(x), Parity::Odd)
+        .unwrap()
+        .use_suffix(Some("f32".to_string()))
+        .unwrap()
+        .into_inner();
+
+    quote!(
+        fn atan(x: f32) -> f32 {
+            use std::f32::consts::PI;
+            let c = if x < 0.0 { -PI/2.0 } else { PI/2.0 };
+            let small = x.abs() < #LIM;
+            let x = if small { x } else { x.recip() };
+            let y = #approx ;
+            if small { y } else { c - y }
         }
     )
 }
@@ -344,8 +387,8 @@ fn generate_libm(path: &str) -> std::io::Result<()> {
     write!(file, "\n{}\n", gen_tan(16))?;
 
     write!(file, "\n{}\n", gen_asin(22))?;
-    // write!(file, "\n{}\n", gen_acos(16))?;
-    // write!(file, "\n{}\n", gen_atan(16))?;
+    write!(file, "\n{}\n", gen_acos(22))?;
+    write!(file, "\n{}\n", gen_atan(22))?;
 
     write!(file, "\n{}\n", gen_exp(7))?;
     write!(file, "\n{}\n", gen_exp2(7))?;
@@ -374,6 +417,8 @@ fn generate_libm(path: &str) -> std::io::Result<()> {
     write!(file, "\n{}\n", gen_test("tan_b", "x.tan()", "tan(x as f32) as f64", ulp*7.0, -std::f64::consts::PI/3.0, std::f64::consts::PI/3.0))?;
 
     write!(file, "\n{}\n", gen_test("asin", "x.asin()", "asin(x as f32) as f64", ulp*9.0, -0.999, 0.999))?;
+    write!(file, "\n{}\n", gen_test("acos", "x.acos()", "acos(x as f32) as f64", ulp*9.0, -0.999, 0.999))?;
+    write!(file, "\n{}\n", gen_test("atan", "x.atan()", "atan(x as f32) as f64", ulp*2.0, -2.0, 2.0))?;
 
     write!(file, "\n{}\n", gen_test("exp_a", "x.exp()", "exp(x as f32) as f64", ulp*3.0, 0.0, 1.0))?;
     write!(file, "\n{}\n", gen_test("exp_b", "x.exp()", "exp(x as f32) as f64", ulp*10.0, 1.0, 2.0))?;

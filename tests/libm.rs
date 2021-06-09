@@ -43,6 +43,9 @@ fn tan(x: f32) -> f32 {
 }
 
 fn asin(x: f32) -> f32 {
+    use std::f32::consts::PI;
+    let c = if x < 0.0 { -PI / 2.0 } else { PI / 2.0 };
+    let s = if x < 0.0 { -1.0 } else { 1.0 };
     let x0 = x;
     let x = if x * x < 0.9f32 * 0.9f32 {
         x
@@ -61,16 +64,63 @@ fn asin(x: f32) -> f32 {
         .mul_add(x * x, 0.16652423337405486_f32)
         .mul_add(x * x, 1.0000005238394805_f32)
         * x;
-    let c = if x0 < 0.0 {
-        -std::f32::consts::PI / 2.0
-    } else {
-        std::f32::consts::PI / 2.0
-    };
-    let s = if x0 < 0.0 { -1.0 } else { 1.0 };
     if x0 * x0 < 0.9f32 * 0.9f32 {
         y
     } else {
         c - y * s
+    }
+}
+
+fn acos(x: f32) -> f32 {
+    use std::f32::consts::PI;
+    let c = if x < 0.0 { PI } else { 0.0 };
+    let s = if x < 0.0 { 1.0 } else { -1.0 };
+    let x0 = x;
+    let x = if x * x < 0.9f32 * 0.9f32 {
+        x
+    } else {
+        (1.0 - x * x).sqrt()
+    };
+    let y = (5.974205075383973_f32)
+        .mul_add(x * x, -21.40061239478606_f32)
+        .mul_add(x * x, 33.11909346520203_f32)
+        .mul_add(x * x, -28.553023578202207_f32)
+        .mul_add(x * x, 14.987170884576244_f32)
+        .mul_add(x * x, -4.8476328497648_f32)
+        .mul_add(x * x, 0.9964135516015877_f32)
+        .mul_add(x * x, -0.06545321396765472_f32)
+        .mul_add(x * x, 0.08136564192686366_f32)
+        .mul_add(x * x, 0.16652423337405486_f32)
+        .mul_add(x * x, 1.0000005238394805_f32)
+        * x;
+    if x0 * x0 < 0.9f32 * 0.9f32 {
+        PI / 2.0 - y
+    } else {
+        c - y * s
+    }
+}
+
+fn atan(x: f32) -> f32 {
+    use std::f32::consts::PI;
+    let c = if x < 0.0 { -PI / 2.0 } else { PI / 2.0 };
+    let small = x.abs() < 1f32;
+    let x = if small { x } else { x.recip() };
+    let y = (0.0009143684233841135_f32)
+        .mul_add(x * x, -0.006308821933028976_f32)
+        .mul_add(x * x, 0.020365370753541973_f32)
+        .mul_add(x * x, -0.042089323447971325_f32)
+        .mul_add(x * x, 0.06553017681621427_f32)
+        .mul_add(x * x, -0.08726065006629005_f32)
+        .mul_add(x * x, 0.11034724342349803_f32)
+        .mul_add(x * x, -0.1427606087864586_f32)
+        .mul_add(x * x, 0.1999935712486494_f32)
+        .mul_add(x * x, -0.33333316226314147_f32)
+        .mul_add(x * x, 0.9999999992290513_f32)
+        * x;
+    if small {
+        y
+    } else {
+        c - y
     }
 }
 
@@ -303,6 +353,44 @@ fn test_asin() {
     }
     println!("asin(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000010728836059570313);
+}
+
+#[test]
+fn test_acos() {
+    const N: i32 = 0x100000;
+    let tmin = -0.9990000000000000;
+    let tmax = 0.9990000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.acos();
+        let y2 = acos(x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("acos(x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.0000010728836059570313);
+}
+
+#[test]
+fn test_atan() {
+    const N: i32 = 0x100000;
+    let tmin = -2.0000000000000000;
+    let tmax = 2.0000000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.atan();
+        let y2 = atan(x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("atan(x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.0000002384185791015625);
 }
 
 #[test]
