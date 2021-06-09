@@ -42,6 +42,38 @@ fn tan(x: f32) -> f32 {
     y * recip
 }
 
+fn asin(x: f32) -> f32 {
+    let x0 = x;
+    let x = if x * x < 0.9f32 * 0.9f32 {
+        x
+    } else {
+        (1.0 - x * x).sqrt()
+    };
+    let y = (5.974205075383973_f32)
+        .mul_add(x * x, -21.40061239478606_f32)
+        .mul_add(x * x, 33.11909346520203_f32)
+        .mul_add(x * x, -28.553023578202207_f32)
+        .mul_add(x * x, 14.987170884576244_f32)
+        .mul_add(x * x, -4.8476328497648_f32)
+        .mul_add(x * x, 0.9964135516015877_f32)
+        .mul_add(x * x, -0.06545321396765472_f32)
+        .mul_add(x * x, 0.08136564192686366_f32)
+        .mul_add(x * x, 0.16652423337405486_f32)
+        .mul_add(x * x, 1.0000005238394805_f32)
+        * x;
+    let c = if x0 < 0.0 {
+        -std::f32::consts::PI / 2.0
+    } else {
+        std::f32::consts::PI / 2.0
+    };
+    let s = if x0 < 0.0 { -1.0 } else { 1.0 };
+    if x0 * x0 < 0.9f32 * 0.9f32 {
+        y
+    } else {
+        c - y * s
+    }
+}
+
 fn exp(x: f32) -> f32 {
     exp2(x * std::f32::consts::LOG2_E)
 }
@@ -252,6 +284,25 @@ fn test_tan_b() {
     }
     println!("tan(x as f32) as f64 me={:20}", max_error);
     assert!(max_error < 0.0000008344650268554688);
+}
+
+#[test]
+fn test_asin() {
+    const N: i32 = 0x100000;
+    let tmin = -0.9990000000000000;
+    let tmax = 0.9990000000000000;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.asin();
+        let y2 = asin(x as f32) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("asin(x as f32) as f64 me={:20}", max_error);
+    assert!(max_error < 0.0000010728836059570313);
 }
 
 #[test]

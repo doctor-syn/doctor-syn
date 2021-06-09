@@ -6,7 +6,6 @@ use quote::quote;
 // TODO:
 //
 // acos
-// asin
 // atan
 // cbrt
 // hypot
@@ -116,6 +115,35 @@ fn gen_atan2(num_terms: usize) -> proc_macro2::TokenStream {
         }
     )
 }
+
+fn gen_asin(num_terms: usize) -> proc_macro2::TokenStream {
+    const LIM : f32 = 0.9;
+    let approx = expr!( x.asin() )
+        .approx(num_terms, -LIM, LIM, name!(x), Parity::Odd)
+        .unwrap()
+        .use_suffix(Some("f32".to_string()))
+        .unwrap()
+        .into_inner();
+
+    quote!(
+        fn asin(x: f32) -> f32 {
+            let x0 = x;
+            let x = if x * x < #LIM * #LIM { x } else { (1.0-x*x).sqrt() };
+            let y = #approx ;
+            let c = if x0 < 0.0 { -std::f32::consts::PI/2.0 } else { std::f32::consts::PI/2.0 };
+            let s = if x0 < 0.0 { -1.0 } else { 1.0  };
+            if x0*x0 < #LIM*#LIM { y } else { c - y * s }
+        }
+    )
+}
+
+// fn gen_asin(num_terms: usize) -> proc_macro2::TokenStream {
+//     quote!(
+//         fn asin(x: f32) -> f32 {
+//             atan2(x, (1.0-x*x).sqrt())
+//         }
+//     )
+// }
 
 fn gen_exp2(num_terms: usize) -> proc_macro2::TokenStream {
     let xmin = -0.5;
@@ -315,6 +343,10 @@ fn generate_libm(path: &str) -> std::io::Result<()> {
     write!(file, "\n{}\n", gen_cos(17))?;
     write!(file, "\n{}\n", gen_tan(16))?;
 
+    write!(file, "\n{}\n", gen_asin(22))?;
+    // write!(file, "\n{}\n", gen_acos(16))?;
+    // write!(file, "\n{}\n", gen_atan(16))?;
+
     write!(file, "\n{}\n", gen_exp(7))?;
     write!(file, "\n{}\n", gen_exp2(7))?;
     write!(file, "\n{}\n", gen_exp_m1(7))?;
@@ -340,6 +372,8 @@ fn generate_libm(path: &str) -> std::io::Result<()> {
     write!(file, "\n{}\n", gen_test("cos", "x.cos()", "cos(x as f32) as f64", ulp*3.0, -std::f64::consts::PI, std::f64::consts::PI))?;
     write!(file, "\n{}\n", gen_test("tan_a", "x.tan()", "tan(x as f32) as f64", ulp*2.0, -std::f64::consts::PI/4.0, std::f64::consts::PI/4.0))?;
     write!(file, "\n{}\n", gen_test("tan_b", "x.tan()", "tan(x as f32) as f64", ulp*7.0, -std::f64::consts::PI/3.0, std::f64::consts::PI/3.0))?;
+
+    write!(file, "\n{}\n", gen_test("asin", "x.asin()", "asin(x as f32) as f64", ulp*9.0, -0.999, 0.999))?;
 
     write!(file, "\n{}\n", gen_test("exp_a", "x.exp()", "exp(x as f32) as f64", ulp*3.0, 0.0, 1.0))?;
     write!(file, "\n{}\n", gen_test("exp_b", "x.exp()", "exp(x as f32) as f64", ulp*10.0, 1.0, 2.0))?;

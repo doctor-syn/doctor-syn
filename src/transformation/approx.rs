@@ -79,6 +79,7 @@ pub fn approx<T: Evaluateable>(
         vars.add_var(variable.clone(), x.try_into()?);
         let subst = expr.subst(vars)?;
         let y: f64 = subst.eval()?;
+        // println!("{} {}", y, subst);
         // println!("x={:16} y={:16} s={:16}", x, y, x.sin());
         xvalues.push(x);
         yvalues.push(y);
