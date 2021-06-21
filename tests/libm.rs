@@ -1,29 +1,53 @@
 fn sin(x: f32) -> f32 {
-    let x = x * (1.0 / (std::f32::consts::PI * 2.0));
-    let x = x - x.round();
-    (-0.6150599377704147_f32)
-        .mul_add(x * x, 3.776312346215613_f32)
-        .mul_add(x * x, -15.084843206874782_f32)
-        .mul_add(x * x, 42.05746026953019_f32)
-        .mul_add(x * x, -76.70577449290244_f32)
-        .mul_add(x * x, 81.60524634871001_f32)
-        .mul_add(x * x, -41.34170220158861_f32)
-        .mul_add(x * x, 6.283185307093742_f32)
-        * x
+    let x = x * (1.0 / (std::f32::consts::PI));
+    let xh = x + 0.5;
+    let xr = x.round();
+    let xhr = xh.round();
+    let s = x - xr;
+    let c = xh - xhr;
+    let sr = (-0.5878112252588481_f32)
+        .mul_add(s * s, 2.5496484487855455_f32)
+        .mul_add(s * s, -5.167705042516404_f32)
+        .mul_add(s * s, 3.1415926342503133_f32)
+        * s;
+    let cr = (-0.23132925050778008_f32)
+        .mul_add(c * c, 1.335050718961723_f32)
+        .mul_add(c * c, -4.0587078433143_f32)
+        .mul_add(c * c, 4.934802176219238_f32)
+        .mul_add(c * c, -0.9999999999999999_f32);
+    let ss = if (xr as i32) & 1 == 0 { sr } else { -sr };
+    let cs = if (xhr as i32 & 1) == 0 { cr } else { -cr };
+    if s.abs() <= 0.25 {
+        ss
+    } else {
+        cs
+    }
 }
 
 fn cos(x: f32) -> f32 {
-    let x = x * (1.0 / (std::f32::consts::PI * 2.0));
-    let x = x - x.round();
-    (0.2437628622134172_f32)
-        .mul_add(x * x, -1.6969999270888276_f32)
-        .mul_add(x * x, 7.899269307802109_f32)
-        .mul_add(x * x, -26.42565411950429_f32)
-        .mul_add(x * x, 60.24459263234794_f32)
-        .mul_add(x * x, -85.45681509594338_f32)
-        .mul_add(x * x, 64.93939398117197_f32)
-        .mul_add(x * x, -19.739208801937608_f32)
-        .mul_add(x * x, 0.9999999999999996_f32)
+    let x = x * (1.0 / (std::f32::consts::PI));
+    let xh = x + 0.5;
+    let xr = x.round();
+    let xhr = xh.round();
+    let c = x - xr;
+    let s = xh - xhr;
+    let sr = (-0.5878112252588481_f32)
+        .mul_add(s * s, 2.5496484487855455_f32)
+        .mul_add(s * s, -5.167705042516404_f32)
+        .mul_add(s * s, 3.1415926342503133_f32)
+        * s;
+    let cr = (0.23132925050778008_f32)
+        .mul_add(c * c, -1.335050718961723_f32)
+        .mul_add(c * c, 4.0587078433143_f32)
+        .mul_add(c * c, -4.934802176219238_f32)
+        .mul_add(c * c, 0.9999999999999999_f32);
+    let ss = if xhr as i32 & 1 == 0 { sr } else { -sr };
+    let cs = if xr as i32 & 1 == 0 { cr } else { -cr };
+    if s.abs() <= 0.25 {
+        ss
+    } else {
+        cs
+    }
 }
 
 fn tan(x: f32) -> f32 {
@@ -347,8 +371,8 @@ fn powi(x: f32, y: i32) -> f32 {
 #[test]
 fn test_sin() {
     const N: i32 = 0x100000;
-    let tmin = -3.1415926535897931;
-    let tmax = 3.1415926535897931;
+    let tmin = -3.141592653589793f64;
+    let tmax = 3.141592653589793f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -356,19 +380,19 @@ fn test_sin() {
         let y2 = sin(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("sin(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000007152557373046875);
+    assert!(max_error < 0.0000007152557373046875f64);
 }
 
 #[test]
 fn test_cos() {
     const N: i32 = 0x100000;
-    let tmin = -3.1415926535897931;
-    let tmax = 3.1415926535897931;
+    let tmin = -3.141592653589793f64;
+    let tmax = 3.141592653589793f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -376,19 +400,19 @@ fn test_cos() {
         let y2 = cos(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("cos(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_tan_a() {
     const N: i32 = 0x100000;
-    let tmin = -0.7853981633974483;
-    let tmax = 0.7853981633974483;
+    let tmin = -0.7853981633974483f64;
+    let tmax = 0.7853981633974483f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -396,19 +420,19 @@ fn test_tan_a() {
         let y2 = tan(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("tan(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_tan_b() {
     const N: i32 = 0x100000;
-    let tmin = -1.0471975511965976;
-    let tmax = 1.0471975511965976;
+    let tmin = -1.0471975511965976f64;
+    let tmax = 1.0471975511965976f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -416,19 +440,19 @@ fn test_tan_b() {
         let y2 = tan(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("tan(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000008344650268554688);
+    assert!(max_error < 0.0000008344650268554688f64);
 }
 
 #[test]
 fn test_asin() {
     const N: i32 = 0x100000;
-    let tmin = -0.9990000000000000;
-    let tmax = 0.9990000000000000;
+    let tmin = -0.999f64;
+    let tmax = 0.999f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -436,19 +460,19 @@ fn test_asin() {
         let y2 = asin(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("asin(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000010728836059570313);
+    assert!(max_error < 0.0000010728836059570313f64);
 }
 
 #[test]
 fn test_acos() {
     const N: i32 = 0x100000;
-    let tmin = -0.9990000000000000;
-    let tmax = 0.9990000000000000;
+    let tmin = -0.999f64;
+    let tmax = 0.999f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -456,19 +480,19 @@ fn test_acos() {
         let y2 = acos(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("acos(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000010728836059570313);
+    assert!(max_error < 0.0000010728836059570313f64);
 }
 
 #[test]
 fn test_atan() {
     const N: i32 = 0x100000;
-    let tmin = -2.0000000000000000;
-    let tmax = 2.0000000000000000;
+    let tmin = -2f64;
+    let tmax = 2f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -476,19 +500,19 @@ fn test_atan() {
         let y2 = atan(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("atan(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_exp_a() {
     const N: i32 = 0x100000;
-    let tmin = 0.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = 0f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -496,19 +520,19 @@ fn test_exp_a() {
         let y2 = exp(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_exp_b() {
     const N: i32 = 0x100000;
-    let tmin = 1.0000000000000000;
-    let tmax = 2.0000000000000000;
+    let tmin = 1f64;
+    let tmax = 2f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -516,19 +540,19 @@ fn test_exp_b() {
         let y2 = exp(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000011920928955078125);
+    assert!(max_error < 0.0000011920928955078125f64);
 }
 
 #[test]
 fn test_exp_m1() {
     const N: i32 = 0x100000;
-    let tmin = 0.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = 0f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -536,19 +560,19 @@ fn test_exp_m1() {
         let y2 = exp_m1(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp_m1(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_exp2() {
     const N: i32 = 0x100000;
-    let tmin = 0.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = 0f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -556,19 +580,19 @@ fn test_exp2() {
         let y2 = exp2(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp2(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_exp2_x() {
     const N: i32 = 0x100000;
-    let tmin = 0.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = 0f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -576,19 +600,19 @@ fn test_exp2_x() {
         let y2 = exp2_approx(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("exp2_approx(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.05);
+    assert!(max_error < 0.05f64);
 }
 
 #[test]
 fn test_ln() {
     const N: i32 = 0x100000;
-    let tmin = 1.0000000000000000;
-    let tmax = 2.7182818284590451;
+    let tmin = 1f64;
+    let tmax = 2.718281828459045f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -596,19 +620,19 @@ fn test_ln() {
         let y2 = ln(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("ln(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_ln_1p_a() {
     const N: i32 = 0x100000;
-    let tmin = 0.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = 0f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -616,19 +640,19 @@ fn test_ln_1p_a() {
         let y2 = ln_1p(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("ln_1p(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_ln_1p_b() {
     const N: i32 = 0x100000;
-    let tmin = 1.0000000000000000;
-    let tmax = 7.1548454853771357;
+    let tmin = 1f64;
+    let tmax = 7.154845485377136f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -636,19 +660,19 @@ fn test_ln_1p_b() {
         let y2 = ln_1p(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("ln_1p(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_log2() {
     const N: i32 = 0x100000;
-    let tmin = 0.2500000000000000;
-    let tmax = 4.2500000000000000;
+    let tmin = 0.25f64;
+    let tmax = 4.25f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -656,19 +680,19 @@ fn test_log2() {
         let y2 = log2(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("log2(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_log10() {
     const N: i32 = 0x100000;
-    let tmin = 0.1000000000000000;
-    let tmax = 10.0999999999999996;
+    let tmin = 0.1f64;
+    let tmax = 10.1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -676,19 +700,19 @@ fn test_log10() {
         let y2 = log10(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("log10(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_log_2() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -696,19 +720,19 @@ fn test_log_2() {
         let y2 = log(x as f32, 2.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("log(x as f32, 2.0) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_log_e() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -716,42 +740,19 @@ fn test_log_e() {
         let y2 = log(x as f32, std::f32::consts::E) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!(
-        "log(x as f32, std::f32::consts::E) as f64 me={:20}",
-        max_error
-    );
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
-}
-
-#[test]
-fn test_log_10() {
-    const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.log(10.0);
-        let y2 = log(x as f32, 10.0) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("log(x as f32, 10.0) as f64 me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_log_2x() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 10.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 10.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -759,19 +760,19 @@ fn test_log_2x() {
         let y2 = log2_approx(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("log2_approx(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.05);
+    assert!(max_error < 0.05f64);
 }
 
 #[test]
 fn test_cosh() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -779,19 +780,19 @@ fn test_cosh() {
         let y2 = cosh(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("cosh(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_sinh() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -799,19 +800,19 @@ fn test_sinh() {
         let y2 = sinh(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("sinh(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_tanh() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -819,19 +820,19 @@ fn test_tanh() {
         let y2 = tanh(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("tanh(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_acosh() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -839,19 +840,19 @@ fn test_acosh() {
         let y2 = acosh(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("acosh(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_asinh() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -859,19 +860,19 @@ fn test_asinh() {
         let y2 = asinh(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("asinh(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_atanh() {
     const N: i32 = 0x100000;
-    let tmin = -0.9000000000000000;
-    let tmax = 0.9000000000000000;
+    let tmin = -0.9f64;
+    let tmax = 0.9f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -879,19 +880,19 @@ fn test_atanh() {
         let y2 = atanh(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("atanh(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_sin_cos_s() {
     const N: i32 = 0x100000;
-    let tmin = -3.1415926535897931;
-    let tmax = 3.1415926535897931;
+    let tmin = -3.141592653589793f64;
+    let tmax = 3.141592653589793f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -899,19 +900,19 @@ fn test_sin_cos_s() {
         let y2 = sin_cos(x as f32).0 as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("sin_cos(x as f32).0 as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000007152557373046875);
+    assert!(max_error < 0.0000007152557373046875f64);
 }
 
 #[test]
 fn test_sin_cos_c() {
     const N: i32 = 0x100000;
-    let tmin = -3.1415926535897931;
-    let tmax = 3.1415926535897931;
+    let tmin = -3.141592653589793f64;
+    let tmax = 3.141592653589793f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -919,19 +920,19 @@ fn test_sin_cos_c() {
         let y2 = sin_cos(x as f32).1 as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("sin_cos(x as f32).1 as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_atan2_a() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -939,19 +940,19 @@ fn test_atan2_a() {
         let y2 = atan2(x as f32, 1.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("atan2(x as f32, 1.0) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_atan2_b() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -959,19 +960,19 @@ fn test_atan2_b() {
         let y2 = atan2(x as f32, -1.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("atan2(x as f32, -1.0) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_atan2_c() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -979,19 +980,19 @@ fn test_atan2_c() {
         let y2 = atan2(1.0, x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("atan2(1.0, x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_atan2_d() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -999,19 +1000,19 @@ fn test_atan2_d() {
         let y2 = atan2(-1.0, x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("atan2(-1.0, x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_hypot_a() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1019,19 +1020,19 @@ fn test_hypot_a() {
         let y2 = hypot(x as f32, 1.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("hypot(x as f32, 1.0) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_hypot_b() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1039,19 +1040,19 @@ fn test_hypot_b() {
         let y2 = hypot(x as f32, -1.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("hypot(x as f32, -1.0) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_hypot_c() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1059,19 +1060,19 @@ fn test_hypot_c() {
         let y2 = hypot(1.0, x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("hypot(1.0, x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_hypot_d() {
     const N: i32 = 0x100000;
-    let tmin = -1.0000000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = -1f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1079,19 +1080,19 @@ fn test_hypot_d() {
         let y2 = hypot(-1.0, x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("hypot(-1.0, x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375);
+    assert!(max_error < 0.00000035762786865234375f64);
 }
 
 #[test]
 fn test_sqrt() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 2.0000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 2f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1099,19 +1100,19 @@ fn test_sqrt() {
         let y2 = sqrt(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("sqrt(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000011920928955078125);
+    assert!(max_error < 0.00000011920928955078125f64);
 }
 
 #[test]
 fn test_cbrt() {
     const N: i32 = 0x100000;
-    let tmin = -2.0000000000000000;
-    let tmax = 2.0000000000000000;
+    let tmin = -2f64;
+    let tmax = 2f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1119,19 +1120,19 @@ fn test_cbrt() {
         let y2 = cbrt(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("cbrt(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000011920928955078125);
+    assert!(max_error < 0.00000011920928955078125f64);
 }
 
 #[test]
 fn test_recip() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1139,19 +1140,19 @@ fn test_recip() {
         let y2 = recip(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("recip(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_recip_n() {
     const N: i32 = 0x100000;
-    let tmin = -1.5000000000000000;
-    let tmax = -0.5000000000000000;
+    let tmin = -1.5f64;
+    let tmax = -0.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1159,19 +1160,19 @@ fn test_recip_n() {
         let y2 = recip(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("recip(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_recip_x() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1179,19 +1180,19 @@ fn test_recip_x() {
         let y2 = recip_approx(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("recip_approx(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.1);
+    assert!(max_error < 0.1f64);
 }
 
 #[test]
 fn test_recip_y() {
     const N: i32 = 0x100000;
-    let tmin = -1.5000000000000000;
-    let tmax = -0.5000000000000000;
+    let tmin = -1.5f64;
+    let tmax = -0.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1199,19 +1200,19 @@ fn test_recip_y() {
         let y2 = recip_approx(x as f32) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("recip_approx(x as f32) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.1);
+    assert!(max_error < 0.1f64);
 }
 
 #[test]
 fn test_powf_2() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1219,19 +1220,19 @@ fn test_powf_2() {
         let y2 = powf(x as f32, 2.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("powf(x as f32, 2.0) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125);
+    assert!(max_error < 0.000000476837158203125f64);
 }
 
 #[test]
 fn test_powf_m1() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1239,19 +1240,19 @@ fn test_powf_m1() {
         let y2 = powf(x as f32, -1.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("powf(x as f32, -1.0) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125);
+    assert!(max_error < 0.000000476837158203125f64);
 }
 
 #[test]
 fn test_powi_2() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1259,19 +1260,19 @@ fn test_powi_2() {
         let y2 = powi(x as f32, 2) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("powi(x as f32, 2) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_powi_3() {
     const N: i32 = 0x100000;
-    let tmin = 0.1200000000000000;
-    let tmax = 1.2000000000000000;
+    let tmin = 0.12f64;
+    let tmax = 1.2f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1279,19 +1280,19 @@ fn test_powi_3() {
         let y2 = powi(x as f32, 3) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("powi(x as f32, 3) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125);
+    assert!(max_error < 0.000000476837158203125f64);
 }
 
 #[test]
 fn test_powi_m1() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1299,19 +1300,19 @@ fn test_powi_m1() {
         let y2 = powi(x as f32, -1) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("powi(x as f32, -1) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625);
+    assert!(max_error < 0.0000002384185791015625f64);
 }
 
 #[test]
 fn test_powi_m2() {
     const N: i32 = 0x100000;
-    let tmin = 0.5000000000000000;
-    let tmax = 1.5000000000000000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1319,19 +1320,19 @@ fn test_powi_m2() {
         let y2 = powi(x as f32, -2) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("powi(x as f32, -2) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000007152557373046875);
+    assert!(max_error < 0.0000007152557373046875f64);
 }
 
 #[test]
 fn test_powi_16() {
     const N: i32 = 0x100000;
-    let tmin = 0.2500000000000000;
-    let tmax = 1.0000000000000000;
+    let tmin = 0.25f64;
+    let tmax = 1f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
@@ -1339,10 +1340,10 @@ fn test_powi_16() {
         let y2 = powi(x as f32, 16) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
-            println!("y1={:20.16}\ny2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
         }
     }
-    println!("powi(x as f32, 16) as f64 me={:20}", max_error);
+    println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000008344650268554688);
+    assert!(max_error < 0.0000008344650268554688f64);
 }

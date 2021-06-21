@@ -6,9 +6,10 @@ use quote::quote;
 use std::convert::TryInto;
 use syn::{parse_quote, Expr};
 
-fn mul_add_polynomial(terms: &[f64], parity: Parity, span: Span) -> Result<Expr> {
+fn mul_add_polynomial(terms: &[f64], variable: Name, parity: Parity, span: Span) -> Result<Expr> {
     let k = terms.len();
     let highest_coeff = terms[k - 1];
+    let x = variable.as_ref();
     match parity {
         Parity::Odd => {
             if k % 2 != 0 {
@@ -19,10 +20,10 @@ fn mul_add_polynomial(terms: &[f64], parity: Parity, span: Span) -> Result<Expr>
                 .rev()
                 .map(|i| {
                     let ti = terms[i];
-                    quote!(mul_add(x*x, #ti))
+                    quote!(mul_add(#x*#x, #ti))
                 })
                 .collect();
-            Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* * x ))
+            Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* * #x ))
         }
         Parity::Even => {
             if k % 2 == 0 {
@@ -33,7 +34,7 @@ fn mul_add_polynomial(terms: &[f64], parity: Parity, span: Span) -> Result<Expr>
                 .rev()
                 .map(|i| {
                     let ti = terms[i];
-                    quote!(mul_add(x*x, #ti))
+                    quote!(mul_add(#x*#x, #ti))
                 })
                 .collect();
             // let ts = quote!( (#highest_coeff) #( .#mul_adds )* ).to_string();
@@ -49,7 +50,7 @@ fn mul_add_polynomial(terms: &[f64], parity: Parity, span: Span) -> Result<Expr>
                 .rev()
                 .map(|i| {
                     let ti = terms[i];
-                    quote!(mul_add(x, #ti))
+                    quote!(mul_add(#x, #ti))
                 })
                 .collect();
             Ok(parse_quote!( (#highest_coeff) #( .#mul_adds )* ))
@@ -87,5 +88,5 @@ pub fn approx<T: Evaluateable>(
 
     let poly = Polynomial::from_points(xvalues.as_slice(), yvalues.as_slice());
 
-    mul_add_polynomial(poly.terms(), parity, expr.span()).map(|e| e.into())
+    mul_add_polynomial(poly.terms(), variable, parity, expr.span()).map(|e| e.into())
 }
