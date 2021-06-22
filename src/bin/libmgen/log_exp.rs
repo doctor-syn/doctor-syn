@@ -1,6 +1,6 @@
 use doctor_syn::Parity;
 use doctor_syn::{expr, name};
-use quote::{quote};
+use quote::quote;
 
 pub fn gen_exp2(num_terms: usize) -> proc_macro2::TokenStream {
     let xmin = -0.5;
@@ -35,7 +35,7 @@ pub fn gen_exp_m1(num_terms: usize) -> proc_macro2::TokenStream {
     let xmin = -0.5;
     let xmax = 0.5;
 
-    let approx = expr!(2.0.powf(x)-1.0)
+    let approx = expr!(2.0.powf(x) - 1.0)
         .approx(num_terms, xmin, xmax, name!(x), Parity::Neither)
         .unwrap()
         .use_suffix(Some("f32".to_string()))
@@ -146,8 +146,11 @@ pub fn gen_powi(_num_terms: usize) -> proc_macro2::TokenStream {
             let b = if p < 16 { b } else { powf(x, p as f32) };
 
             // negative powers are reciprocals.
-            if y < 0 { recip(b) } else { b }
+            if y < 0 {
+                recip(b)
+            } else {
+                b
+            }
         }
     )
 }
-

@@ -6,7 +6,7 @@ use syn::{
     ExprPath, ExprUnary, Token,
 };
 
-const TRACING : bool = false;
+const TRACING: bool = false;
 // use proc_macro2::Span;
 
 /// A visitor trait for a subset of expressions.

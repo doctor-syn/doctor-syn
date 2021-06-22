@@ -15,11 +15,11 @@ pub use syn;
 #[cfg(test)]
 mod tests;
 
+pub use error::*;
 pub use expression::{Expression, Parity};
 pub use name::Name;
 pub use std::convert::{TryFrom, TryInto};
 pub use variablelist::VariableList;
-pub use error::*;
 
 use num_traits::Float;
 

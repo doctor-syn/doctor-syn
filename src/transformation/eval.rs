@@ -11,7 +11,7 @@ use crate::Expression;
 use crate::Evaluateable;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, ExprUnary, UnOp, ExprParen};
+use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, ExprParen, ExprUnary, UnOp};
 
 #[derive(Debug, Clone)]
 pub struct Eval<T: TryFrom<Expression> + TryInto<Expression>> {

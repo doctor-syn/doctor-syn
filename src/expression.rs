@@ -1,11 +1,12 @@
 use crate::error::{Error, Result};
 use crate::transformation::{
-    approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst, use_suffix::UseSuffix
+    approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst,
+    use_suffix::UseSuffix,
 };
 use crate::visitor::Visitor;
 use crate::Evaluateable;
 use crate::{Name, VariableList};
-use proc_macro2::{Span};
+use proc_macro2::Span;
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
@@ -144,8 +145,7 @@ macro_rules! expr {
 impl std::str::FromStr for Expression {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self> {
-        let inner : Expr = syn::parse_str(s)
-            .map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+        let inner: Expr = syn::parse_str(s).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
         Ok(Self { inner })
     }
 }

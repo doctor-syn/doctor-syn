@@ -1,4 +1,4 @@
-use quote::{quote, format_ident};
+use quote::{format_ident, quote};
 
 pub fn gen_negate_on_odd(num_bits: usize) -> proc_macro2::TokenStream {
     let shift = num_bits - 1;
@@ -17,7 +17,12 @@ pub fn gen_exp2_approx(_num_terms: usize) -> proc_macro2::TokenStream {
     // A very approximate 2.pow(x) used for estimates +/- 0.05
     quote!(
         fn exp2_approx(x: f32) -> f32 {
-            f32::from_bits((x.mul_add(0x00800000 as f32, 0x3f800000 as f32 - 0x00800000 as f32 * 0.04)) as u32)
+            f32::from_bits(
+                (x.mul_add(
+                    0x00800000 as f32,
+                    0x3f800000 as f32 - 0x00800000 as f32 * 0.04,
+                )) as u32,
+            )
         }
     )
 }
@@ -26,8 +31,13 @@ pub fn gen_recip_approx(_num_terms: usize) -> proc_macro2::TokenStream {
     // A very approximate x.recip() used for estimates +/- 0.1
     quote!(
         fn recip_approx(x: f32) -> f32 {
-            let y = f32::from_bits((0x3f800000 as f32 * 2.0 - (x.abs().to_bits() as f32)) as u32) - 0.08;
-            if x < 0.0 { -y } else { y }
+            let y = f32::from_bits((0x3f800000 as f32 * 2.0 - (x.abs().to_bits() as f32)) as u32)
+                - 0.08;
+            if x < 0.0 {
+                -y
+            } else {
+                y
+            }
         }
     )
 }
@@ -43,4 +53,3 @@ pub fn gen_log2_approx(_num_terms: usize) -> proc_macro2::TokenStream {
         }
     )
 }
-

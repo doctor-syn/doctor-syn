@@ -1,4 +1,4 @@
-use quote::{quote};
+use quote::quote;
 
 pub fn gen_sqrt(_num_terms: usize) -> proc_macro2::TokenStream {
     // Probably better done with a reciprocal estimate or bitcast log divide.
@@ -15,8 +15,8 @@ pub fn gen_sqrt(_num_terms: usize) -> proc_macro2::TokenStream {
 
     quote!(
         fn sqrt(x: f32) -> f32 {
-            let r = exp2(log2(x) * (1.0/2.0));
-            let y = r + (x - r*r) / (2.0*r);
+            let r = exp2(log2(x) * (1.0 / 2.0));
+            let y = r + (x - r * r) / (2.0 * r);
             y
         }
     )
@@ -35,9 +35,13 @@ pub fn gen_cbrt(_num_terms: usize) -> proc_macro2::TokenStream {
 
     quote!(
         fn cbrt(x: f32) -> f32 {
-            let r = exp2(log2(x.abs()) * (1.0/3.0));
-            let y = r + (x.abs() - r*r*r) / (3.0*r*r);
-            if x < 0.0 { -y } else { y }
+            let r = exp2(log2(x.abs()) * (1.0 / 3.0));
+            let y = r + (x.abs() - r * r * r) / (3.0 * r * r);
+            if x < 0.0 {
+                -y
+            } else {
+                y
+            }
         }
     )
 }
@@ -55,9 +59,9 @@ pub fn gen_recip(_num_terms: usize) -> proc_macro2::TokenStream {
         fn recip(x: f32) -> f32 {
             //let r = exp2_approx(-log2_approx(x));
             let r = recip_approx(x);
-            let r = r * ( 2.0 - x * r );
-            let r = r * ( 2.0 - x * r );
-            let r = r * ( 2.0 - x * r );
+            let r = r * (2.0 - x * r);
+            let r = r * (2.0 - x * r);
+            let r = r * (2.0 - x * r);
             r
         }
     )
@@ -69,8 +73,11 @@ pub fn gen_hypot(_num_terms: usize) -> proc_macro2::TokenStream {
     quote!(
         fn hypot(x: f32, y: f32) -> f32 {
             let (x, y) = if x.abs() > y.abs() { (x, y) } else { (y, x) };
-            if x.abs() <= f32::MIN_POSITIVE { x } else { x.abs()*(1.0 + (y/x)*(y/x)).sqrt() }
+            if x.abs() <= f32::MIN_POSITIVE {
+                x
+            } else {
+                x.abs() * (1.0 + (y / x) * (y / x)).sqrt()
+            }
         }
     )
 }
-

@@ -1,9 +1,9 @@
 pub mod approx;
+pub mod collect;
 pub mod eval;
-pub mod subst;
 pub mod expand;
 pub mod paren;
-pub mod collect;
+pub mod subst;
 pub mod use_suffix;
 
 mod tools;

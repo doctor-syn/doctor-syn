@@ -1,4 +1,4 @@
-use quote::{quote};
+use quote::quote;
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
 pub fn gen_sinh(_num_terms: usize) -> proc_macro2::TokenStream {
@@ -26,7 +26,7 @@ pub fn gen_cosh(_num_terms: usize) -> proc_macro2::TokenStream {
 pub fn gen_tanh(_num_terms: usize) -> proc_macro2::TokenStream {
     quote!(
         fn tanh(x: f32) -> f32 {
-            let exp2x = exp2(x*(std::f32::consts::LOG2_E*2.0));
+            let exp2x = exp2(x * (std::f32::consts::LOG2_E * 2.0));
             (exp2x - 1.0) / (exp2x + 1.0)
         }
     )
@@ -36,7 +36,7 @@ pub fn gen_tanh(_num_terms: usize) -> proc_macro2::TokenStream {
 pub fn gen_asinh(_num_terms: usize) -> proc_macro2::TokenStream {
     quote!(
         fn asinh(x: f32) -> f32 {
-            ln(x + (x*x+1.0).sqrt())
+            ln(x + (x * x + 1.0).sqrt())
         }
     )
 }
@@ -45,7 +45,7 @@ pub fn gen_asinh(_num_terms: usize) -> proc_macro2::TokenStream {
 pub fn gen_acosh(_num_terms: usize) -> proc_macro2::TokenStream {
     quote!(
         fn acosh(x: f32) -> f32 {
-            ln(x + (x*x-1.0).sqrt())
+            ln(x + (x * x - 1.0).sqrt())
         }
     )
 }
@@ -58,4 +58,3 @@ pub fn gen_atanh(_num_terms: usize) -> proc_macro2::TokenStream {
         }
     )
 }
-
