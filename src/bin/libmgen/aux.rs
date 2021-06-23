@@ -62,17 +62,17 @@ pub fn gen_aux(num_bits: usize) -> (TokenStream, TokenStream) {
     // let fty = format_ident!("f{}", num_bits);
     // let suffix = format!("f{}", num_bits);
 
-    let negate_on_odd = gen_negate_on_odd(num_bits);
-    let exp2_approx = gen_exp2_approx(num_bits);
+    let _negate_on_odd = gen_negate_on_odd(num_bits);
+    let _exp2_approx = gen_exp2_approx(num_bits);
     let recip_approx = gen_recip_approx(num_bits);
-    let log2_approx = gen_log2_approx(num_bits);
+    let _log2_approx = gen_log2_approx(num_bits);
 
     (
         quote!(
-            #negate_on_odd
-            #exp2_approx
+            // #negate_on_odd
+            // #exp2_approx
             #recip_approx
-            #log2_approx
+            // #log2_approx
         ), quote!(
         )
     )

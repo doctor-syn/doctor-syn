@@ -318,18 +318,6 @@ fn recip(x: f32) -> f32 {
     let r = r * (2.0 - x * r);
     r
 }
-fn negate_on_odd(x: f32, y: f32) -> f32 {
-    let sign_bit = ((x as u32) & 1) << 31usize;
-    f32::from_bits(sign_bit ^ y.to_bits())
-}
-fn exp2_approx(x: f32) -> f32 {
-    f32::from_bits(
-        (x.mul_add(
-            0x00800000 as f32,
-            0x3f800000 as f32 - 0x00800000 as f32 * 0.04,
-        )) as u32,
-    )
-}
 fn recip_approx(x: f32) -> f32 {
     let y = f32::from_bits((0x3f800000 as f32 * 2.0 - (x.abs().to_bits() as f32)) as u32) - 0.08;
     if x < 0.0 {
@@ -337,12 +325,6 @@ fn recip_approx(x: f32) -> f32 {
     } else {
         y
     }
-}
-fn log2_approx(x: f32) -> f32 {
-    let exponent = (x.to_bits() >> 23) as i32 - 0x7f;
-    let x = f32::from_bits((x.to_bits() & 0x7fffff) | 0x3f800000) - 0.96;
-    let y: f32 = x;
-    y + (exponent as f32)
 }
 #[test]
 fn test_sin() {
