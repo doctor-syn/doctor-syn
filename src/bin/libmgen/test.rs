@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::{quote};
+use quote::quote;
 
 pub fn gen_test(
     test_name: TokenStream,
@@ -8,7 +8,7 @@ pub fn gen_test(
     accuracy: f64,
     tmin: f64,
     tmax: f64,
-) -> proc_macro2::TokenStream {
+) -> TokenStream {
     quote!(
         #[test]
         fn #test_name() {

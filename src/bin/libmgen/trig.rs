@@ -83,51 +83,51 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+// pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize) -> TokenStream {
+//     let suffix = format!("f{}", num_bits);
+//     let fty = format_ident!("f{}", num_bits);
 
-    let xmin = -0.5;
-    let xmax = 0.5;
+//     let xmin = -0.5;
+//     let xmax = 0.5;
 
-    let approx = expr!((x * 3.1415926535897932384626433 * 2.0).sin())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
-        .unwrap()
-        .use_suffix(Some(suffix))
-        .unwrap()
-        .into_inner();
+//     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).sin())
+//         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
+//         .unwrap()
+//         .use_suffix(Some(suffix))
+//         .unwrap()
+//         .into_inner();
 
-    quote!(
-        fn sin(x: #fty) -> #fty {
-            let x = x * (1.0 / (std::#fty::consts::PI * 2.0));
-            let x = x - x.round();
-            #approx
-        }
-    )
-}
+//     quote!(
+//         fn sin(x: #fty) -> #fty {
+//             let x = x * (1.0 / (std::#fty::consts::PI * 2.0));
+//             let x = x - x.round();
+//             #approx
+//         }
+//     )
+// }
 
-pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+// pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize) -> TokenStream {
+//     let suffix = format!("f{}", num_bits);
+//     let fty = format_ident!("f{}", num_bits);
 
-    let xmin = -0.5;
-    let xmax = 0.5;
+//     let xmin = -0.5;
+//     let xmax = 0.5;
 
-    let approx = expr!((x * 3.1415926535897932384626433 * 2.0).cos())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Even)
-        .unwrap()
-        .use_suffix(Some(suffix))
-        .unwrap()
-        .into_inner();
+//     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).cos())
+//         .approx(num_terms, xmin, xmax, name!(x), Parity::Even)
+//         .unwrap()
+//         .use_suffix(Some(suffix))
+//         .unwrap()
+//         .into_inner();
 
-    quote!(
-        fn cos(x: #fty) -> #fty {
-            let x = x * (1.0 / (std::#fty::consts::PI * 2.0));
-            let x = x - x.round();
-            #approx
-        }
-    )
-}
+//     quote!(
+//         fn cos(x: #fty) -> #fty {
+//             let x = x * (1.0 / (std::#fty::consts::PI * 2.0));
+//             let x = x - x.round();
+//             #approx
+//         }
+//     )
+// }
 
 pub fn gen_sin_cos(_num_terms: usize, num_bits: usize) -> TokenStream {
     let fty = format_ident!("f{}", num_bits);
@@ -178,7 +178,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
 
     let fty = format_ident!("f{}", num_bits);
 
-    let bit = (2.0_f64).powi(if num_bits == 32 {23} else {52} );
+    let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
 
     let test_sin = gen_test(
         quote!(test_sin),

@@ -13,7 +13,7 @@ For example, say we want to make an approximation to `-cos(x*2π)` over the
 domain `-0.5..0.5`, we can use the approx function to transform an expression.
 
 ```
-fn gen_cos() -> proc_macro2::TokenStream {
+fn gen_cos() -> TokenStream {
     let xmin = -0.5;
     let xmax = 0.5;
 

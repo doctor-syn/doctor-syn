@@ -1,7 +1,7 @@
 use doctor_syn::Parity;
 use doctor_syn::{expr, name};
-use quote::{quote, format_ident};
 use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
 
 use crate::test::gen_test;
 
@@ -122,7 +122,7 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
 
     let fty = format_ident!("f{}", num_bits);
 
-    let bit = (2.0_f64).powi(if num_bits == 32 {23} else {52} );
+    let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
 
     let test_asin = gen_test(
         quote!(test_asin),
@@ -130,24 +130,24 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(asin(x as #fty) as f64),
         bit * 9.0,
         -0.999,
-        0.999
+        0.999,
     );
     let test_acos = gen_test(
-            quote!(test_acos),
-            quote!(x.acos()),
-            quote!(acos(x as #fty) as f64),
-            bit * 9.0,
-            -0.999,
-            0.999
-        );
+        quote!(test_acos),
+        quote!(x.acos()),
+        quote!(acos(x as #fty) as f64),
+        bit * 9.0,
+        -0.999,
+        0.999,
+    );
     let test_atan = gen_test(
-            quote!(test_atan),
-            quote!(x.atan()),
-            quote!(atan(x as #fty) as f64),
-            bit * 2.0,
-            -2.0,
-            2.0
-        );
+        quote!(test_atan),
+        quote!(x.atan()),
+        quote!(atan(x as #fty) as f64),
+        bit * 2.0,
+        -2.0,
+        2.0,
+    );
 
     let test_atan2_a = gen_test(
         quote!(test_atan2_a),
@@ -155,7 +155,7 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(atan2(x as #fty, 1.0) as f64),
         bit * 3.0,
         -1.0,
-        1.0
+        1.0,
     );
     let test_atan2_b = gen_test(
         quote!(test_atan2_b),
@@ -163,7 +163,7 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(atan2(x as #fty, -1.0) as f64),
         bit * 3.0,
         -1.0,
-        1.0
+        1.0,
     );
     let test_atan2_c = gen_test(
         quote!(test_atan2_c),
@@ -171,7 +171,7 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(atan2(1.0, x as #fty) as f64),
         bit * 3.0,
         -1.0,
-        1.0
+        1.0,
     );
     let test_atan2_d = gen_test(
         quote!(test_atan2_d),
@@ -179,7 +179,7 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(atan2(-1.0, x as #fty) as f64),
         bit * 3.0,
         -1.0,
-        1.0
+        1.0,
     );
 
     (

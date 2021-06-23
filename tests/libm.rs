@@ -174,6 +174,176 @@ fn atan2(y: f32, x: f32) -> f32 {
         * x;
     y + offset
 }
+fn exp(x: f32) -> f32 {
+    exp2(x * std::f32::consts::LOG2_E)
+}
+fn exp2(x: f32) -> f32 {
+    let r = x.round();
+    let mul = f32::from_bits((r.mul_add(0x00800000 as f32, 0x3f800000 as f32)) as u32);
+    let x = x - r;
+    (0.00015469731983042893_f32)
+        .mul_add(x, 0.0013410000966213198_f32)
+        .mul_add(x, 0.00961803078248943_f32)
+        .mul_add(x, 0.05550297314198923_f32)
+        .mul_add(x, 0.24022651084117352_f32)
+        .mul_add(x, 0.6931472253950114_f32)
+        .mul_add(x, 1_f32)
+        * mul
+}
+fn exp_m1(x: f32) -> f32 {
+    let x = x * std::f32::consts::LOG2_E;
+    let r = x.round();
+    let mul = f32::from_bits((r.mul_add(0x00800000 as f32, 0x3f800000 as f32)) as u32);
+    let x = x - r;
+    (0.00015469731983042893_f32)
+        .mul_add(x, 0.0013410000966213198_f32)
+        .mul_add(x, 0.00961803078248943_f32)
+        .mul_add(x, 0.05550297314198923_f32)
+        .mul_add(x, 0.24022651084117352_f32)
+        .mul_add(x, 0.6931472253950114_f32)
+        .mul_add(x, 0.00000000000000003991219299848534_f32)
+        * mul
+        + (mul - 1.0)
+}
+fn ln(x: f32) -> f32 {
+    log2(x) * (1.0 / std::f32::consts::LOG2_E)
+}
+fn ln_1p(x: f32) -> f32 {
+    let exponent = ((x + 1.0).to_bits() >> 23) as i32 - 0x7f;
+    let x = if exponent == 0 {
+        x
+    } else {
+        f32::from_bits(((x + 1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0
+    };
+    let y: f32 = (-0.008874696649844664_f32)
+        .mul_add(x, 0.05061587563631424_f32)
+        .mul_add(x, -0.13573160547317467_f32)
+        .mul_add(x, 0.24089975662254867_f32)
+        .mul_add(x, -0.34715166209993725_f32)
+        .mul_add(x, 0.4787361538138562_f32)
+        .mul_add(x, -0.72118516198798_f32)
+        .mul_add(x, 1.4426913401382175_f32)
+        .mul_add(x, 0_f32);
+    (y + (exponent as f32)) * (1.0 / std::f32::consts::LOG2_E)
+}
+fn log2(x: f32) -> f32 {
+    let exponent = (x.to_bits() >> 23) as i32 - 0x7f;
+    let x = f32::from_bits((x.to_bits() & 0x7fffff) | 0x3f800000) - 1.5;
+    let y: f32 = (-0.008874696649735232_f32)
+        .mul_add(x, 0.01511708903698527_f32)
+        .mul_add(x, -0.020698917295047616_f32)
+        .mul_add(x, 0.03731541074473215_f32)
+        .mul_add(x, -0.07127813300215657_f32)
+        .mul_add(x, 0.14254471630463159_f32)
+        .mul_add(x, -0.32059812016799316_f32)
+        .mul_add(x, 0.9617954032360934_f32)
+        .mul_add(x, 0.5849625007211562_f32);
+    y + (exponent as f32)
+}
+fn log10(x: f32) -> f32 {
+    log2(x) * (1.0 / std::f32::consts::LOG2_10)
+}
+fn log(x: f32, base: f32) -> f32 {
+    log2(x) / log2(base)
+}
+fn powi(x: f32, y: i32) -> f32 {
+    let a = x;
+    let p = y.abs();
+    let b = if (p & (1 << 0)) != 0 { a } else { 1.0 };
+    let a = a * a;
+    let b = if (p & (1 << 1)) != 0 { b * a } else { b };
+    let a = a * a;
+    let b = if (p & (1 << 2)) != 0 { b * a } else { b };
+    let a = a * a;
+    let b = if (p & (1 << 3)) != 0 { b * a } else { b };
+    let b = if p < 16 { b } else { powf(x, p as f32) };
+    if y < 0 {
+        recip(b)
+    } else {
+        b
+    }
+}
+fn powf(x: f32, y: f32) -> f32 {
+    exp2(log2(x) * y)
+}
+fn sinh(x: f32) -> f32 {
+    let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
+    let b = x.mul_add(-std::f32::consts::LOG2_E, -1.0);
+    exp2(a) - exp2(b)
+}
+fn cosh(x: f32) -> f32 {
+    let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
+    let b = x.mul_add(-std::f32::consts::LOG2_E, -1.0);
+    exp2(a) + exp2(b)
+}
+fn tanh(x: f32) -> f32 {
+    let exp2x = exp2(x * (std::f32::consts::LOG2_E * 2.0));
+    (exp2x - 1.0) / (exp2x + 1.0)
+}
+fn asinh(x: f32) -> f32 {
+    ln(x + (x * x + 1.0).sqrt())
+}
+fn acosh(x: f32) -> f32 {
+    ln(x + (x * x - 1.0).sqrt())
+}
+fn atanh(x: f32) -> f32 {
+    (ln(1.0 + x) - ln(1.0 - x)) * 0.5
+}
+fn sqrt(x: f32) -> f32 {
+    let r = exp2(log2(x) * (1.0 / 2.0));
+    let y = r + (x - r * r) / (2.0 * r);
+    y
+}
+fn cbrt(x: f32) -> f32 {
+    let r = exp2(log2(x.abs()) * (1.0 / 3.0));
+    let y = r + (x.abs() - r * r * r) / (3.0 * r * r);
+    if x < 0.0 {
+        -y
+    } else {
+        y
+    }
+}
+fn hypot(x: f32, y: f32) -> f32 {
+    let (x, y) = if x.abs() > y.abs() { (x, y) } else { (y, x) };
+    if x.abs() <= f32::MIN_POSITIVE {
+        x
+    } else {
+        x.abs() * (1.0 + (y / x) * (y / x)).sqrt()
+    }
+}
+fn recip(x: f32) -> f32 {
+    let r = recip_approx(x);
+    let r = r * (2.0 - x * r);
+    let r = r * (2.0 - x * r);
+    let r = r * (2.0 - x * r);
+    r
+}
+fn negate_on_odd(x: f32, y: f32) -> f32 {
+    let sign_bit = ((x as u32) & 1) << 31usize;
+    f32::from_bits(sign_bit ^ y.to_bits())
+}
+fn exp2_approx(x: f32) -> f32 {
+    f32::from_bits(
+        (x.mul_add(
+            0x00800000 as f32,
+            0x3f800000 as f32 - 0x00800000 as f32 * 0.04,
+        )) as u32,
+    )
+}
+fn recip_approx(x: f32) -> f32 {
+    let y = f32::from_bits((0x3f800000 as f32 * 2.0 - (x.abs().to_bits() as f32)) as u32) - 0.08;
+    if x < 0.0 {
+        -y
+    } else {
+        y
+    }
+}
+fn log2_approx(x: f32) -> f32 {
+    let exponent = (x.to_bits() >> 23) as i32 - 0x7f;
+    let x = f32::from_bits((x.to_bits() & 0x7fffff) | 0x3f800000) - 0.96;
+    let y: f32 = x;
+    y + (exponent as f32)
+}
 #[test]
 fn test_sin() {
     const N: i32 = 0x100000;
@@ -402,200 +572,6 @@ fn test_atan2_d() {
     assert!(!max_error.is_nan());
     assert!(max_error < 25165824f64);
 }
-fn exp(x: f32) -> f32 {
-    exp2(x * std::f32::consts::LOG2_E)
-}
-
-fn exp2(x: f32) -> f32 {
-    let r = x.round();
-    let mul = f32::from_bits((r.mul_add(0x00800000 as f32, 0x3f800000 as f32)) as u32);
-    let x = x - r;
-    (0.00015469731983042893_f32)
-        .mul_add(x, 0.0013410000966213198_f32)
-        .mul_add(x, 0.00961803078248943_f32)
-        .mul_add(x, 0.05550297314198923_f32)
-        .mul_add(x, 0.24022651084117352_f32)
-        .mul_add(x, 0.6931472253950114_f32)
-        .mul_add(x, 1_f32)
-        * mul
-}
-
-fn exp_m1(x: f32) -> f32 {
-    let x = x * std::f32::consts::LOG2_E;
-    let r = x.round();
-    let mul = f32::from_bits((r.mul_add(0x00800000 as f32, 0x3f800000 as f32)) as u32);
-    let x = x - r;
-    (0.00015469731983042893_f32)
-        .mul_add(x, 0.0013410000966213198_f32)
-        .mul_add(x, 0.00961803078248943_f32)
-        .mul_add(x, 0.05550297314198923_f32)
-        .mul_add(x, 0.24022651084117352_f32)
-        .mul_add(x, 0.6931472253950114_f32)
-        .mul_add(x, 0.00000000000000003991219299848534_f32)
-        * mul
-        + (mul - 1.0)
-}
-
-fn exp2_approx(x: f32) -> f32 {
-    f32::from_bits(
-        (x.mul_add(
-            0x00800000 as f32,
-            0x3f800000 as f32 - 0x00800000 as f32 * 0.04,
-        )) as u32,
-    )
-}
-
-fn negate_on_odd(x: f32, y: f32) -> f32 {
-    let sign_bit = ((x as u32) & 1) << 31usize;
-    f32::from_bits(sign_bit ^ y.to_bits())
-}
-
-fn ln(x: f32) -> f32 {
-    log2(x) * (1.0 / std::f32::consts::LOG2_E)
-}
-
-fn ln_1p(x: f32) -> f32 {
-    let exponent = ((x + 1.0).to_bits() >> 23) as i32 - 0x7f;
-    let x = if exponent == 0 {
-        x
-    } else {
-        f32::from_bits(((x + 1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0
-    };
-    let y: f32 = (-0.008874696649844664_f32)
-        .mul_add(x, 0.05061587563631424_f32)
-        .mul_add(x, -0.13573160547317467_f32)
-        .mul_add(x, 0.24089975662254867_f32)
-        .mul_add(x, -0.34715166209993725_f32)
-        .mul_add(x, 0.4787361538138562_f32)
-        .mul_add(x, -0.72118516198798_f32)
-        .mul_add(x, 1.4426913401382175_f32)
-        .mul_add(x, 0_f32);
-    (y + (exponent as f32)) * (1.0 / std::f32::consts::LOG2_E)
-}
-
-fn log2(x: f32) -> f32 {
-    let exponent = (x.to_bits() >> 23) as i32 - 0x7f;
-    let x = f32::from_bits((x.to_bits() & 0x7fffff) | 0x3f800000) - 1.5;
-    let y: f32 = (-0.008874696649735232_f32)
-        .mul_add(x, 0.01511708903698527_f32)
-        .mul_add(x, -0.020698917295047616_f32)
-        .mul_add(x, 0.03731541074473215_f32)
-        .mul_add(x, -0.07127813300215657_f32)
-        .mul_add(x, 0.14254471630463159_f32)
-        .mul_add(x, -0.32059812016799316_f32)
-        .mul_add(x, 0.9617954032360934_f32)
-        .mul_add(x, 0.5849625007211562_f32);
-    y + (exponent as f32)
-}
-
-fn log10(x: f32) -> f32 {
-    log2(x) * (1.0 / std::f32::consts::LOG2_10)
-}
-
-fn log(x: f32, base: f32) -> f32 {
-    log2(x) / log2(base)
-}
-
-fn log2_approx(x: f32) -> f32 {
-    let exponent = (x.to_bits() >> 23) as i32 - 0x7f;
-    let x = f32::from_bits((x.to_bits() & 0x7fffff) | 0x3f800000) - 0.96;
-    let y: f32 = x;
-    y + (exponent as f32)
-}
-
-fn sinh(x: f32) -> f32 {
-    let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
-    let b = x.mul_add(-std::f32::consts::LOG2_E, -1.0);
-    exp2(a) - exp2(b)
-}
-
-fn cosh(x: f32) -> f32 {
-    let a = x.mul_add(std::f32::consts::LOG2_E, -1.0);
-    let b = x.mul_add(-std::f32::consts::LOG2_E, -1.0);
-    exp2(a) + exp2(b)
-}
-
-fn tanh(x: f32) -> f32 {
-    let exp2x = exp2(x * (std::f32::consts::LOG2_E * 2.0));
-    (exp2x - 1.0) / (exp2x + 1.0)
-}
-
-fn asinh(x: f32) -> f32 {
-    ln(x + (x * x + 1.0).sqrt())
-}
-
-fn acosh(x: f32) -> f32 {
-    ln(x + (x * x - 1.0).sqrt())
-}
-
-fn atanh(x: f32) -> f32 {
-    (ln(1.0 + x) - ln(1.0 - x)) * 0.5
-}
-
-fn sqrt(x: f32) -> f32 {
-    let r = exp2(log2(x) * (1.0 / 2.0));
-    let y = r + (x - r * r) / (2.0 * r);
-    y
-}
-
-fn cbrt(x: f32) -> f32 {
-    let r = exp2(log2(x.abs()) * (1.0 / 3.0));
-    let y = r + (x.abs() - r * r * r) / (3.0 * r * r);
-    if x < 0.0 {
-        -y
-    } else {
-        y
-    }
-}
-
-fn hypot(x: f32, y: f32) -> f32 {
-    let (x, y) = if x.abs() > y.abs() { (x, y) } else { (y, x) };
-    if x.abs() <= f32::MIN_POSITIVE {
-        x
-    } else {
-        x.abs() * (1.0 + (y / x) * (y / x)).sqrt()
-    }
-}
-
-fn recip(x: f32) -> f32 {
-    let r = recip_approx(x);
-    let r = r * (2.0 - x * r);
-    let r = r * (2.0 - x * r);
-    let r = r * (2.0 - x * r);
-    r
-}
-
-fn recip_approx(x: f32) -> f32 {
-    let y = f32::from_bits((0x3f800000 as f32 * 2.0 - (x.abs().to_bits() as f32)) as u32) - 0.08;
-    if x < 0.0 {
-        -y
-    } else {
-        y
-    }
-}
-
-fn powf(x: f32, y: f32) -> f32 {
-    exp2(log2(x) * y)
-}
-
-fn powi(x: f32, y: i32) -> f32 {
-    let a = x;
-    let p = y.abs();
-    let b = if (p & (1 << 0)) != 0 { a } else { 1.0 };
-    let a = a * a;
-    let b = if (p & (1 << 1)) != 0 { b * a } else { b };
-    let a = a * a;
-    let b = if (p & (1 << 2)) != 0 { b * a } else { b };
-    let a = a * a;
-    let b = if (p & (1 << 3)) != 0 { b * a } else { b };
-    let b = if p < 16 { b } else { powf(x, p as f32) };
-    if y < 0 {
-        recip(b)
-    } else {
-        b
-    }
-}
-
 #[test]
 fn test_exp_a() {
     const N: i32 = 0x100000;
@@ -613,9 +589,8 @@ fn test_exp_a() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_exp_b() {
     const N: i32 = 0x100000;
@@ -633,9 +608,8 @@ fn test_exp_b() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000011920928955078125f64);
+    assert!(max_error < 83886080f64);
 }
-
 #[test]
 fn test_exp_m1() {
     const N: i32 = 0x100000;
@@ -653,9 +627,8 @@ fn test_exp_m1() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_exp2() {
     const N: i32 = 0x100000;
@@ -673,29 +646,8 @@ fn test_exp2() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
-#[test]
-fn test_exp2_x() {
-    const N: i32 = 0x100000;
-    let tmin = 0f64;
-    let tmax = 1f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.exp2();
-        let y2 = exp2_approx(x as f32) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.05f64);
-}
-
 #[test]
 fn test_ln() {
     const N: i32 = 0x100000;
@@ -713,9 +665,8 @@ fn test_ln() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_ln_1p_a() {
     const N: i32 = 0x100000;
@@ -733,9 +684,8 @@ fn test_ln_1p_a() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_ln_1p_b() {
     const N: i32 = 0x100000;
@@ -753,9 +703,8 @@ fn test_ln_1p_b() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_log2() {
     const N: i32 = 0x100000;
@@ -773,9 +722,8 @@ fn test_log2() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_log10() {
     const N: i32 = 0x100000;
@@ -793,9 +741,8 @@ fn test_log10() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_log_2() {
     const N: i32 = 0x100000;
@@ -813,9 +760,8 @@ fn test_log_2() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_log_e() {
     const N: i32 = 0x100000;
@@ -833,19 +779,18 @@ fn test_log_e() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
-fn test_log_2x() {
+fn test_powf_2() {
     const N: i32 = 0x100000;
     let tmin = 0.5f64;
-    let tmax = 10.5f64;
+    let tmax = 1.5f64;
     let mut max_error = 0.0_f64;
     for i in 0..=N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.log2();
-        let y2 = log2_approx(x as f32) as f64;
+        let y1 = x.powf(2.0);
+        let y2 = powf(x as f32, 2.0) as f64;
         max_error = max_error.max((y1 - y2).abs());
         if i % (N / 16) == 0 {
             println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
@@ -853,9 +798,122 @@ fn test_log_2x() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.05f64);
+    assert!(max_error < 33554432f64);
 }
-
+#[test]
+fn test_powf_m1() {
+    const N: i32 = 0x100000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.powf(-1.0);
+        let y2 = powf(x as f32, -1.0) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("me={:20}", max_error);
+    assert!(!max_error.is_nan());
+    assert!(max_error < 33554432f64);
+}
+#[test]
+fn test_powi_2() {
+    const N: i32 = 0x100000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.powi(2);
+        let y2 = powi(x as f32, 2) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("me={:20}", max_error);
+    assert!(!max_error.is_nan());
+    assert!(max_error < 16777216f64);
+}
+#[test]
+fn test_powi_3() {
+    const N: i32 = 0x100000;
+    let tmin = 0.12f64;
+    let tmax = 1.2f64;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.powi(3);
+        let y2 = powi(x as f32, 3) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("me={:20}", max_error);
+    assert!(!max_error.is_nan());
+    assert!(max_error < 33554432f64);
+}
+#[test]
+fn test_powi_m1() {
+    const N: i32 = 0x100000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.powi(-1);
+        let y2 = powi(x as f32, -1) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("me={:20}", max_error);
+    assert!(!max_error.is_nan());
+    assert!(max_error < 16777216f64);
+}
+#[test]
+fn test_powi_m2() {
+    const N: i32 = 0x100000;
+    let tmin = 0.5f64;
+    let tmax = 1.5f64;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.powi(-2);
+        let y2 = powi(x as f32, -2) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("me={:20}", max_error);
+    assert!(!max_error.is_nan());
+    assert!(max_error < 50331648f64);
+}
+#[test]
+fn test_powi_16() {
+    const N: i32 = 0x100000;
+    let tmin = 0.25f64;
+    let tmax = 1f64;
+    let mut max_error = 0.0_f64;
+    for i in 0..=N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let y1 = x.powi(16);
+        let y2 = powi(x as f32, 16) as f64;
+        max_error = max_error.max((y1 - y2).abs());
+        if i % (N / 16) == 0 {
+            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
+        }
+    }
+    println!("me={:20}", max_error);
+    assert!(!max_error.is_nan());
+    assert!(max_error < 58720256f64);
+}
 #[test]
 fn test_cosh() {
     const N: i32 = 0x100000;
@@ -873,9 +931,8 @@ fn test_cosh() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_sinh() {
     const N: i32 = 0x100000;
@@ -893,9 +950,8 @@ fn test_sinh() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_tanh() {
     const N: i32 = 0x100000;
@@ -913,9 +969,8 @@ fn test_tanh() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_acosh() {
     const N: i32 = 0x100000;
@@ -933,9 +988,8 @@ fn test_acosh() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_asinh() {
     const N: i32 = 0x100000;
@@ -953,9 +1007,8 @@ fn test_asinh() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_atanh() {
     const N: i32 = 0x100000;
@@ -973,9 +1026,8 @@ fn test_atanh() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_hypot_a() {
     const N: i32 = 0x100000;
@@ -993,9 +1045,8 @@ fn test_hypot_a() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_hypot_b() {
     const N: i32 = 0x100000;
@@ -1013,9 +1064,8 @@ fn test_hypot_b() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_hypot_c() {
     const N: i32 = 0x100000;
@@ -1033,9 +1083,8 @@ fn test_hypot_c() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_hypot_d() {
     const N: i32 = 0x100000;
@@ -1053,9 +1102,8 @@ fn test_hypot_d() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 25165824f64);
 }
-
 #[test]
 fn test_sqrt() {
     const N: i32 = 0x100000;
@@ -1073,9 +1121,8 @@ fn test_sqrt() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000011920928955078125f64);
+    assert!(max_error < 8388608f64);
 }
-
 #[test]
 fn test_cbrt() {
     const N: i32 = 0x100000;
@@ -1093,9 +1140,8 @@ fn test_cbrt() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000011920928955078125f64);
+    assert!(max_error < 8388608f64);
 }
-
 #[test]
 fn test_recip() {
     const N: i32 = 0x100000;
@@ -1113,9 +1159,8 @@ fn test_recip() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_recip_n() {
     const N: i32 = 0x100000;
@@ -1133,9 +1178,8 @@ fn test_recip_n() {
     }
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
+    assert!(max_error < 16777216f64);
 }
-
 #[test]
 fn test_recip_x() {
     const N: i32 = 0x100000;
@@ -1155,7 +1199,6 @@ fn test_recip_x() {
     assert!(!max_error.is_nan());
     assert!(max_error < 0.1f64);
 }
-
 #[test]
 fn test_recip_y() {
     const N: i32 = 0x100000;
@@ -1174,144 +1217,4 @@ fn test_recip_y() {
     println!("me={:20}", max_error);
     assert!(!max_error.is_nan());
     assert!(max_error < 0.1f64);
-}
-
-#[test]
-fn test_powf_2() {
-    const N: i32 = 0x100000;
-    let tmin = 0.5f64;
-    let tmax = 1.5f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.powf(2.0);
-        let y2 = powf(x as f32, 2.0) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125f64);
-}
-
-#[test]
-fn test_powf_m1() {
-    const N: i32 = 0x100000;
-    let tmin = 0.5f64;
-    let tmax = 1.5f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.powf(-1.0);
-        let y2 = powf(x as f32, -1.0) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125f64);
-}
-
-#[test]
-fn test_powi_2() {
-    const N: i32 = 0x100000;
-    let tmin = 0.5f64;
-    let tmax = 1.5f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.powi(2);
-        let y2 = powi(x as f32, 2) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
-}
-
-#[test]
-fn test_powi_3() {
-    const N: i32 = 0x100000;
-    let tmin = 0.12f64;
-    let tmax = 1.2f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.powi(3);
-        let y2 = powi(x as f32, 3) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125f64);
-}
-
-#[test]
-fn test_powi_m1() {
-    const N: i32 = 0x100000;
-    let tmin = 0.5f64;
-    let tmax = 1.5f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.powi(-1);
-        let y2 = powi(x as f32, -1) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000002384185791015625f64);
-}
-
-#[test]
-fn test_powi_m2() {
-    const N: i32 = 0x100000;
-    let tmin = 0.5f64;
-    let tmax = 1.5f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.powi(-2);
-        let y2 = powi(x as f32, -2) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000007152557373046875f64);
-}
-
-#[test]
-fn test_powi_16() {
-    const N: i32 = 0x100000;
-    let tmin = 0.25f64;
-    let tmax = 1f64;
-    let mut max_error = 0.0_f64;
-    for i in 0..=N {
-        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let y1 = x.powi(16);
-        let y2 = powi(x as f32, 16) as f64;
-        max_error = max_error.max((y1 - y2).abs());
-        if i % (N / 16) == 0 {
-            println!("y1={:20.16} y2={:20.16} e={:20.16}", y1, y2, y2 - y1);
-        }
-    }
-    println!("me={:20}", max_error);
-    assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000008344650268554688f64);
 }
