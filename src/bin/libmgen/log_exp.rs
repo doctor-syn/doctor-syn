@@ -1,5 +1,5 @@
 use doctor_syn::Parity;
-use doctor_syn::{expr, name};
+use doctor_syn::{expr, name, num_digits_for};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
@@ -13,7 +13,7 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 0.5;
 
     let approx = expr!(2.0.powf(x))
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither)
+        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -46,7 +46,7 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 0.5;
 
     let approx = expr!(2.0.powf(x) - 1.0)
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither)
+        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -71,7 +71,7 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 1.0;
 
     let approx = expr!((x + 1.0).log2())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither)
+        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -95,7 +95,7 @@ pub fn gen_log2(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 0.5;
 
     let approx = expr!((x + 1.5).log2())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither)
+        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()

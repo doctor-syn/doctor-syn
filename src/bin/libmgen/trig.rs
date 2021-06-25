@@ -4,6 +4,7 @@ use doctor_syn::{expr, name};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::f64::consts::PI;
+use doctor_syn::{num_digits_for};
 
 pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
     let suffix = format!("f{}", num_bits);
@@ -14,14 +15,14 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 0.25;
 
     let sin_approx = expr!((s * 3.1415926535897932384626433).sin())
-        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd)
+        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix.clone()))
         .unwrap()
         .into_inner();
 
     let cos_approx = expr!(-(c * 3.1415926535897932384626433).cos())
-        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even)
+        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -53,14 +54,14 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 0.25;
 
     let sin_approx = expr!((s * 3.1415926535897932384626433).sin())
-        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd)
+        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix.clone()))
         .unwrap()
         .into_inner();
 
     let cos_approx = expr!((c * 3.1415926535897932384626433).cos())
-        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even)
+        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -91,7 +92,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     let xmax = 0.5;
 
 //     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).sin())
-//         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
+//         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
 //         .unwrap()
 //         .use_suffix(Some(suffix))
 //         .unwrap()
@@ -114,7 +115,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     let xmax = 0.5;
 
 //     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).cos())
-//         .approx(num_terms, xmin, xmax, name!(x), Parity::Even)
+//         .approx(num_terms, xmin, xmax, name!(x), Parity::Even, num_digits_for(num_bits))
 //         .unwrap()
 //         .use_suffix(Some(suffix))
 //         .unwrap()
@@ -150,7 +151,7 @@ pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 0.499999;
 
     let approx = expr!((x * 3.1415926535897932384626433).tan() * (x * x - 0.25))
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
+        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()

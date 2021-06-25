@@ -49,7 +49,7 @@ fn test_round() {
     );
 }
 
-pub fn pi(num_digits: i32) -> BigDecimal {
+pub fn pi(num_digits: i64) -> BigDecimal {
     // let x : BigDecimal = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679".parse().unwrap();
     //round(x, num_digits as i64)
 
@@ -59,6 +59,14 @@ pub fn pi(num_digits: i32) -> BigDecimal {
 
 pub fn bigd(i: i32) -> BigDecimal {
     BigDecimal::from_i32(i).unwrap()
+}
+
+pub fn bigdf(i: f64) -> BigDecimal {
+    BigDecimal::from_f64(i).unwrap()
+}
+
+pub fn zero() -> BigDecimal {
+    bigd(0)
 }
 
 pub fn one() -> BigDecimal {
@@ -73,11 +81,16 @@ pub fn two() -> BigDecimal {
     bigd(2)
 }
 
+/// Return the number of decimal digits to calculate for a floating point size.
+pub fn num_digits_for(num_bits: usize) -> i64 {
+    if num_bits == 32 { 10 } else { 24 }
+}
+
 // Evaluate McLaurin series of exp-like functions (sin, cos, exp)
 // Note that we would prefer to use round(), but there are bugs in BigDecimal.
 fn mclaurin<F: FnMut(i32, &BigDecimal, &BigDecimal, &BigDecimal) -> Option<BigDecimal>>(
     x: BigDecimal,
-    num_digits: i32,
+    num_digits: i64,
     mut f: F,
 ) -> BigDecimal {
     let mut power = BigDecimal::one();
@@ -111,7 +124,7 @@ fn mclaurin<F: FnMut(i32, &BigDecimal, &BigDecimal, &BigDecimal) -> Option<BigDe
     round(tot, num_digits as i64 + 1).normalized()
 }
 
-pub fn sin(x: BigDecimal, num_digits: i32) -> BigDecimal {
+pub fn sin(x: BigDecimal, num_digits: i64) -> BigDecimal {
     mclaurin(x, num_digits, |i, tot, power, factorial| match i & 3 {
         1 => Some(tot + power / factorial),
         3 => Some(tot - power / factorial),
@@ -119,7 +132,7 @@ pub fn sin(x: BigDecimal, num_digits: i32) -> BigDecimal {
     })
 }
 
-pub fn cos(x: BigDecimal, num_digits: i32) -> BigDecimal {
+pub fn cos(x: BigDecimal, num_digits: i64) -> BigDecimal {
     mclaurin(x, num_digits, |i, tot, power, factorial| match i & 3 {
         0 => Some(tot + power / factorial),
         2 => Some(tot - power / factorial),
@@ -127,17 +140,17 @@ pub fn cos(x: BigDecimal, num_digits: i32) -> BigDecimal {
     })
 }
 
-pub fn exp(x: BigDecimal, num_digits: i32) -> BigDecimal {
+pub fn exp(x: BigDecimal, num_digits: i64) -> BigDecimal {
     mclaurin(x, num_digits, |_i, tot, power, factorial| {
         Some(tot + power / factorial)
     })
 }
 
-pub fn tan(x: BigDecimal, num_digits: i32) -> BigDecimal {
+pub fn tan(x: BigDecimal, num_digits: i64) -> BigDecimal {
     sin(x.clone(), num_digits) / cos(x, num_digits)
 }
 
-pub fn asin(x: BigDecimal, num_digits: i32) -> BigDecimal {
+pub fn asin(x: BigDecimal, num_digits: i64) -> BigDecimal {
     let mut numer = BigDecimal::one();
     let mut denom = BigDecimal::one();
     mclaurin(x, num_digits, |i, tot, power, _factorial| {
@@ -154,11 +167,11 @@ pub fn asin(x: BigDecimal, num_digits: i32) -> BigDecimal {
     })
 }
 
-pub fn acos(x: BigDecimal, num_digits: i32) -> BigDecimal {
+pub fn acos(x: BigDecimal, num_digits: i64) -> BigDecimal {
     pi(num_digits) / two() - asin(x, num_digits)
 }
 
-pub fn atan(x: BigDecimal, num_digits: i32) -> BigDecimal {
+pub fn atan(x: BigDecimal, num_digits: i64) -> BigDecimal {
     if x.abs() > half() {
         // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
         atan(
@@ -178,7 +191,7 @@ pub fn atan(x: BigDecimal, num_digits: i32) -> BigDecimal {
     }
 }
 
-pub fn ln(mut x: BigDecimal, num_digits: i32) -> Option<BigDecimal> {
+pub fn ln(mut x: BigDecimal, num_digits: i64) -> Option<BigDecimal> {
     if x.is_zero() || x.is_negative() {
         return None;
     }
@@ -228,7 +241,7 @@ pub fn ln(mut x: BigDecimal, num_digits: i32) -> Option<BigDecimal> {
     }
 }
 
-pub fn log(x: BigDecimal, base: BigDecimal, num_digits: i32) -> Option<BigDecimal> {
+pub fn log(x: BigDecimal, base: BigDecimal, num_digits: i64) -> Option<BigDecimal> {
     if let (Some(lnx), Some(lnbase)) = (ln(x, num_digits), ln(base, num_digits)) {
         Some(lnx / lnbase)
     } else {
@@ -236,7 +249,7 @@ pub fn log(x: BigDecimal, base: BigDecimal, num_digits: i32) -> Option<BigDecima
     }
 }
 
-pub fn pow(x: BigDecimal, y: BigDecimal, num_digits: i32) -> Option<BigDecimal> {
+pub fn pow(x: BigDecimal, y: BigDecimal, num_digits: i64) -> Option<BigDecimal> {
     if let Some(lnx) = ln(x, num_digits) {
         Some(exp(y * lnx, num_digits))
     } else {

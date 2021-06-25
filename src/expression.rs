@@ -10,7 +10,7 @@ use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
 use syn::{Expr, ExprLit, Lit, parse_quote};
-use bigdecimal::BigDecimal;
+use crate::bdmath::*;
 
 pub enum Parity {
     Odd,
@@ -46,7 +46,7 @@ impl TryFrom<f64> for Expression {
     fn try_from(val: f64) -> Result<Self> {
         let s = format!("{}", val);
         let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
         Ok(Self {
             inner: inner.into(),
         })
@@ -59,7 +59,7 @@ impl TryFrom<f32> for Expression {
     fn try_from(val: f32) -> Result<Self> {
         let s = format!("{}", val);
         let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
         Ok(Self {
             inner: inner.into(),
         })
@@ -70,7 +70,7 @@ impl From<BigDecimal> for Expression {
     fn from(val: BigDecimal) -> Self {
         let s = val.to_string();
         let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site())).unwrap();
+            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s)).unwrap();
         Self {
             inner: inner.into(),
         }
@@ -278,7 +278,7 @@ macro_rules! expr {
 impl std::str::FromStr for Expression {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self> {
-        let inner: Expr = syn::parse_str(s).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+        let inner: Expr = syn::parse_str(s).map_err(|_| Error::CouldNotParse(s.to_owned()))?;
         Ok(Self { inner })
     }
 }
@@ -339,7 +339,7 @@ impl Expression {
     /// assert_eq!(expr!(100 / 10).eval(20).unwrap(), expr!(10));
     /// assert!(expr!(x + 1).eval(20).is_err());
     /// ```
-    pub fn eval(&self, num_digits: i32) -> Result<Expression> {
+    pub fn eval(&self, num_digits: i64) -> Result<Expression> {
         let expr: Expr = Eval {
             num_digits
         }
@@ -354,7 +354,7 @@ impl Expression {
     /// ```ignore
     /// use doctor_syn::{expr, name, Parity};
     ///
-    /// let e = expr!(x).approx(2, 0.0, 1.0, name!(x), Parity::Neither).unwrap();
+    /// let e = expr!(x).approx(2, 0.0, 1.0, name!(x), Parity::Neither, num_digits_for(num_bits)).unwrap();
     /// let expected = expr!(1f64 . mul_add (x , 0f64));
     /// assert_eq!(e, expected));
     /// ```
@@ -365,8 +365,9 @@ impl Expression {
         xmax: f64,
         variable: Name,
         parity: Parity,
+        num_digits: i64,
     ) -> Result<Expression> {
-        approx(self, num_terms, xmin, xmax, variable, parity)
+        approx(self, num_terms, xmin, xmax, variable, parity, num_digits)
     }
 
     /// Expand an expression.

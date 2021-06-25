@@ -22,6 +22,7 @@ pub use expression::{Expression, Parity};
 pub use name::Name;
 pub use std::convert::{TryFrom, TryInto};
 pub use variablelist::VariableList;
+pub use bdmath::num_digits_for;
 
 pub trait Evaluateable:
     TryFrom<Expression, Error = error::Error>

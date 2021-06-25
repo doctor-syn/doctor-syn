@@ -15,7 +15,7 @@ use crate::bdmath::*;
 
 #[derive(Debug, Clone)]
 pub struct Eval {
-    pub(crate) num_digits: i32,
+    pub(crate) num_digits: i64,
 }
 
 fn eval_err(e: Expr) -> Error {
