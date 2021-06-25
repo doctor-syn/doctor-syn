@@ -1,4 +1,5 @@
 use proc_macro2::Span;
+use crate::Expression;
 
 #[derive(Debug)]
 pub enum Error {
@@ -12,7 +13,7 @@ pub enum Error {
     CouldNotConvertToExpression(Span),
     CouldNotConvertFromExpression(Span),
     CouldNotParse(Span),
-    CouldNotEvaulate(Span),
+    CouldNotEvaulate(Expression),
     WrongNumberOfTerms(Span),
 }
 

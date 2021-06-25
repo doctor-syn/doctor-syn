@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
 use crate::polynomial::Polynomial;
-use crate::{Evaluateable, Expression, Name, Parity, VariableList};
+use crate::{Expression, Name, Parity, VariableList};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::convert::TryInto;
@@ -58,19 +58,20 @@ fn mul_add_polynomial(terms: &[f64], variable: Name, parity: Parity, span: Span)
     }
 }
 
-pub fn approx<T: Evaluateable>(
+pub fn approx(
     expr: &Expression,
     num_terms: usize,
-    xmin: T,
-    xmax: T,
+    xmin: f64,
+    xmax: f64,
     variable: Name,
     parity: Parity,
 ) -> Result<Expression> {
-    let err_fn = || Error::CouldNotEvaulate(expr.span());
+    let num_digits = 20;
+    // let err_fn = || Error::CouldNotEvaulate(expr.span());
     use std::f64::consts::PI;
-    let a = (xmax + xmin).to_f64().ok_or_else(err_fn)? * 0.5;
+    let a = (xmax + xmin) * 0.5;
     let b = PI / (num_terms - 1) as f64;
-    let c = (xmax - xmin).to_f64().ok_or_else(err_fn)? * 0.5;
+    let c = (xmax - xmin) * 0.5;
     let mut xvalues = Vec::new();
     let mut yvalues = Vec::new();
     for i in 0..num_terms {
@@ -79,7 +80,7 @@ pub fn approx<T: Evaluateable>(
         let mut vars = VariableList::new();
         vars.add_var(variable.clone(), x.try_into()?);
         let subst = expr.subst(vars)?;
-        let y: f64 = subst.eval()?;
+        let y: f64 = subst.eval(num_digits)?.try_into()?;
         // println!("{} {}", y, subst);
         // println!("x={:16} y={:16} s={:16}", x, y, x.sin());
         xvalues.push(x);

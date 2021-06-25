@@ -21,10 +21,9 @@ pub use name::Name;
 pub use std::convert::{TryFrom, TryInto};
 pub use variablelist::VariableList;
 
-use num_traits::Float;
-
 pub trait Evaluateable:
-    TryFrom<Expression, Error = error::Error> + TryInto<Expression, Error = error::Error> + Float
+    TryFrom<Expression, Error = error::Error>
+    + TryInto<Expression, Error = error::Error>
 {
 }
 
