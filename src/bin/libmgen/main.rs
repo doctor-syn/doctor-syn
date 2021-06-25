@@ -1,7 +1,7 @@
 use quote::quote;
 use std::io::Write;
 
-mod aux;
+mod auxfuncs;
 mod hyperbolic;
 mod inv_trig;
 mod log_exp;
@@ -14,7 +14,7 @@ use inv_trig::*;
 use log_exp::*;
 use recip_sqrt::*;
 use trig::*;
-use aux::*;
+use auxfuncs::*;
 
 fn generate_libm(path: &str, num_bits: usize) -> std::io::Result<()> {
     let mut file = std::fs::File::create(path)?;
