@@ -50,11 +50,13 @@ fn test_round() {
 }
 
 pub fn pi(num_digits: i64) -> BigDecimal {
-    // let x : BigDecimal = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679".parse().unwrap();
-    //round(x, num_digits as i64)
-
-    // Machin series.
-    (atan(one() / bigd(5), num_digits) * bigd(4) - atan(one() / bigd(239), num_digits)) * bigd(4)
+    if num_digits < 100 {
+        let x : BigDecimal = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481".parse().unwrap();
+        round(x, num_digits as i64)
+    } else {
+        // Machin series.
+        (atan(one() / bigd(5), num_digits) * bigd(4) - atan(one() / bigd(239), num_digits)) * bigd(4)
+    }
 }
 
 pub fn bigd(i: i32) -> BigDecimal {

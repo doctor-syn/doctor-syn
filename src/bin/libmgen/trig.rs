@@ -14,14 +14,14 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmin = -0.25;
     let xmax = 0.25;
 
-    let sin_approx = expr!((s * 3.1415926535897932384626433).sin())
+    let sin_approx = expr!((s * PI).sin())
         .approx(num_terms, xmin, xmax, name!(s), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix.clone()))
         .unwrap()
         .into_inner();
 
-    let cos_approx = expr!(-(c * 3.1415926535897932384626433).cos())
+    let cos_approx = expr!(-(c * PI).cos())
         .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
@@ -53,14 +53,14 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmin = -0.25;
     let xmax = 0.25;
 
-    let sin_approx = expr!((s * 3.1415926535897932384626433).sin())
+    let sin_approx = expr!((s * PI).sin())
         .approx(num_terms, xmin, xmax, name!(s), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix.clone()))
         .unwrap()
         .into_inner();
 
-    let cos_approx = expr!((c * 3.1415926535897932384626433).cos())
+    let cos_approx = expr!((c * PI).cos())
         .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
@@ -91,7 +91,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     let xmin = -0.5;
 //     let xmax = 0.5;
 
-//     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).sin())
+//     let approx = expr!((x * PI * 2.0).sin())
 //         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
 //         .unwrap()
 //         .use_suffix(Some(suffix))
@@ -114,7 +114,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     let xmin = -0.5;
 //     let xmax = 0.5;
 
-//     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).cos())
+//     let approx = expr!((x * PI * 2.0).cos())
 //         .approx(num_terms, xmin, xmax, name!(x), Parity::Even, num_digits_for(num_bits))
 //         .unwrap()
 //         .use_suffix(Some(suffix))
@@ -150,7 +150,7 @@ pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmin = -0.499999;
     let xmax = 0.499999;
 
-    let approx = expr!((x * 3.1415926535897932384626433).tan() * (x * x - 0.25))
+    let approx = expr!((x * PI).tan() * (x * x - 0.25))
         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
         .use_suffix(Some(suffix))
