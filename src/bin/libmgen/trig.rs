@@ -1,28 +1,43 @@
 use crate::test::gen_test;
 use doctor_syn::Parity;
 use doctor_syn::{expr, name};
-use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
-use std::f64::consts::PI;
 use doctor_syn::{num_digits_for};
+use proc_macro2::TokenStream;
+use quote::{quote};
+use std::f64::consts::PI;
+use crate::helpers;
 
 pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+    let suffix = helpers::get_suffix(num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
     let xmax = 0.25;
 
     let sin_approx = expr!((s * PI).sin())
-        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(s),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_suffix(Some(suffix.clone()))
         .unwrap()
         .into_inner();
 
     let cos_approx = expr!(-(c * PI).cos())
-        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even, num_digits_for(num_bits))
+        .approx(
+            num_terms + 1,
+            xmin,
+            xmax,
+            name!(c),
+            Parity::Even,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -46,22 +61,36 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+    let suffix = helpers::get_suffix(num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
     let xmax = 0.25;
 
     let sin_approx = expr!((s * PI).sin())
-        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(s),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_suffix(Some(suffix.clone()))
         .unwrap()
         .into_inner();
 
     let cos_approx = expr!((c * PI).cos())
-        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even, num_digits_for(num_bits))
+        .approx(
+            num_terms + 1,
+            xmin,
+            xmax,
+            name!(c),
+            Parity::Even,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -85,8 +114,8 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 // pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize) -> TokenStream {
-//     let suffix = format!("f{}", num_bits);
-//     let fty = format_ident!("f{}", num_bits);
+//     let suffix = helpers::get_suffix(num_bits);
+//     let fty = helpers::get_fty(num_bits);
 
 //     let xmin = -0.5;
 //     let xmax = 0.5;
@@ -108,8 +137,8 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 // }
 
 // pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize) -> TokenStream {
-//     let suffix = format!("f{}", num_bits);
-//     let fty = format_ident!("f{}", num_bits);
+//     let suffix = helpers::get_suffix(num_bits);
+//     let fty = helpers::get_fty(num_bits);
 
 //     let xmin = -0.5;
 //     let xmax = 0.5;
@@ -131,7 +160,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 // }
 
 pub fn gen_sin_cos(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     // There is some synergy between sin and cos, but not as much as ULP-focused approximants.
     quote!(
@@ -142,8 +171,8 @@ pub fn gen_sin_cos(_num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+    let suffix = helpers::get_suffix(num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     // Use a Padé approximation. The expression (x*x - pi*pi/4) goes to zero at the poles
     // cancelling the infinities, similar to sinc(x).
@@ -151,7 +180,14 @@ pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
     let xmax = 0.499999;
 
     let approx = expr!((x * PI).tan() * (x * x - 0.25))
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(x),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_suffix(Some(suffix))
         .unwrap()
@@ -172,14 +208,15 @@ pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
 // Generate accurate sin, cos, tan, sin_cos.
 // Return functions and tests.
 pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
-    let sin = gen_quadrant_sin(8, num_bits);
-    let cos = gen_quadrant_cos(8, num_bits);
+    let num_terms = helpers::get_quadrant_terms(num_bits);
+    let sin = gen_quadrant_sin(num_terms, num_bits);
+    let cos = gen_quadrant_cos(num_terms, num_bits);
     let tan = gen_tan(16, num_bits);
-    let sin_cos = gen_sin_cos(9, num_bits);
+    let sin_cos = gen_sin_cos(num_terms, num_bits);
 
-    let fty = format_ident!("f{}", num_bits);
+    let fty = helpers::get_fty(num_bits);
 
-    let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
+    let bit = (2.0_f64).powi(if num_bits == 32 { -23 } else { -52 });
 
     let test_sin = gen_test(
         quote!(test_sin),
@@ -201,7 +238,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_tan),
         quote!(x.tan()),
         quote!(tan(x as #fty) as f64),
-        bit * 2.0,
+        bit * 3.0,
         -PI / 4.0,
         PI / 4.0,
     );

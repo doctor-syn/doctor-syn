@@ -68,7 +68,10 @@ impl TryFrom<f32> for Expression {
 
 impl From<BigDecimal> for Expression {
     fn from(val: BigDecimal) -> Self {
+        // use bigdecimal::ToPrimitive;
+        // let f = val.to_f64().unwrap();
         let s = val.to_string();
+        // println!("From<BigDecimal> {}", s);
         let inner: ExprLit =
             syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s)).unwrap();
         Self {

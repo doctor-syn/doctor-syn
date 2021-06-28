@@ -1,13 +1,14 @@
 use doctor_syn::Parity;
 use doctor_syn::{expr, name, num_digits_for};
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::{quote};
+use crate::helpers;
 
 use crate::test::gen_test;
 
 pub fn gen_atan2(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+    let suffix = helpers::get_suffix(num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     let xmin = -1.0;
     let xmax = 1.0;
@@ -35,8 +36,8 @@ pub fn gen_atan2(num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 pub fn gen_asin(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+    let suffix = helpers::get_suffix(num_bits);
+    let fty = helpers::get_fty(num_bits);
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
@@ -61,8 +62,8 @@ pub fn gen_asin(num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 pub fn gen_acos(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+    let suffix = helpers::get_suffix(num_bits);
+    let fty = helpers::get_fty(num_bits);
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
@@ -87,8 +88,8 @@ pub fn gen_acos(num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 pub fn gen_atan(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+    let suffix = helpers::get_suffix(num_bits);
+    let fty = helpers::get_fty(num_bits);
     let lim = quote!(1.0);
 
     let approx = expr!(x.atan())
@@ -120,7 +121,7 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
     let acos = gen_acos(22, num_bits);
     let atan = gen_atan(22, num_bits);
 
-    let fty = format_ident!("f{}", num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
 
