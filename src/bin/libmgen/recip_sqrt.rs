@@ -4,7 +4,7 @@ use crate::helpers;
 
 use crate::test::gen_test;
 
-pub fn gen_sqrt(num_bits: usize) -> TokenStream {
+pub fn gen_sqrt(num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
     // Probably better done with a reciprocal estimate or bitcast log divide.
     //
@@ -27,7 +27,7 @@ pub fn gen_sqrt(num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_cbrt(num_bits: usize) -> TokenStream {
+pub fn gen_cbrt(num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
     // Probably better done with a bitcast log divide.
     //
@@ -48,7 +48,7 @@ pub fn gen_cbrt(num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_recip(num_bits: usize) -> TokenStream {
+pub fn gen_recip(num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
     // Probably better done with a reciprocal estimate and refinement.
     //
@@ -70,7 +70,7 @@ pub fn gen_recip(num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_hypot(num_bits: usize) -> TokenStream {
+pub fn gen_hypot(num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     // see https://en.wikipedia.org/wiki/Hypot
@@ -87,13 +87,13 @@ pub fn gen_hypot(num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_recip_sqrt(num_bits: usize) -> (TokenStream, TokenStream) {
+pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
     let fty = helpers::get_fty(num_bits);
 
-    let sqrt = gen_sqrt(num_bits);
-    let cbrt = gen_cbrt(num_bits);
-    let hypot = gen_hypot(num_bits);
-    let recip = gen_recip(num_bits);
+    let sqrt = gen_sqrt(num_bits, number_type);
+    let cbrt = gen_cbrt(num_bits, number_type);
+    let hypot = gen_hypot(num_bits, number_type);
+    let recip = gen_recip(num_bits, number_type);
 
     let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
 

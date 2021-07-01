@@ -8,7 +8,7 @@ pub mod transformation;
 pub mod variablelist;
 pub mod visitor;
 
-mod bdmath;
+pub mod bdmath;
 
 // Re-export for use in macros.
 pub use syn;

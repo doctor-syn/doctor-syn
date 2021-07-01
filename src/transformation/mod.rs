@@ -4,7 +4,7 @@ pub mod eval;
 pub mod expand;
 pub mod paren;
 pub mod subst;
-pub mod use_suffix;
+pub mod use_number_type;
 
 mod tools;
 

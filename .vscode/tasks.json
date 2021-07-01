@@ -6,7 +6,7 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "clear && cargo run --bin libmgen && rustfmt tests/libm*.rs && cargo test",
+            "command": "clear && RUST_BACKTRACE=1 cargo run --release --bin libmgen && rustfmt tests/libm*.rs && cargo test --release ",
             "group": {
                 "kind": "build",
                 "isDefault": true

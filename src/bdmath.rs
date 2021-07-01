@@ -99,6 +99,8 @@ fn maclaurin<F: FnMut(i32, &BigDecimal, &BigDecimal, &BigDecimal) -> Option<BigD
     let mut factorial = BigDecimal::one();
     let mut tot = BigDecimal::zero();
     let mut i = 0;
+    // let imax = x.digits() as i32 * 10;
+    let imax = 30000;
     loop {
         let new_tot = f(i, &tot, &power, &factorial);
 
@@ -111,7 +113,7 @@ fn maclaurin<F: FnMut(i32, &BigDecimal, &BigDecimal, &BigDecimal) -> Option<BigD
             if new_tot == tot {
                 break;
             }
-            if i > 3000 {
+            if i > imax {
                 panic!("Sequence did not converge.");
             }
             tot = new_tot;
@@ -153,20 +155,28 @@ pub fn tan(x: BigDecimal, num_digits: i64) -> BigDecimal {
 }
 
 pub fn asin(x: BigDecimal, num_digits: i64) -> BigDecimal {
-    let mut numer = BigDecimal::one();
-    let mut denom = BigDecimal::one();
-    maclaurin(x, num_digits, |i, tot, power, _factorial| {
-        if (i & 1) != 0 {
-            let z = bigd(i);
-            //println!("numer={} denom={}", numer, denom);
-            let res = tot + power * &numer / &denom / &z;
-            numer *= &z;
-            denom *= bigd(i + 1);
-            Some(res)
-        } else {
-            None
-        }
-    })
+    if x.abs() > half() {
+        // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        atan(
+            (one() + &x * &x).sqrt().unwrap() / (one() + &x),
+            num_digits,
+        ) * two() * x.signum()
+    } else {
+        let mut numer = BigDecimal::one();
+        let mut denom = BigDecimal::one();
+        maclaurin(x, num_digits, |i, tot, power, _factorial| {
+            if (i & 1) != 0 {
+                let z = bigd(i);
+                //println!("numer={} denom={}", numer, denom);
+                let res = tot + power * &numer / &denom / &z;
+                numer *= &z;
+                denom *= bigd(i + 1);
+                Some(res)
+            } else {
+                None
+            }
+        })
+    }
 }
 
 pub fn acos(x: BigDecimal, num_digits: i64) -> BigDecimal {
@@ -259,7 +269,7 @@ pub fn pow(x: BigDecimal, y: BigDecimal, num_digits: i64) -> Option<BigDecimal> 
     }
 }
 
-// #[test]
+#[test]
 fn test_functions() {
     use crate::expr;
 

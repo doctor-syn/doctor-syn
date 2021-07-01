@@ -7,8 +7,7 @@ use quote::{quote};
 use std::f64::consts::PI;
 use crate::helpers;
 
-pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = helpers::get_suffix(num_bits);
+pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     // Quadrant sin/cos over a smaller range.
@@ -25,7 +24,7 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
             num_digits_for(num_bits),
         )
         .unwrap()
-        .use_suffix(Some(suffix.clone()))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -39,7 +38,7 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
             num_digits_for(num_bits),
         )
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -60,8 +59,7 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = helpers::get_suffix(num_bits);
+pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     // Quadrant sin/cos over a smaller range.
@@ -78,7 +76,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
             num_digits_for(num_bits),
         )
         .unwrap()
-        .use_suffix(Some(suffix.clone()))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -92,7 +90,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
             num_digits_for(num_bits),
         )
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -113,7 +111,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-// pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize) -> TokenStream {
+// pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
 //     let suffix = helpers::get_suffix(num_bits);
 //     let fty = helpers::get_fty(num_bits);
 
@@ -123,7 +121,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     let approx = expr!((x * PI * 2.0).sin())
 //         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
 //         .unwrap()
-//         .use_suffix(Some(suffix))
+//         .use_number_type(number_type)
 //         .unwrap()
 //         .into_inner();
 
@@ -136,7 +134,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     )
 // }
 
-// pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize) -> TokenStream {
+// pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
 //     let suffix = helpers::get_suffix(num_bits);
 //     let fty = helpers::get_fty(num_bits);
 
@@ -146,7 +144,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     let approx = expr!((x * PI * 2.0).cos())
 //         .approx(num_terms, xmin, xmax, name!(x), Parity::Even, num_digits_for(num_bits))
 //         .unwrap()
-//         .use_suffix(Some(suffix))
+//         .use_number_type(number_type)
 //         .unwrap()
 //         .into_inner();
 
@@ -159,7 +157,7 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     )
 // }
 
-pub fn gen_sin_cos(_num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_sin_cos(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     // There is some synergy between sin and cos, but not as much as ULP-focused approximants.
@@ -170,8 +168,7 @@ pub fn gen_sin_cos(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = helpers::get_suffix(num_bits);
+pub fn gen_tan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     // Use a Padé approximation. The expression (x*x - pi*pi/4) goes to zero at the poles
@@ -189,7 +186,7 @@ pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
             num_digits_for(num_bits),
         )
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -207,12 +204,13 @@ pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
 
 // Generate accurate sin, cos, tan, sin_cos.
 // Return functions and tests.
-pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
-    let num_terms = helpers::get_quadrant_terms(num_bits);
-    let sin = gen_quadrant_sin(num_terms, num_bits);
-    let cos = gen_quadrant_cos(num_terms, num_bits);
-    let tan = gen_tan(16, num_bits);
-    let sin_cos = gen_sin_cos(num_terms, num_bits);
+pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
+    let cos_sin_num_terms = helpers::get_quadrant_terms(num_bits);
+    let tan_num_terms = helpers::get_tan_terms(num_bits);
+    let sin = gen_quadrant_sin(cos_sin_num_terms, num_bits, number_type);
+    let cos = gen_quadrant_cos(cos_sin_num_terms, num_bits, number_type);
+    let tan = gen_tan(tan_num_terms, num_bits, number_type);
+    let sin_cos = gen_sin_cos(cos_sin_num_terms, num_bits, number_type);
 
     let fty = helpers::get_fty(num_bits);
 
@@ -222,7 +220,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_sin),
         quote!(x.sin()),
         quote!(sin(x as #fty) as f64),
-        bit * 2.0,
+        bit * 3.0,
         -PI,
         PI,
     );
@@ -230,7 +228,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_cos),
         quote!(x.cos()),
         quote!(cos(x as #fty) as f64),
-        bit * 2.0,
+        bit * 4.0,
         -PI,
         PI,
     );
@@ -238,7 +236,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_tan),
         quote!(x.tan()),
         quote!(tan(x as #fty) as f64),
-        bit * 3.0,
+        bit * 6.0,
         -PI / 4.0,
         PI / 4.0,
     );
@@ -246,7 +244,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_sin_cos_1),
         quote!(x.sin()),
         quote!(sin_cos(x as #fty).0 as f64),
-        bit * 2.0,
+        bit * 3.0,
         -PI,
         PI,
     );
@@ -254,7 +252,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_sin_cos_2),
         quote!(x.cos()),
         quote!(sin_cos(x as #fty).1 as f64),
-        bit * 2.0,
+        bit * 4.0,
         -PI,
         PI,
     );

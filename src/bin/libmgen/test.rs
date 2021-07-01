@@ -1,5 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
+use doctor_syn::*;
+use doctor_syn::bdmath::*;
+use doctor_syn::bigdecimal::ToPrimitive;
 
 pub fn gen_test(
     test_name: TokenStream,
@@ -9,9 +12,47 @@ pub fn gen_test(
     tmin: f64,
     tmax: f64,
 ) -> TokenStream {
+    const N : i32 = 128;
+    let num_digits = 20;
+    let refe : Expression = syn::parse2::<syn::Expr>(refexpr.clone()).unwrap().into();
+    let variable = name!(x);
+    let mut accurate_values = TokenStream::new();
+    for i in 1..N {
+        let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
+        let xe : Expression = x.try_into().unwrap();
+        let mut vars = VariableList::new();
+        vars.add_var(variable.clone(), xe.into());
+        let subst = refe.subst(vars).unwrap();
+        if let Ok(ye) = subst.eval(num_digits) {
+            let y: BigDecimal = ye.try_into().unwrap();
+            let y = y.to_f64().unwrap();
+            let row = quote!((#x,#y),);
+            accurate_values.extend(row.into_iter());
+        }
+    }
+
     quote!(
         #[test]
         fn #test_name() {
+            let accurate_values : &[(f64, f64)] = &[#accurate_values];
+
+            let mut max_ref_error = 0.0_f64;
+            let mut max_lib_error = 0.0_f64;
+            for (x, y) in accurate_values {
+                let x = *x;
+                let y = *y;
+                let y1 = #refexpr;
+                let y2 = #expr;
+                let eref = (y1 - y).abs();
+                let elib = (y2 - y).abs();
+                max_ref_error = max_ref_error.max(eref);
+                max_lib_error = max_lib_error.max(elib);
+                println!(" x={:25.20} y1={:25.20} y2={:25.20} eref={:25.20} elib={:25.20}", x, y1, y2, eref, elib);
+            }
+            println!("# eref={:25.20} elib={:25.20}", max_ref_error, max_lib_error);
+            assert!(!max_lib_error.is_nan());
+            assert!(max_lib_error <= #accuracy);
+
             const N: i32 = 0x100000;
             let tmin = #tmin;
             let tmax = #tmax;
@@ -39,3 +80,4 @@ pub fn gen_test(
         }
     )
 }
+

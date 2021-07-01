@@ -6,8 +6,7 @@ use crate::helpers;
 
 use crate::test::*;
 
-pub fn gen_exp2(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = helpers::get_suffix(num_bits);
+pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
     let uty = helpers::get_uty(num_bits);
     let one = helpers::get_one(num_bits);
@@ -19,7 +18,7 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize) -> TokenStream {
     let approx = expr!(2.0.powf(x))
         .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -33,7 +32,7 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_exp(_num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_exp(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
     quote!(
         fn exp(x: #fty) -> #fty {
@@ -42,10 +41,9 @@ pub fn gen_exp(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_exp_m1(num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
     let uty = helpers::get_uty(num_bits);
-    let suffix = helpers::get_suffix(num_bits);
     let one = helpers::get_one(num_bits);
     let escale = helpers::get_escale(num_bits);
 
@@ -55,7 +53,7 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize) -> TokenStream {
     let approx = expr!(2.0.powf(x) - 1.0)
         .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -70,9 +68,8 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_ln_1p(num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
-    let suffix = helpers::get_suffix(num_bits);
 
     let xmin = 0.0;
     let xmax = 1.0;
@@ -80,7 +77,7 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize) -> TokenStream {
     let approx = expr!((x + 1.0).log2())
         .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -94,9 +91,8 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_log2(num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_log2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
-    let suffix = helpers::get_suffix(num_bits);
     let one = helpers::get_one(num_bits);
     let escale = helpers::get_escale(num_bits);
 
@@ -106,7 +102,7 @@ pub fn gen_log2(num_terms: usize, num_bits: usize) -> TokenStream {
     let approx = expr!((x + 1.5).log2())
         .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -120,7 +116,7 @@ pub fn gen_log2(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_ln(_num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_ln(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     quote!(
@@ -130,7 +126,7 @@ pub fn gen_ln(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_log10(_num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_log10(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     quote!(
@@ -140,7 +136,7 @@ pub fn gen_log10(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_log(_num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_log(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     quote!(
@@ -150,7 +146,7 @@ pub fn gen_log(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_powf(_num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_powf(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     quote!(
@@ -160,7 +156,7 @@ pub fn gen_powf(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_powi(_num_terms: usize, num_bits: usize) -> TokenStream {
+pub fn gen_powi(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
 
     // Note, for constant values under 16, the code path is very short.
@@ -190,18 +186,18 @@ pub fn gen_powi(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_log_exp(num_bits: usize) -> (TokenStream, TokenStream) {
-    let exp = gen_exp(7, num_bits);
-    let exp2 = gen_exp2(7, num_bits);
-    let exp_m1 = gen_exp_m1(7, num_bits);
+pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
+    let exp = gen_exp(7, num_bits, number_type);
+    let exp2 = gen_exp2(7, num_bits, number_type);
+    let exp_m1 = gen_exp_m1(7, num_bits, number_type);
 
-    let ln = gen_ln(9, num_bits);
-    let ln_1p = gen_ln_1p(9, num_bits);
-    let log2 = gen_log2(9, num_bits);
-    let log10 = gen_log10(9, num_bits);
-    let log = gen_log(9, num_bits);
-    let powf = gen_powf(16, num_bits);
-    let powi = gen_powi(16, num_bits);
+    let ln = gen_ln(9, num_bits, number_type);
+    let ln_1p = gen_ln_1p(9, num_bits, number_type);
+    let log2 = gen_log2(9, num_bits, number_type);
+    let log10 = gen_log10(9, num_bits, number_type);
+    let log = gen_log(9, num_bits, number_type);
+    let powf = gen_powf(16, num_bits, number_type);
+    let powi = gen_powi(16, num_bits, number_type);
 
     let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
     let fty = helpers::get_fty(num_bits);

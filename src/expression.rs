@@ -1,7 +1,8 @@
+use crate::bdmath::*;
 use crate::error::{Error, Result};
 use crate::transformation::{
     approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst,
-    use_suffix::UseSuffix,
+    use_number_type::UseNumberType,
 };
 use crate::visitor::Visitor;
 use crate::{Name, VariableList};
@@ -9,8 +10,7 @@ use proc_macro2::Span;
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{Expr, ExprLit, Lit, parse_quote};
-use crate::bdmath::*;
+use syn::{parse_quote, Expr, ExprLit, Lit};
 
 pub enum Parity {
     Odd,
@@ -31,7 +31,7 @@ impl From<Expr> for Expression {
 
 impl From<bool> for Expression {
     fn from(expr: bool) -> Self {
-        let e : Expr = if expr {
+        let e: Expr = if expr {
             parse_quote!(true)
         } else {
             parse_quote!(false)
@@ -40,43 +40,53 @@ impl From<bool> for Expression {
     }
 }
 
-impl TryFrom<f64> for Expression {
-    type Error = Error;
+// impl TryFrom<f64> for Expression {
+//     type Error = Error;
 
-    fn try_from(val: f64) -> Result<Self> {
-        let s = format!("{}", val);
-        let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
-        Ok(Self {
-            inner: inner.into(),
-        })
+//     fn try_from(val: f64) -> Result<Self> {
+//         let s = format!("{}", val);
+//         let inner: ExprLit = syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
+//         Ok(Self {
+//             inner: inner.into(),
+//         })
+//     }
+// }
+
+// impl TryFrom<f32> for Expression {
+//     type Error = Error;
+
+//     fn try_from(val: f32) -> Result<Self> {
+//         let s = format!("{}", val);
+//         let inner: ExprLit = syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
+//         Ok(Self {
+//             inner: inner.into(),
+//         })
+//     }
+// }
+
+impl From<f64> for Expression {
+    fn from(val: f64) -> Self {
+        let bd = BigDecimal::from_f64(val).unwrap();
+        Expression::from(bd)
     }
 }
 
-impl TryFrom<f32> for Expression {
-    type Error = Error;
-
-    fn try_from(val: f32) -> Result<Self> {
-        let s = format!("{}", val);
-        let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
-        Ok(Self {
-            inner: inner.into(),
-        })
+impl From<f32> for Expression {
+    fn from(val: f32) -> Self {
+        let bd = BigDecimal::from_f32(val).unwrap();
+        Expression::from(bd)
     }
 }
 
 impl From<BigDecimal> for Expression {
     fn from(val: BigDecimal) -> Self {
-        // use bigdecimal::ToPrimitive;
-        // let f = val.to_f64().unwrap();
         let s = val.to_string();
-        // println!("From<BigDecimal> {}", s);
-        let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s)).unwrap();
-        Self {
-            inner: inner.into(),
+        let inner = ExprLit {
+            attrs: Vec::new(),
+            lit: syn::LitFloat::new(s.as_str(), Span::call_site()).into(),
         }
+        .into();
+        Self { inner }
     }
 }
 
@@ -315,8 +325,12 @@ impl Expression {
     /// ```
     pub fn is_numeric(&self) -> bool {
         match self.inner {
-            Expr::Lit(ExprLit { lit: Lit::Int(_), .. }) => true,
-            Expr::Lit(ExprLit { lit: Lit::Float(_), .. }) => true,
+            Expr::Lit(ExprLit {
+                lit: Lit::Int(_), ..
+            }) => true,
+            Expr::Lit(ExprLit {
+                lit: Lit::Float(_), ..
+            }) => true,
             _ => false,
         }
     }
@@ -343,10 +357,7 @@ impl Expression {
     /// assert!(expr!(x + 1).eval(20).is_err());
     /// ```
     pub fn eval(&self, num_digits: i64) -> Result<Expression> {
-        let expr: Expr = Eval {
-            num_digits
-        }
-        .visit_expr(&self.inner)?;
+        let expr: Expr = Eval { num_digits }.visit_expr(&self.inner)?;
         Ok(Expression::from(expr))
     }
 
@@ -435,9 +446,16 @@ impl Expression {
     /// ```
     /// use doctor_syn::{expr};
     ///
-    /// assert_eq!(expr!(1.0f64).use_suffix(Some("f32".to_string())).unwrap(), expr!(1.0_f32));
+    /// assert_eq!(expr!(1.0f64).use_number_type("f32_hex").unwrap(), expr!(f32 :: from_bits (1065353216u32)));
     /// ```
-    pub fn use_suffix(&self, float_suffix: Option<String>) -> Result<Expression> {
-        Ok(UseSuffix { float_suffix }.visit_expr(&self.inner)?.into())
+    pub fn use_number_type(
+        &self,
+        number_type: &str,
+    ) -> Result<Expression> {
+        Ok(UseNumberType {
+            number_type,
+        }
+        .visit_expr(&self.inner)?
+        .into())
     }
 }

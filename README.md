@@ -20,7 +20,7 @@ fn gen_cos() -> TokenStream {
     let approx = expr!((x * PI * 2.0).cos() * -1.0)
         .approx(13, xmin, xmax, name!(x), Parity::Even)
         .unwrap()
-        .use_suffix(Some("f32".to_string()))
+        .use_number_type(Some("f32".to_string()))
         .unwrap()
         .into_inner();
 
