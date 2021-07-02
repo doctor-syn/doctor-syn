@@ -348,10 +348,10 @@ impl Expression {
     /// use doctor_syn::{expr};
     ///
     /// assert_eq!(expr!(-(1)).eval(20).unwrap(), expr!(0 - 1).eval(20).unwrap());
-    /// assert_eq!(expr!(1 + 1).eval(20).unwrap(), expr!(2 + 0));
-    /// assert_eq!(expr!(1 - 1).eval(20).unwrap(), expr!(0 + 0));
-    /// assert_eq!(expr!(2 * 2).eval(20).unwrap(), expr!(4 + 0));
-    /// assert_eq!(expr!(100 / 10).eval(20).unwrap(), expr!(10 + 0));
+    /// assert_eq!(expr!(1 + 1).eval(20).unwrap(), expr!(2 + 0).eval(20).unwrap());
+    /// assert_eq!(expr!(1 - 1).eval(20).unwrap(), expr!(0 + 0).eval(20).unwrap());
+    /// assert_eq!(expr!(2 * 2).eval(20).unwrap(), expr!(4 + 0).eval(20).unwrap());
+    /// assert_eq!(expr!(100 / 10).eval(20).unwrap(), expr!(10 + 0).eval(20).unwrap());
     /// assert!(expr!(x + 1).eval(20).is_err());
     /// ```
     pub fn eval(&self, num_digits: i64) -> Result<Expression> {
