@@ -34,9 +34,11 @@ jobs:
       - name: Dump/Format the generated libm for debugging purposes
         run: |
           # Dump a formatted version to stdout, so that it can be inspected.
-          rustfmt --emit=stdout tests/libm.rs
+          rustfmt --emit=stdout tests/libm32.rs
+          rustfmt --emit=stdout tests/libm64.rs
           # Also actually format it, to improve error output.
-          rustfmt tests/libm.rs
+          rustfmt tests/libm32.rs
+          rustfmt tests/libm64.rs
       # Ensure the generated libm still passes tests
       - run: cargo test --verbose --workspace
 
@@ -54,7 +56,9 @@ jobs:
       - name: Regenerate libm
         run: |
           cargo run --bin libmgen
-          rustfmt --emit=stdout tests/libm.rs
-          rustfmt tests/libm.rs
+          rustfmt --emit=stdout tests/libm32.rs
+          rustfmt tests/libm32.rs
+          rustfmt --emit=stdout tests/libm64.rs
+          rustfmt tests/libm64.rs
       # See if the new libm has warnings
       - run: cargo check --test libm
