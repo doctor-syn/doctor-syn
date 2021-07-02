@@ -61,4 +61,6 @@ jobs:
           rustfmt --emit=stdout tests/libm64.rs
           rustfmt tests/libm64.rs
       # See if the new libm has warnings
-      - run: cargo check --test libm
+      - run: |
+          cargo check --test libm32
+          cargo check --test libm64
