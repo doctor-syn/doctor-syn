@@ -1,21 +1,21 @@
 use doctor_syn::Parity;
-use doctor_syn::{expr, name};
+use doctor_syn::{expr, name, num_digits_for};
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::{quote};
+use crate::helpers;
 
 use crate::test::gen_test;
 
-pub fn gen_atan2(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_atan2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
 
     let xmin = -1.0;
     let xmax = 1.0;
 
     let approx = expr!(x.atan())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
+        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -34,15 +34,14 @@ pub fn gen_atan2(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_asin(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_asin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
-        .approx(num_terms, -0.9, 0.9, name!(x), Parity::Odd)
+        .approx(num_terms, -0.9, 0.9, name!(x), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -60,15 +59,14 @@ pub fn gen_asin(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_acos(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_acos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
-        .approx(num_terms, -0.9, 0.9, name!(x), Parity::Odd)
+        .approx(num_terms, -0.9, 0.9, name!(x), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -86,15 +84,14 @@ pub fn gen_acos(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_atan(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_atan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     let lim = quote!(1.0);
 
     let approx = expr!(x.atan())
-        .approx(num_terms, -1.0, 1.0, name!(x), Parity::Odd)
+        .approx(num_terms, -1.0, 1.0, name!(x), Parity::Odd, num_digits_for(num_bits))
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -114,13 +111,13 @@ pub fn gen_atan(num_terms: usize, num_bits: usize) -> TokenStream {
 
 // Generate accurate sin, cos, tan, sin_cos.
 // Return functions and tests.
-pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
-    let atan2 = gen_atan2(16, num_bits);
-    let asin = gen_asin(22, num_bits);
-    let acos = gen_acos(22, num_bits);
-    let atan = gen_atan(22, num_bits);
+pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
+    let atan2 = gen_atan2(16, num_bits, number_type);
+    let asin = gen_asin(22, num_bits, number_type);
+    let acos = gen_acos(22, num_bits, number_type);
+    let atan = gen_atan(22, num_bits, number_type);
 
-    let fty = format_ident!("f{}", num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
 
@@ -129,16 +126,16 @@ pub fn gen_inv_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(x.asin()),
         quote!(asin(x as #fty) as f64),
         bit * 9.0,
-        -0.999,
-        0.999,
+        -0.99,
+        0.99,
     );
     let test_acos = gen_test(
         quote!(test_acos),
         quote!(x.acos()),
         quote!(acos(x as #fty) as f64),
         bit * 9.0,
-        -0.999,
-        0.999,
+        -0.99,
+        0.99,
     );
     let test_atan = gen_test(
         quote!(test_atan),

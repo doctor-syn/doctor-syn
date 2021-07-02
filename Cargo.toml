@@ -16,3 +16,5 @@ syn = { version = "1.0", features = ["full", "extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 num-traits = "0.2"
+bigdecimal = "0.2"
+num-bigint = "0.3"

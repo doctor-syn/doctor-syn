@@ -1,10 +1,11 @@
 use crate::test::*;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::{quote};
+use crate::helpers;
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
-pub fn gen_sinh(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_sinh(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     quote!(
         fn sinh(x: #fty) -> #fty {
             let a = x.mul_add(std::#fty::consts::LOG2_E, -1.0);
@@ -15,8 +16,8 @@ pub fn gen_sinh(_num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
-pub fn gen_cosh(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_cosh(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     quote!(
         fn cosh(x: #fty) -> #fty {
             let a = x.mul_add(std::#fty::consts::LOG2_E, -1.0);
@@ -27,8 +28,8 @@ pub fn gen_cosh(_num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
-pub fn gen_tanh(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_tanh(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     quote!(
         fn tanh(x: #fty) -> #fty {
             let exp2x = exp2(x * (std::#fty::consts::LOG2_E * 2.0));
@@ -38,8 +39,8 @@ pub fn gen_tanh(_num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 // https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
-pub fn gen_asinh(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_asinh(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     quote!(
         fn asinh(x: #fty) -> #fty {
             ln(x + (x * x + 1.0).sqrt())
@@ -48,8 +49,8 @@ pub fn gen_asinh(_num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 // https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
-pub fn gen_acosh(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_acosh(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     quote!(
         fn acosh(x: #fty) -> #fty {
             ln(x + (x * x - 1.0).sqrt())
@@ -58,8 +59,8 @@ pub fn gen_acosh(_num_terms: usize, num_bits: usize) -> TokenStream {
 }
 
 // https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
-pub fn gen_atanh(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_atanh(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     quote!(
         fn atanh(x: #fty) -> #fty {
             (ln(1.0 + x) - ln(1.0 - x)) * 0.5
@@ -67,17 +68,17 @@ pub fn gen_atanh(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_hyperbolic(num_bits: usize) -> (TokenStream, TokenStream) {
-    let sinh = gen_sinh(7, num_bits);
-    let cosh = gen_cosh(7, num_bits);
-    let tanh = gen_tanh(7, num_bits);
+pub fn gen_hyperbolic(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
+    let sinh = gen_sinh(7, num_bits, number_type);
+    let cosh = gen_cosh(7, num_bits, number_type);
+    let tanh = gen_tanh(7, num_bits, number_type);
 
-    let asinh = gen_asinh(7, num_bits);
-    let acosh = gen_acosh(7, num_bits);
-    let atanh = gen_atanh(7, num_bits);
+    let asinh = gen_asinh(7, num_bits, number_type);
+    let acosh = gen_acosh(7, num_bits, number_type);
+    let atanh = gen_atanh(7, num_bits, number_type);
 
     let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
-    let fty = format_ident!("f{}", num_bits);
+    let fty = helpers::get_fty(num_bits);
 
     let test_cosh = gen_test(
         quote!(test_cosh),

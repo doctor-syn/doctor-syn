@@ -1,29 +1,44 @@
 use crate::test::gen_test;
 use doctor_syn::Parity;
 use doctor_syn::{expr, name};
+use doctor_syn::{num_digits_for};
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::{quote};
 use std::f64::consts::PI;
+use crate::helpers;
 
-pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
     let xmax = 0.25;
 
-    let sin_approx = expr!((s * 3.1415926535897932384626433).sin())
-        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd)
+    let sin_approx = expr!((s * PI).sin())
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(s),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
-        .use_suffix(Some(suffix.clone()))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
-    let cos_approx = expr!(-(c * 3.1415926535897932384626433).cos())
-        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even)
+    let cos_approx = expr!(-(c * PI).cos())
+        .approx(
+            num_terms + 1,
+            xmin,
+            xmax,
+            name!(c),
+            Parity::Even,
+            num_digits_for(num_bits),
+        )
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -44,25 +59,38 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
     let xmax = 0.25;
 
-    let sin_approx = expr!((s * 3.1415926535897932384626433).sin())
-        .approx(num_terms, xmin, xmax, name!(s), Parity::Odd)
+    let sin_approx = expr!((s * PI).sin())
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(s),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
-        .use_suffix(Some(suffix.clone()))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
-    let cos_approx = expr!((c * 3.1415926535897932384626433).cos())
-        .approx(num_terms + 1, xmin, xmax, name!(c), Parity::Even)
+    let cos_approx = expr!((c * PI).cos())
+        .approx(
+            num_terms + 1,
+            xmin,
+            xmax,
+            name!(c),
+            Parity::Even,
+            num_digits_for(num_bits),
+        )
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -83,17 +111,17 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-// pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize) -> TokenStream {
-//     let suffix = format!("f{}", num_bits);
-//     let fty = format_ident!("f{}", num_bits);
+// pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+//     let suffix = helpers::get_suffix(num_bits);
+//     let fty = helpers::get_fty(num_bits);
 
 //     let xmin = -0.5;
 //     let xmax = 0.5;
 
-//     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).sin())
-//         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
+//     let approx = expr!((x * PI * 2.0).sin())
+//         .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
 //         .unwrap()
-//         .use_suffix(Some(suffix))
+//         .use_number_type(number_type)
 //         .unwrap()
 //         .into_inner();
 
@@ -106,17 +134,17 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     )
 // }
 
-// pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize) -> TokenStream {
-//     let suffix = format!("f{}", num_bits);
-//     let fty = format_ident!("f{}", num_bits);
+// pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+//     let suffix = helpers::get_suffix(num_bits);
+//     let fty = helpers::get_fty(num_bits);
 
 //     let xmin = -0.5;
 //     let xmax = 0.5;
 
-//     let approx = expr!((x * 3.1415926535897932384626433 * 2.0).cos())
-//         .approx(num_terms, xmin, xmax, name!(x), Parity::Even)
+//     let approx = expr!((x * PI * 2.0).cos())
+//         .approx(num_terms, xmin, xmax, name!(x), Parity::Even, num_digits_for(num_bits))
 //         .unwrap()
-//         .use_suffix(Some(suffix))
+//         .use_number_type(number_type)
 //         .unwrap()
 //         .into_inner();
 
@@ -129,8 +157,8 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize) -> TokenStream {
 //     )
 // }
 
-pub fn gen_sin_cos(_num_terms: usize, num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_sin_cos(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
 
     // There is some synergy between sin and cos, but not as much as ULP-focused approximants.
     quote!(
@@ -140,19 +168,25 @@ pub fn gen_sin_cos(_num_terms: usize, num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
-    let suffix = format!("f{}", num_bits);
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_tan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
 
     // Use a Padé approximation. The expression (x*x - pi*pi/4) goes to zero at the poles
     // cancelling the infinities, similar to sinc(x).
     let xmin = -0.499999;
     let xmax = 0.499999;
 
-    let approx = expr!((x * 3.1415926535897932384626433).tan() * (x * x - 0.25))
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd)
+    let approx = expr!((x * PI).tan() * (x * x - 0.25))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(x),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
-        .use_suffix(Some(suffix))
+        .use_number_type(number_type)
         .unwrap()
         .into_inner();
 
@@ -170,21 +204,23 @@ pub fn gen_tan(num_terms: usize, num_bits: usize) -> TokenStream {
 
 // Generate accurate sin, cos, tan, sin_cos.
 // Return functions and tests.
-pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
-    let sin = gen_quadrant_sin(8, num_bits);
-    let cos = gen_quadrant_cos(8, num_bits);
-    let tan = gen_tan(16, num_bits);
-    let sin_cos = gen_sin_cos(9, num_bits);
+pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
+    let cos_sin_num_terms = helpers::get_quadrant_terms(num_bits);
+    let tan_num_terms = helpers::get_tan_terms(num_bits);
+    let sin = gen_quadrant_sin(cos_sin_num_terms, num_bits, number_type);
+    let cos = gen_quadrant_cos(cos_sin_num_terms, num_bits, number_type);
+    let tan = gen_tan(tan_num_terms, num_bits, number_type);
+    let sin_cos = gen_sin_cos(cos_sin_num_terms, num_bits, number_type);
 
-    let fty = format_ident!("f{}", num_bits);
+    let fty = helpers::get_fty(num_bits);
 
-    let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
+    let bit = (2.0_f64).powi(if num_bits == 32 { -23 } else { -52 });
 
     let test_sin = gen_test(
         quote!(test_sin),
         quote!(x.sin()),
         quote!(sin(x as #fty) as f64),
-        bit * 2.0,
+        bit * 3.0,
         -PI,
         PI,
     );
@@ -192,7 +228,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_cos),
         quote!(x.cos()),
         quote!(cos(x as #fty) as f64),
-        bit * 2.0,
+        bit * 4.0,
         -PI,
         PI,
     );
@@ -200,7 +236,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_tan),
         quote!(x.tan()),
         quote!(tan(x as #fty) as f64),
-        bit * 2.0,
+        bit * 6.0,
         -PI / 4.0,
         PI / 4.0,
     );
@@ -208,7 +244,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_sin_cos_1),
         quote!(x.sin()),
         quote!(sin_cos(x as #fty).0 as f64),
-        bit * 2.0,
+        bit * 3.0,
         -PI,
         PI,
     );
@@ -216,7 +252,7 @@ pub fn gen_quadrant_trig(num_bits: usize) -> (TokenStream, TokenStream) {
         quote!(test_sin_cos_2),
         quote!(x.cos()),
         quote!(sin_cos(x as #fty).1 as f64),
-        bit * 2.0,
+        bit * 4.0,
         -PI,
         PI,
     );

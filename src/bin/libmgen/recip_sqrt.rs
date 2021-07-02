@@ -1,10 +1,11 @@
-use quote::{format_ident, quote};
+use quote::{quote};
 use proc_macro2::TokenStream;
+use crate::helpers;
 
 use crate::test::gen_test;
 
-pub fn gen_sqrt(num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_sqrt(num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     // Probably better done with a reciprocal estimate or bitcast log divide.
     //
     // Given an estimate r of a square root:
@@ -19,15 +20,15 @@ pub fn gen_sqrt(num_bits: usize) -> TokenStream {
 
     quote!(
         fn sqrt(x: #fty) -> #fty {
-            let r = exp2(log2(x) * (1.0 / 2.0));
+            let r = sqrt_approx(x);
             let y = r + (x - r * r) / (2.0 * r);
             y
         }
     )
 }
 
-pub fn gen_cbrt(num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_cbrt(num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     // Probably better done with a bitcast log divide.
     //
     // Given an estimate r of a cube root:
@@ -40,19 +41,15 @@ pub fn gen_cbrt(num_bits: usize) -> TokenStream {
 
     quote!(
         fn cbrt(x: #fty) -> #fty {
-            let r = exp2(log2(x.abs()) * (1.0 / 3.0));
+            let r = cbrt_approx(x.abs());
             let y = r + (x.abs() - r * r * r) / (3.0 * r * r);
-            if x < 0.0 {
-                -y
-            } else {
-                y
-            }
+            y.copysign(x)
         }
     )
 }
 
-pub fn gen_recip(num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_recip(num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
     // Probably better done with a reciprocal estimate and refinement.
     //
     // Given an estimate r of a reciprocal 1/x
@@ -73,8 +70,8 @@ pub fn gen_recip(num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_hypot(num_bits: usize) -> TokenStream {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_hypot(num_bits: usize, _number_type: &str) -> TokenStream {
+    let fty = helpers::get_fty(num_bits);
 
     // see https://en.wikipedia.org/wiki/Hypot
     //
@@ -90,13 +87,13 @@ pub fn gen_hypot(num_bits: usize) -> TokenStream {
     )
 }
 
-pub fn gen_recip_sqrt(num_bits: usize) -> (TokenStream, TokenStream) {
-    let fty = format_ident!("f{}", num_bits);
+pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
+    let fty = helpers::get_fty(num_bits);
 
-    let sqrt = gen_sqrt(num_bits);
-    let cbrt = gen_cbrt(num_bits);
-    let hypot = gen_hypot(num_bits);
-    let recip = gen_recip(num_bits);
+    let sqrt = gen_sqrt(num_bits, number_type);
+    let cbrt = gen_cbrt(num_bits, number_type);
+    let hypot = gen_hypot(num_bits, number_type);
+    let recip = gen_recip(num_bits, number_type);
 
     let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
 

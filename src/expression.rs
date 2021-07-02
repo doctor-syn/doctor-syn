@@ -1,16 +1,16 @@
+use crate::bdmath::*;
 use crate::error::{Error, Result};
 use crate::transformation::{
     approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst,
-    use_suffix::UseSuffix,
+    use_number_type::UseNumberType,
 };
 use crate::visitor::Visitor;
-use crate::Evaluateable;
 use crate::{Name, VariableList};
 use proc_macro2::Span;
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{Expr, ExprLit, Lit};
+use syn::{parse_quote, Expr, ExprLit, Lit};
 
 pub enum Parity {
     Odd,
@@ -29,31 +29,79 @@ impl From<Expr> for Expression {
     }
 }
 
-impl TryFrom<f64> for Expression {
-    type Error = Error;
-
-    fn try_from(val: f64) -> Result<Self> {
-        let s = format!("{}", val);
-        let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
-        Ok(Self {
-            inner: inner.into(),
-        })
+impl From<bool> for Expression {
+    fn from(expr: bool) -> Self {
+        let e: Expr = if expr {
+            parse_quote!(true)
+        } else {
+            parse_quote!(false)
+        };
+        Self { inner: e }
     }
 }
 
-impl TryFrom<f32> for Expression {
-    type Error = Error;
+// impl TryFrom<f64> for Expression {
+//     type Error = Error;
 
-    fn try_from(val: f32) -> Result<Self> {
-        let s = format!("{}", val);
-        let inner: ExprLit =
-            syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
-        Ok(Self {
-            inner: inner.into(),
-        })
+//     fn try_from(val: f64) -> Result<Self> {
+//         let s = format!("{}", val);
+//         let inner: ExprLit = syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
+//         Ok(Self {
+//             inner: inner.into(),
+//         })
+//     }
+// }
+
+// impl TryFrom<f32> for Expression {
+//     type Error = Error;
+
+//     fn try_from(val: f32) -> Result<Self> {
+//         let s = format!("{}", val);
+//         let inner: ExprLit = syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
+//         Ok(Self {
+//             inner: inner.into(),
+//         })
+//     }
+// }
+
+impl From<f64> for Expression {
+    fn from(val: f64) -> Self {
+        let bd = BigDecimal::from_f64(val).unwrap();
+        Expression::from(bd)
     }
 }
+
+impl From<f32> for Expression {
+    fn from(val: f32) -> Self {
+        let bd = BigDecimal::from_f32(val).unwrap();
+        Expression::from(bd)
+    }
+}
+
+impl From<BigDecimal> for Expression {
+    fn from(val: BigDecimal) -> Self {
+        let s = val.to_string();
+        let inner = ExprLit {
+            attrs: Vec::new(),
+            lit: syn::LitFloat::new(s.as_str(), Span::call_site()).into(),
+        }
+        .into();
+        Self { inner }
+    }
+}
+
+// impl TryFrom<BigDecimal> for Expression {
+//     type Error = Error;
+
+//     fn try_from(val: BigDecimal) -> Result<Self> {
+//         let s = format!("{}", val);
+//         let inner: ExprLit =
+//             syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+//         Ok(Self {
+//             inner: inner.into(),
+//         })
+//     }
+// }
 
 fn expr_to<N>(expr: &syn::Expr) -> Result<N>
 where
@@ -107,6 +155,22 @@ impl TryFrom<Expression> for f32 {
     }
 }
 
+impl TryFrom<&Expression> for BigDecimal {
+    type Error = Error;
+
+    fn try_from(expr: &Expression) -> Result<Self> {
+        expr_to::<BigDecimal>(&expr.inner)
+    }
+}
+
+impl TryFrom<Expression> for BigDecimal {
+    type Error = Error;
+
+    fn try_from(expr: Expression) -> Result<Self> {
+        expr_to::<BigDecimal>(&expr.inner)
+    }
+}
+
 impl From<Expression> for Expr {
     fn from(expr: Expression) -> Self {
         expr.inner
@@ -128,9 +192,89 @@ impl std::fmt::Display for Expression {
 
 impl std::fmt::Debug for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let inner = &self.inner;
-        write!(f, "{}", quote!(#inner).to_string())
-        // write!(f, "{:?}", quote!(#inner))
+        std::fmt::Debug::fmt(&self.inner, f)
+    }
+}
+
+macro_rules! make_op {
+    ($fname: ident, $op: tt) => {
+        fn $fname(lhs: Expression, rhs: Expression ) -> Expression {
+            if lhs.is_numeric() && rhs.is_numeric() {
+                let lhs : BigDecimal = lhs.try_into().unwrap();
+                let rhs : BigDecimal = rhs.try_into().unwrap();
+                (lhs $op rhs).try_into().unwrap()
+            } else {
+                let lhs = lhs.as_ref();
+                let rhs = rhs.as_ref();
+                let res : Expr = parse_quote!((#lhs) + (#rhs));
+                res.into()
+            }
+        }
+    }
+}
+
+make_op!(add, +);
+make_op!(sub, -);
+make_op!(mul, *);
+make_op!(div, /);
+
+impl std::ops::Add for Expression {
+    type Output = Self;
+
+    /// Adding expressions uses BigDecimal if they are numeric
+    /// or (lhs) + (rhs) otherwise.
+    ///
+    /// ```
+    /// use doctor_syn::{Expression, expr};
+    /// assert_eq!(expr!(1.234) + expr!(2), expr!(3.234));
+    /// ```
+    fn add(self, rhs: Self) -> Self::Output {
+        add(self, rhs)
+    }
+}
+
+impl std::ops::Mul for Expression {
+    type Output = Self;
+
+    /// Subtracting expressions uses BigDecimal if they are numeric
+    /// or (lhs) - (rhs) otherwise.
+    ///
+    /// ```
+    /// use doctor_syn::{Expression, expr};
+    /// assert_eq!(expr!(3.234) - expr!(2), expr!(1.234));
+    /// ```
+    fn mul(self, rhs: Self) -> Self::Output {
+        mul(self, rhs)
+    }
+}
+
+impl std::ops::Div for Expression {
+    type Output = Self;
+
+    /// Adding expressions uses BigDecimal if they are numeric
+    /// or (lhs) + (rhs) otherwise.
+    ///
+    /// ```
+    /// use doctor_syn::{Expression, expr};
+    /// assert_eq!(expr!(1.234) + expr!(2), expr!(3.234));
+    /// ```
+    fn div(self, rhs: Self) -> Self::Output {
+        div(self, rhs)
+    }
+}
+
+impl std::ops::Sub for Expression {
+    type Output = Self;
+
+    /// Subtracting expressions uses BigDecimal if they are numeric
+    /// or (lhs) - (rhs) otherwise.
+    ///
+    /// ```
+    /// use doctor_syn::{Expression, expr};
+    /// assert_eq!(expr!(3.234) - expr!(2), expr!(1.234));
+    /// ```
+    fn sub(self, rhs: Self) -> Self::Output {
+        sub(self, rhs)
     }
 }
 
@@ -145,7 +289,7 @@ macro_rules! expr {
 impl std::str::FromStr for Expression {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self> {
-        let inner: Expr = syn::parse_str(s).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
+        let inner: Expr = syn::parse_str(s).map_err(|_| Error::CouldNotParse(s.to_owned()))?;
         Ok(Self { inner })
     }
 }
@@ -159,7 +303,7 @@ impl Expression {
         self.inner
     }
 
-    /// Generate a number from a literal expression.
+    /// Return true if this is a literal.
     /// ```
     /// use doctor_syn::{Expression, expr};
     /// assert!(expr!("hello").is_lit());
@@ -167,6 +311,24 @@ impl Expression {
     pub fn is_lit(&self) -> bool {
         match self.inner {
             Expr::Lit(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Return true if this is a numeric literal.
+    /// ```
+    /// use doctor_syn::{Expression, expr};
+    /// assert!(expr!(1).is_numeric());
+    /// assert!(expr!(1.0).is_numeric());
+    /// ```
+    pub fn is_numeric(&self) -> bool {
+        match self.inner {
+            Expr::Lit(ExprLit {
+                lit: Lit::Int(_), ..
+            }) => true,
+            Expr::Lit(ExprLit {
+                lit: Lit::Float(_), ..
+            }) => true,
             _ => false,
         }
     }
@@ -181,18 +343,20 @@ impl Expression {
         Ok(Subst { variables }.visit_expr(&self.inner)?.into())
     }
 
-    /// Eval constant expressions into a single expression using a particular floating point type.
+    /// Eval constant expressions into a single expression.
     /// ```
     /// use doctor_syn::{expr};
     ///
-    /// assert_eq!(expr!(1 + 1).eval::<f64>().unwrap(), 2.0);
+    /// assert_eq!(expr!(-(1)).eval(20).unwrap(), expr!(0 - 1).eval(20).unwrap());
+    /// assert_eq!(expr!(1 + 1).eval(20).unwrap(), expr!(2 + 0).eval(20).unwrap());
+    /// assert_eq!(expr!(1 - 1).eval(20).unwrap(), expr!(0 + 0).eval(20).unwrap());
+    /// assert_eq!(expr!(2 * 2).eval(20).unwrap(), expr!(4 + 0).eval(20).unwrap());
+    /// assert_eq!(expr!(100 / 10).eval(20).unwrap(), expr!(10 + 0).eval(20).unwrap());
+    /// assert!(expr!(x + 1).eval(20).is_err());
     /// ```
-    pub fn eval<T: Evaluateable>(&self) -> Result<T> {
-        let expr: Expr = Eval::<T> {
-            datatype: std::marker::PhantomData,
-        }
-        .visit_expr(&self.inner)?;
-        Ok(Expression::from(expr).try_into()?)
+    pub fn eval(&self, num_digits: i64) -> Result<Expression> {
+        let expr: Expr = Eval { num_digits }.visit_expr(&self.inner)?;
+        Ok(Expression::from(expr))
     }
 
     /// Return a polynomial approximation of a single variable expression.
@@ -202,19 +366,20 @@ impl Expression {
     /// ```ignore
     /// use doctor_syn::{expr, name, Parity};
     ///
-    /// let e = expr!(x).approx(2, 0.0, 1.0, name!(x), Parity::Neither).unwrap();
+    /// let e = expr!(x).approx(2, 0.0, 1.0, name!(x), Parity::Neither, num_digits_for(num_bits)).unwrap();
     /// let expected = expr!(1f64 . mul_add (x , 0f64));
     /// assert_eq!(e, expected));
     /// ```
-    pub fn approx<T: Evaluateable>(
+    pub fn approx(
         &self,
         num_terms: usize,
-        xmin: T,
-        xmax: T,
+        xmin: f64,
+        xmax: f64,
         variable: Name,
         parity: Parity,
+        num_digits: i64,
     ) -> Result<Expression> {
-        approx(self, num_terms, xmin, xmax, variable, parity)
+        approx(self, num_terms, xmin, xmax, variable, parity, num_digits)
     }
 
     /// Expand an expression.
@@ -279,9 +444,16 @@ impl Expression {
     /// ```
     /// use doctor_syn::{expr};
     ///
-    /// assert_eq!(expr!(1.0f64).use_suffix(Some("f32".to_string())).unwrap(), expr!(1.0_f32));
+    /// assert_eq!(expr!(1.0f64).use_number_type("f32_hex").unwrap(), expr!(f32 :: from_bits (1065353216u32)));
     /// ```
-    pub fn use_suffix(&self, float_suffix: Option<String>) -> Result<Expression> {
-        Ok(UseSuffix { float_suffix }.visit_expr(&self.inner)?.into())
+    pub fn use_number_type(
+        &self,
+        number_type: &str,
+    ) -> Result<Expression> {
+        Ok(UseNumberType {
+            number_type,
+        }
+        .visit_expr(&self.inner)?
+        .into())
     }
 }
