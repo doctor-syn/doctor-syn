@@ -2,15 +2,16 @@ use crate::bdmath::*;
 use crate::error::{Error, Result};
 use crate::transformation::{
     approx::approx, collect::Collect, eval::Eval, expand::Expand, paren::Paren, subst::Subst,
-    use_number_type::UseNumberType,
+    use_number_type::UseNumberType
 };
+use crate::transformation::tools::*;
 use crate::visitor::Visitor;
 use crate::{Name, VariableList};
 use proc_macro2::Span;
 use quote::quote;
 use std::convert::{TryFrom, TryInto};
 use syn::spanned::Spanned;
-use syn::{parse_quote, Expr, ExprLit, Lit};
+use syn::{Expr, parse_quote};
 
 pub enum Parity {
     Odd,
@@ -40,30 +41,6 @@ impl From<bool> for Expression {
     }
 }
 
-// impl TryFrom<f64> for Expression {
-//     type Error = Error;
-
-//     fn try_from(val: f64) -> Result<Self> {
-//         let s = format!("{}", val);
-//         let inner: ExprLit = syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
-//         Ok(Self {
-//             inner: inner.into(),
-//         })
-//     }
-// }
-
-// impl TryFrom<f32> for Expression {
-//     type Error = Error;
-
-//     fn try_from(val: f32) -> Result<Self> {
-//         let s = format!("{}", val);
-//         let inner: ExprLit = syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(s))?;
-//         Ok(Self {
-//             inner: inner.into(),
-//         })
-//     }
-// }
-
 impl From<f64> for Expression {
     fn from(val: f64) -> Self {
         let bd = BigDecimal::from_f64(val).unwrap();
@@ -80,78 +57,8 @@ impl From<f32> for Expression {
 
 impl From<BigDecimal> for Expression {
     fn from(val: BigDecimal) -> Self {
-        let s = val.to_string();
-        let inner = ExprLit {
-            attrs: Vec::new(),
-            lit: syn::LitFloat::new(s.as_str(), Span::call_site()).into(),
-        }
-        .into();
+        let inner = from_bigdecimal(val);
         Self { inner }
-    }
-}
-
-// impl TryFrom<BigDecimal> for Expression {
-//     type Error = Error;
-
-//     fn try_from(val: BigDecimal) -> Result<Self> {
-//         let s = format!("{}", val);
-//         let inner: ExprLit =
-//             syn::parse_str(s.as_str()).map_err(|_| Error::CouldNotParse(Span::call_site()))?;
-//         Ok(Self {
-//             inner: inner.into(),
-//         })
-//     }
-// }
-
-fn expr_to<N>(expr: &syn::Expr) -> Result<N>
-where
-    N: std::str::FromStr,
-    N::Err: std::fmt::Display,
-{
-    if let Expr::Lit(ref lit) = expr {
-        match &lit.lit {
-            Lit::Float(f) => f
-                .base10_parse()
-                .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
-            Lit::Int(i) => i
-                .base10_parse()
-                .map_err(|_| Error::CouldNotConvertFromExpression(lit.lit.span())),
-            _ => return Err(Error::CouldNotConvertFromExpression(lit.lit.span())),
-        }
-    } else {
-        Err(Error::CouldNotConvertFromExpression(expr.span()))
-    }
-}
-
-impl TryFrom<&Expression> for f64 {
-    type Error = Error;
-
-    fn try_from(expr: &Expression) -> Result<Self> {
-        expr_to::<f64>(&expr.inner)
-    }
-}
-
-impl TryFrom<Expression> for f64 {
-    type Error = Error;
-
-    fn try_from(expr: Expression) -> Result<Self> {
-        expr_to::<f64>(&expr.inner)
-    }
-}
-
-impl TryFrom<&Expression> for f32 {
-    type Error = Error;
-
-    fn try_from(expr: &Expression) -> Result<Self> {
-        expr_to::<f32>(&expr.inner)
-    }
-}
-
-impl TryFrom<Expression> for f32 {
-    type Error = Error;
-
-    fn try_from(expr: Expression) -> Result<Self> {
-        expr_to::<f32>(&expr.inner)
     }
 }
 
@@ -159,7 +66,7 @@ impl TryFrom<&Expression> for BigDecimal {
     type Error = Error;
 
     fn try_from(expr: &Expression) -> Result<Self> {
-        expr_to::<BigDecimal>(&expr.inner)
+        as_bigdecimal(&expr.inner).ok_or_else(|| Error::CouldNotEvaulate(expr.clone().into()))
     }
 }
 
@@ -167,7 +74,7 @@ impl TryFrom<Expression> for BigDecimal {
     type Error = Error;
 
     fn try_from(expr: Expression) -> Result<Self> {
-        expr_to::<BigDecimal>(&expr.inner)
+        as_bigdecimal(&expr.inner).ok_or_else(|| Error::CouldNotEvaulate(expr.clone().into()))
     }
 }
 
@@ -322,15 +229,7 @@ impl Expression {
     /// assert!(expr!(1.0).is_numeric());
     /// ```
     pub fn is_numeric(&self) -> bool {
-        match self.inner {
-            Expr::Lit(ExprLit {
-                lit: Lit::Int(_), ..
-            }) => true,
-            Expr::Lit(ExprLit {
-                lit: Lit::Float(_), ..
-            }) => true,
-            _ => false,
-        }
+        is_numeric(&self.inner)
     }
 
     /// Substitute the occurance of certain variables with an expression.

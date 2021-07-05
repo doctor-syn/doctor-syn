@@ -12,6 +12,7 @@ use std::convert::TryInto;
 use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, ExprParen, ExprPath, ExprUnary, UnOp};
 
 use crate::bdmath::*;
+use crate::transformation::tools::*;
 
 #[derive(Debug, Clone)]
 pub struct Eval {
@@ -118,7 +119,7 @@ impl Visitor for Eval {
             //     .into()),
             ("sin", x, 0) => Ok(Expression::from(sin(x, self.num_digits)).into()),
 
-            ("cos", x, 0) => Ok(Expression::from(cos(x, self.num_digits)).into()),
+            ("cos", x, 0) => Ok(from_bigdecimal(cos(x, self.num_digits))),
 
             ("tan", x, 0) => Ok(Expression::from(tan(x, self.num_digits)).into()),
 

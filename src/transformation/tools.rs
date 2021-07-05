@@ -1,6 +1,8 @@
+use bigdecimal::{BigDecimal, Signed};
 use proc_macro2::Span;
 use syn::spanned::Spanned;
 use syn::{BinOp, Expr, ExprBinary, ExprParen, ExprUnary, UnOp};
+use syn::{ExprLit, Lit};
 
 // Negate an expression.
 pub fn negate(expr: &Expr) -> Expr {
@@ -98,4 +100,47 @@ pub fn make_unary(op: UnOp, expr: Expr) -> Expr {
         expr: Box::new(expr),
     }
     .into()
+}
+
+pub fn is_numeric(expr: &Expr) -> bool {
+    match expr {
+        Expr::Lit(ExprLit {
+            lit: Lit::Int(_), ..
+        }) => true,
+        Expr::Lit(ExprLit {
+            lit: Lit::Float(_), ..
+        }) => true,
+        Expr::Unary(ExprUnary {
+            op: UnOp::Neg(_),
+            expr,
+            ..
+        }) => is_numeric(expr),
+        _ => false,
+    }
+}
+
+pub fn as_bigdecimal(expr: &Expr) -> Option<BigDecimal> {
+    match expr {
+        Expr::Lit(ExprLit {
+            lit: Lit::Int(litint), ..
+        }) => litint.base10_digits().parse().ok(),
+        Expr::Lit(ExprLit {
+            lit: Lit::Float(litfloat), ..
+        }) => litfloat.base10_digits().parse().ok(),
+        Expr::Unary(ExprUnary {
+            op: UnOp::Neg(_),
+            expr,
+            ..
+        }) => as_bigdecimal(expr).map(|val| -val),
+        _ => None,
+    }
+}
+
+pub fn from_bigdecimal(bd: BigDecimal) -> Expr {
+    if bd.is_negative() {
+        negate(&from_bigdecimal(-bd))
+    } else {
+        let s = bd.to_string();
+        syn::parse_str(&s).unwrap()
+    }
 }

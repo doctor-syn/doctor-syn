@@ -6,7 +6,7 @@ pub mod paren;
 pub mod subst;
 pub mod use_number_type;
 
-mod tools;
+pub mod tools;
 
 // pub use approx::approx;
 // pub use eval::Eval;

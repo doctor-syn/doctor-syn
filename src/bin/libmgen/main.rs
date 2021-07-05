@@ -53,14 +53,7 @@ fn generate_libm(path: &str, num_bits: usize, number_type: &str) -> std::io::Res
 
 
 fn main() {
-    // let val = doctor_syn::expr!((2.16065388452409390396).cos()).eval(60).unwrap();
-    // let bd : doctor_syn::bigdecimal::BigDecimal = val.into();
-    //let val = doctor_syn::expr!(123456789.123456789123456789123456789123456789).eval(60).unwrap();
-    //let bd : bigdecimal::BigDecimal = "123456789.123456789123456789123456789123456789".parse().unwrap();
-    //let val = doctor_syn::expr!(123456789.123456789123456789123456789123456789);
-    //let val = doctor_syn::Expression::from(bd);
-    // println!("val={}", val);
-    // println!("bd={}", bd);
     generate_libm("tests/libm32.rs", 32, "f32_hex").unwrap();
     generate_libm("tests/libm64.rs", 64, "f64_hex").unwrap();
+    // generate_libm("tests/libm32_simd.rs", 32, "f32_simd").unwrap();
 }
