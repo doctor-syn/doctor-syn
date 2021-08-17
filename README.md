@@ -6,7 +6,7 @@
 A computer algebra system for rust.
 
 This crate is mostly for generating mathematical code at compile time.
-The focus is largely on numerical apprimation of transcendental and
+The focus is largely on numerical approximation of transcendental and
 statistical functions to make them vectorisable.
 
 For example, say we want to make an approximation to `-cos(x*2π)` over the
