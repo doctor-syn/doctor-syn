@@ -1,84 +1,36 @@
 fn sin(x: f64) -> f64 {
-    let x = x * (1.0 / (std::f64::consts::PI));
-    let xh = x + 0.5;
-    let xr = x.round();
-    let xhr = xh.round();
-    let s = x - xr;
-    let c = xh - xhr;
-    let sr = (f64::from_bits(4533224211552522724u64))
-        .mul_add(s * s, -f64::from_bits(4526904794657877692u64))
-        .mul_add(s * s, f64::from_bits(4514765511010485662u64))
-        .mul_add(s * s, f64::from_bits(4514972455596732655u64))
-        .mul_add(s * s, -f64::from_bits(4537088310675991054u64))
-        .mul_add(s * s, f64::from_bits(4557237389260074166u64))
-        .mul_add(s * s, -f64::from_bits(4575147550484435460u64))
-        .mul_add(s * s, f64::from_bits(4590583655612470010u64))
-        .mul_add(s * s, -f64::from_bits(4603572914567167358u64))
-        .mul_add(s * s, f64::from_bits(4612924877709880034u64))
-        .mul_add(s * s, -f64::from_bits(4617504345765035603u64))
-        .mul_add(s * s, f64::from_bits(4614256656552045849u64))
-        * s;
-    let cr = (-f64::from_bits(4541357127470134405u64))
-        .mul_add(c * c, f64::from_bits(4535685821052114702u64))
-        .mul_add(c * c, -f64::from_bits(4524238393972550508u64))
-        .mul_add(c * c, f64::from_bits(4511902924251034042u64))
-        .mul_add(c * c, -f64::from_bits(4526716360343400293u64))
-        .mul_add(c * c, f64::from_bits(4547349409924260334u64))
-        .mul_add(c * c, -f64::from_bits(4566541413855835106u64))
-        .mul_add(c * c, f64::from_bits(4583095551421171033u64))
-        .mul_add(c * c, -f64::from_bits(4597646699804080948u64))
-        .mul_add(c * c, f64::from_bits(4608692308080902139u64))
-        .mul_add(c * c, -f64::from_bits(4616255722032421572u64))
-        .mul_add(c * c, f64::from_bits(4617242111765267935u64))
-        .mul_add(c * c, -f64::from_bits(4607182418800017408u64));
-    let ss = if (xr as i32) & 1 == 0 { sr } else { -sr };
-    let cs = if (xhr as i32 & 1) == 0 { cr } else { -cr };
-    if s.abs() <= 0.25 {
-        ss
-    } else {
-        cs
-    }
+    let x = x * (1.0 / (std::f64::consts::PI * 2.0));
+    let x = x - x.round();
+    (-f64::from_bits(4545501706472348228u64))
+        .mul_add(x * x, f64::from_bits(4562831448939763098u64))
+        .mul_add(x * x, -f64::from_bits(4578088046517435701u64))
+        .mul_add(x * x, f64::from_bits(4592174882389057316u64))
+        .mul_add(x * x, -f64::from_bits(4604643489359722122u64))
+        .mul_add(x * x, f64::from_bits(4615784187295390098u64))
+        .mul_add(x * x, -f64::from_bits(4624687146389862212u64))
+        .mul_add(x * x, f64::from_bits(4631116052258804715u64))
+        .mul_add(x * x, -f64::from_bits(4635098111958760769u64))
+        .mul_add(x * x, f64::from_bits(4635442875846732514u64))
+        .mul_add(x * x, -f64::from_bits(4631015144647147091u64))
+        .mul_add(x * x, f64::from_bits(4618760256179416345u64))
+        * x
 }
 fn cos(x: f64) -> f64 {
-    let x = x * (1.0 / (std::f64::consts::PI));
-    let xh = x + 0.5;
-    let xr = x.round();
-    let xhr = xh.round();
-    let c = x - xr;
-    let s = xh - xhr;
-    let sr = (f64::from_bits(4533224211552522724u64))
-        .mul_add(s * s, -f64::from_bits(4526904794657877692u64))
-        .mul_add(s * s, f64::from_bits(4514765511010485662u64))
-        .mul_add(s * s, f64::from_bits(4514972455596732655u64))
-        .mul_add(s * s, -f64::from_bits(4537088310675991054u64))
-        .mul_add(s * s, f64::from_bits(4557237389260074166u64))
-        .mul_add(s * s, -f64::from_bits(4575147550484435460u64))
-        .mul_add(s * s, f64::from_bits(4590583655612470010u64))
-        .mul_add(s * s, -f64::from_bits(4603572914567167358u64))
-        .mul_add(s * s, f64::from_bits(4612924877709880034u64))
-        .mul_add(s * s, -f64::from_bits(4617504345765035603u64))
-        .mul_add(s * s, f64::from_bits(4614256656552045849u64))
-        * s;
-    let cr = (f64::from_bits(4541357127470134407u64))
-        .mul_add(c * c, -f64::from_bits(4535685821052114701u64))
-        .mul_add(c * c, f64::from_bits(4524238393972550510u64))
-        .mul_add(c * c, -f64::from_bits(4511902924251034043u64))
-        .mul_add(c * c, f64::from_bits(4526716360343400294u64))
-        .mul_add(c * c, -f64::from_bits(4547349409924260333u64))
-        .mul_add(c * c, f64::from_bits(4566541413855835108u64))
-        .mul_add(c * c, -f64::from_bits(4583095551421171031u64))
-        .mul_add(c * c, f64::from_bits(4597646699804080949u64))
-        .mul_add(c * c, -f64::from_bits(4608692308080902138u64))
-        .mul_add(c * c, f64::from_bits(4616255722032421572u64))
-        .mul_add(c * c, -f64::from_bits(4617242111765267934u64))
-        .mul_add(c * c, f64::from_bits(4607182418800017408u64));
-    let ss = if xhr as i32 & 1 == 0 { sr } else { -sr };
-    let cs = if xr as i32 & 1 == 0 { cr } else { -cr };
-    if s.abs() <= 0.25 {
-        ss
-    } else {
-        cs
-    }
+    let x = x * (1.0 / (std::f64::consts::PI * 2.0));
+    let x = x - x.round();
+    (f64::from_bits(4536797209078208591u64))
+        .mul_add(x * x, -f64::from_bits(4554565470160256409u64))
+        .mul_add(x * x, f64::from_bits(4570860669984039323u64))
+        .mul_add(x * x, -f64::from_bits(4585404116896779477u64))
+        .mul_add(x * x, f64::from_bits(4598751787279356433u64))
+        .mul_add(x * x, -f64::from_bits(4610399748524066687u64))
+        .mul_add(x * x, f64::from_bits(4620584609291252319u64))
+        .mul_add(x * x, -f64::from_bits(4628131547694774604u64))
+        .mul_add(x * x, f64::from_bits(4633675496823044722u64))
+        .mul_add(x * x, -f64::from_bits(4635713905845125113u64))
+        .mul_add(x * x, f64::from_bits(4634270120541903556u64))
+        .mul_add(x * x, -f64::from_bits(4626249311020008926u64))
+        .mul_add(x * x, f64::from_bits(4607182418800017408u64))
 }
 fn tan(x: f64) -> f64 {
     let x = x * (1.0 / (std::f64::consts::PI));
@@ -355,6 +307,10 @@ fn recip(x: f64) -> f64 {
     let r = r * (2.0 - x * r);
     r
 }
+fn negate_on_odd(x: f64, y: f64) -> f64 {
+    let sign_bit = (((x as i64) & 1) << 63i32) as u64;
+    f64::from_bits(sign_bit ^ y.to_bits())
+}
 fn recip_approx(x: f64) -> f64 {
     let y = f64::from_bits(
         ((x.abs().to_bits() as f64).mul_add(-1.0, 0x3ff0000000000000_u64 as f64 * 2.0)) as u64,
@@ -526,7 +482,7 @@ fn test_sin() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.0000000000000006661338147750939f64);
+    assert!(max_lib_error <= 0.0000000000000017763568394002505f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -560,7 +516,7 @@ fn test_sin() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000000000000006661338147750939f64);
+    assert!(max_error < 0.0000000000000017763568394002505f64);
 }
 #[test]
 fn test_cos() {
@@ -720,7 +676,7 @@ fn test_cos() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.0000000000000008881784197001252f64);
+    assert!(max_lib_error <= 0.0000000000000017763568394002505f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -754,7 +710,7 @@ fn test_cos() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000000000000008881784197001252f64);
+    assert!(max_error < 0.0000000000000017763568394002505f64);
 }
 #[test]
 fn test_tan() {
@@ -1096,7 +1052,7 @@ fn test_sin_cos_1() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.0000000000000006661338147750939f64);
+    assert!(max_lib_error <= 0.0000000000000017763568394002505f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -1130,7 +1086,7 @@ fn test_sin_cos_1() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000000000000006661338147750939f64);
+    assert!(max_error < 0.0000000000000017763568394002505f64);
 }
 #[test]
 fn test_sin_cos_2() {
@@ -1290,7 +1246,7 @@ fn test_sin_cos_2() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.0000000000000008881784197001252f64);
+    assert!(max_lib_error <= 0.0000000000000017763568394002505f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -1324,7 +1280,7 @@ fn test_sin_cos_2() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.0000000000000008881784197001252f64);
+    assert!(max_error < 0.0000000000000017763568394002505f64);
 }
 #[test]
 fn test_asin() {
@@ -6601,4 +6557,15 @@ fn test_recip_y() {
     );
     assert!(!max_error.is_nan());
     assert!(max_error < 0.1f64);
+}
+#[test]
+fn test_negate_on_odd() {
+    assert_eq!(negate_on_odd(-4.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(-3.0, 1.0), -1.0);
+    assert_eq!(negate_on_odd(-2.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(-1.0, 1.0), -1.0);
+    assert_eq!(negate_on_odd(0.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(1.0, 1.0), -1.0);
+    assert_eq!(negate_on_odd(2.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(3.0, 1.0), -1.0);
 }

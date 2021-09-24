@@ -1,6 +1,6 @@
-use quote::{quote};
-use proc_macro2::TokenStream;
 use crate::helpers;
+use proc_macro2::TokenStream;
+use quote::quote;
 
 use crate::test::gen_test;
 

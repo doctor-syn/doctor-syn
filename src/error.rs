@@ -1,5 +1,5 @@
-use proc_macro2::Span;
 use crate::Expression;
+use proc_macro2::Span;
 
 #[derive(Debug)]
 pub enum Error {

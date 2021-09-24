@@ -1,8 +1,8 @@
+use crate::helpers;
 use doctor_syn::Parity;
 use doctor_syn::{expr, name, num_digits_for};
 use proc_macro2::TokenStream;
-use quote::{quote};
-use crate::helpers;
+use quote::quote;
 
 use crate::test::gen_test;
 
@@ -13,7 +13,14 @@ pub fn gen_atan2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
     let xmax = 1.0;
 
     let approx = expr!(x.atan())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Odd, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(x),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()
@@ -39,7 +46,14 @@ pub fn gen_asin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
-        .approx(num_terms, -0.9, 0.9, name!(x), Parity::Odd, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            -0.9,
+            0.9,
+            name!(x),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()
@@ -64,7 +78,14 @@ pub fn gen_acos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
-        .approx(num_terms, -0.9, 0.9, name!(x), Parity::Odd, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            -0.9,
+            0.9,
+            name!(x),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()
@@ -89,7 +110,14 @@ pub fn gen_atan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     let lim = quote!(1.0);
 
     let approx = expr!(x.atan())
-        .approx(num_terms, -1.0, 1.0, name!(x), Parity::Odd, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            -1.0,
+            1.0,
+            name!(x),
+            Parity::Odd,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()

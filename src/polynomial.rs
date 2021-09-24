@@ -78,7 +78,9 @@ mod test {
         let y = &mut [bigd(6), bigd(9), bigd(2), bigd(5)];
 
         let p = Polynomial::from_points(x, y, 30);
-        let y2 = (0..x.len()).map(|i| p.eval(x[i].clone())).collect::<Vec<_>>();
+        let y2 = (0..x.len())
+            .map(|i| p.eval(x[i].clone()))
+            .collect::<Vec<_>>();
 
         let err = (0..x.len())
             .map(|i| (&y2[i] - &y[i]).abs())

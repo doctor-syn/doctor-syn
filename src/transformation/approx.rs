@@ -1,3 +1,4 @@
+use crate::bdmath::*;
 use crate::error::{Error, Result};
 use crate::polynomial::Polynomial;
 use crate::{Expression, Name, Parity, VariableList};
@@ -5,13 +6,17 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::convert::TryInto;
 use syn::{parse_quote, Expr};
-use crate::bdmath::*;
 
 fn mkexpr(x: &BigDecimal) -> Expr {
     Expression::from(x.clone()).into()
 }
 
-fn mul_add_polynomial(terms: &[BigDecimal], variable: Name, parity: Parity, span: Span) -> Result<Expr> {
+fn mul_add_polynomial(
+    terms: &[BigDecimal],
+    variable: Name,
+    parity: Parity,
+    span: Span,
+) -> Result<Expr> {
     let k = terms.len();
     let highest_coeff = mkexpr(&terms[k - 1]);
     let x = variable.as_ref();

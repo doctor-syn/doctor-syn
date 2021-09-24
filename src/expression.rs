@@ -446,14 +446,9 @@ impl Expression {
     ///
     /// assert_eq!(expr!(1.0f64).use_number_type("f32_hex").unwrap(), expr!(f32 :: from_bits (1065353216u32)));
     /// ```
-    pub fn use_number_type(
-        &self,
-        number_type: &str,
-    ) -> Result<Expression> {
-        Ok(UseNumberType {
-            number_type,
-        }
-        .visit_expr(&self.inner)?
-        .into())
+    pub fn use_number_type(&self, number_type: &str) -> Result<Expression> {
+        Ok(UseNumberType { number_type }
+            .visit_expr(&self.inner)?
+            .into())
     }
 }

@@ -45,6 +45,7 @@ impl Visitor for Eval {
 
         let errfn = || Error::CouldNotEvaulate(Expression::from(Expr::from(expr.clone())));
         let arg0 = || args[0].clone();
+        let arg1 = || args[1].clone();
         // let mkexpr = |e : BigDecimal| Result::Ok(Expr::from(Expression::from(e)));
 
         match (expr.method.to_string().as_str(), receiver, args.len()) {
@@ -83,7 +84,9 @@ impl Visitor for Eval {
 
             ("exp", x, 0) => Ok(Expression::from(exp(x, self.num_digits)).into()),
 
-            ("exp2", x, 0) => Ok(Expression::from(pow(two(), x, self.num_digits).ok_or_else(errfn)?).into()),
+            ("exp2", x, 0) => {
+                Ok(Expression::from(pow(two(), x, self.num_digits).ok_or_else(errfn)?).into())
+            }
 
             ("ln", x, 0) => Ok(Expression::from(ln(x, self.num_digits).ok_or_else(errfn)?).into()),
 
@@ -127,6 +130,23 @@ impl Visitor for Eval {
             ("acos", x, 0) => Ok(Expression::from(acos(x, self.num_digits)).into()),
 
             ("atan", x, 0) => Ok(Expression::from(atan(x, self.num_digits)).into()),
+
+            ("erf", x, 0) => Ok(Expression::from(erf(x, self.num_digits)).into()),
+
+            ("erfc", x, 0) => Ok(Expression::from(erfc(x, self.num_digits)).into()),
+
+            ("dnorm", x, 2) => {
+                Ok(Expression::from(dnorm(x, arg0(), arg1(), self.num_digits)).into())
+            }
+
+            ("pnorm", x, 2) => {
+                Ok(Expression::from(pnorm(x, arg0(), arg1(), self.num_digits)).into())
+            }
+
+            ("qnorm", x, 2) => Ok(Expression::from(
+                qnorm(x, arg0(), arg1(), self.num_digits).ok_or_else(errfn)?,
+            )
+            .into()),
 
             // ("atan2", x, 1) => Ok(x
             //     .atan2(arg0().try_into()?)

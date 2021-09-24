@@ -1,8 +1,8 @@
+use crate::helpers;
 use doctor_syn::Parity;
 use doctor_syn::{expr, name, num_digits_for};
 use proc_macro2::TokenStream;
-use quote::{quote};
-use crate::helpers;
+use quote::quote;
 
 use crate::test::*;
 
@@ -16,7 +16,14 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     let xmax = 0.5;
 
     let approx = expr!(2.0.powf(x))
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(x),
+            Parity::Neither,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()
@@ -51,7 +58,14 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> Token
     let xmax = 0.5;
 
     let approx = expr!(2.0.powf(x) - 1.0)
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(x),
+            Parity::Neither,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()
@@ -75,7 +89,14 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
     let xmax = 1.0;
 
     let approx = expr!((x + 1.0).log2())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(x),
+            Parity::Neither,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()
@@ -100,7 +121,14 @@ pub fn gen_log2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     let xmax = 0.5;
 
     let approx = expr!((x + 1.5).log2())
-        .approx(num_terms, xmin, xmax, name!(x), Parity::Neither, num_digits_for(num_bits))
+        .approx(
+            num_terms,
+            xmin,
+            xmax,
+            name!(x),
+            Parity::Neither,
+            num_digits_for(num_bits),
+        )
         .unwrap()
         .use_number_type(number_type)
         .unwrap()

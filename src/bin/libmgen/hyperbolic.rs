@@ -1,7 +1,7 @@
+use crate::helpers;
 use crate::test::*;
 use proc_macro2::TokenStream;
-use quote::{quote};
-use crate::helpers;
+use quote::quote;
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
 pub fn gen_sinh(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {

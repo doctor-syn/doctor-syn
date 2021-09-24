@@ -11,18 +11,17 @@ pub mod visitor;
 pub mod bdmath;
 
 // Re-export for use in macros.
-pub use syn;
-pub use quote;
 pub use bigdecimal;
 pub use proc_macro2;
+pub use quote;
+pub use syn;
 
 #[cfg(test)]
 mod tests;
 
+pub use bdmath::num_digits_for;
 pub use error::*;
 pub use expression::{Expression, Parity};
 pub use name::Name;
 pub use std::convert::{TryFrom, TryInto};
 pub use variablelist::VariableList;
-pub use bdmath::num_digits_for;
-

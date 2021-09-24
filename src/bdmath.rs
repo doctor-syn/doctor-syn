@@ -1,6 +1,8 @@
 //! BigDecimal math support
 //!
 
+use core::num;
+
 pub use bigdecimal::{BigDecimal, FromPrimitive, One, Signed, Zero};
 pub use num_bigint::BigInt;
 
@@ -55,8 +57,22 @@ pub fn pi(num_digits: i64) -> BigDecimal {
         round(x, num_digits as i64)
     } else {
         // Machin series.
-        (atan(one() / bigd(5), num_digits) * bigd(4) - atan(one() / bigd(239), num_digits)) * bigd(4)
+        (atan(one() / bigd(5), num_digits) * bigd(4) - atan(one() / bigd(239), num_digits))
+            * bigd(4)
     }
+}
+
+pub fn sqrt_two(num_digits: i64) -> BigDecimal {
+    sqrt(two(), num_digits).unwrap()
+}
+
+pub fn one_over_root_two_pi(num_digits: i64) -> BigDecimal {
+    sqrt(one() / (two() * pi(num_digits)), num_digits).unwrap()
+}
+
+pub fn sqrt(x: BigDecimal, _num_digits: i64) -> Option<BigDecimal> {
+    // TODO: make our own sqrt as this has a fixed num_digits of 100.
+    x.sqrt()
 }
 
 pub fn bigd(i: i32) -> BigDecimal {
@@ -85,7 +101,11 @@ pub fn two() -> BigDecimal {
 
 /// Return the number of decimal digits to calculate for a floating point size.
 pub fn num_digits_for(num_bits: usize) -> i64 {
-    if num_bits == 32 { 10 } else { 24 }
+    if num_bits == 32 {
+        10
+    } else {
+        24
+    }
 }
 
 // Evaluate MacLaurin series of exp-like functions (sin, cos, exp)
@@ -157,10 +177,7 @@ pub fn tan(x: BigDecimal, num_digits: i64) -> BigDecimal {
 pub fn asin(x: BigDecimal, num_digits: i64) -> BigDecimal {
     if x.abs() > half() {
         // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
-        atan(
-            (one() + &x * &x).sqrt().unwrap() / (one() + &x),
-            num_digits,
-        ) * two() * x.signum()
+        atan((one() + &x * &x).sqrt().unwrap() / (one() + &x), num_digits) * two() * x.signum()
     } else {
         let mut numer = BigDecimal::one();
         let mut denom = BigDecimal::one();
@@ -264,6 +281,81 @@ pub fn log(x: BigDecimal, base: BigDecimal, num_digits: i64) -> Option<BigDecima
 pub fn pow(x: BigDecimal, y: BigDecimal, num_digits: i64) -> Option<BigDecimal> {
     if let Some(lnx) = ln(x, num_digits) {
         Some(exp(y * lnx, num_digits))
+    } else {
+        None
+    }
+}
+
+/// erf(x) = 2*pnorm(sqrt(2)*x) - 1
+/// https://en.wikipedia.org/wiki/Error_function#Asymptotic_expansion
+/// 1       -3        10      -42      216
+/// 1 * 1!  -3 * 1!   5 * 2!  -7 * 3!  9 * 4!
+pub fn erf(x: BigDecimal, num_digits: i64) -> BigDecimal {
+    two() / sqrt(pi(num_digits), num_digits).unwrap()
+        * &x
+        * maclaurin(&x * &x, num_digits, |i, tot, power, factorial| {
+            match i & 1 {
+                0 => Some(tot + power / (bigd(2 * i + 1) * factorial)),
+                1 => Some(tot - power / (bigd(2 * i + 1) * factorial)),
+                _ => None,
+            }
+        })
+}
+
+/// erfc(x) = 2*pnorm(-sqrt(2)*x)
+/// https://en.wikipedia.org/wiki/Error_function#Asymptotic_expansion
+/// 1       -3        10      -42      216
+/// 1 * 1!  -3 * 1!   5 * 2!  -7 * 3!  9 * 4!
+pub fn erfc(x: BigDecimal, num_digits: i64) -> BigDecimal {
+    one() - erf(x, num_digits)
+}
+
+/// Normal distribution.
+/// https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html
+/// https://en.wikipedia.org/wiki/Normal_distribution
+pub fn dnorm(x: BigDecimal, mean: BigDecimal, sd: BigDecimal, num_digits: i64) -> BigDecimal {
+    let x = (x - mean) / &sd;
+    let k1 = one_over_root_two_pi(num_digits);
+    k1 * exp(-&x * &x * half(), num_digits) / sd
+}
+
+/// Cumulative normal distribution.
+///   erfc(x) = 2*pnorm(-sqrt(2)*x)
+///   erfc(x)/2 = pnorm(-sqrt(2)*x)
+///   erfc(-x/sqrt(2))/2 = pnorm(x)
+///
+///   erf(x) = 2*pnorm(sqrt(2)*x) - 1
+///   (erf(x) + 1)/2 = pnorm(sqrt(2)*x)
+///   (erf(x/sqrt(2)) + 1)/2 = pnorm(x)
+pub fn pnorm(x: BigDecimal, mean: BigDecimal, sd: BigDecimal, num_digits: i64) -> BigDecimal {
+    let x = (x - mean) / sd;
+    (erf(x / two().sqrt().unwrap(), num_digits) + one()) * half()
+}
+
+/// Inverse cumulative normal distribution (probit).
+/// https://en.wikipedia.org/wiki/Probit
+/// qnorm(x) = sqrt(2)*inverfc(2*x)
+/// https://en.wikipedia.org/wiki/Normal_distribution
+/// Newton raphson:
+/// x <- x - (pnorm(x) - y) / dnorm(x)
+pub fn qnorm(
+    x: BigDecimal,
+    mean: BigDecimal,
+    sd: BigDecimal,
+    num_digits: i64,
+) -> Option<BigDecimal> {
+    if let Some(logit) = ln(&x / (one() - &x), num_digits) {
+        let mut guess = logit * bigdf(0.6);
+        loop {
+            let pnorm = pnorm(guess.clone(), mean.clone(), sd.clone(), num_digits);
+            let err = pnorm - &x;
+            if round(err.abs(), num_digits).is_zero() {
+                break;
+            }
+            let dnorm = dnorm(guess.clone(), mean.clone(), sd.clone(), num_digits);
+            guess -= err / dnorm;
+        }
+        Some(round(guess, num_digits))
     } else {
         None
     }
@@ -447,3 +539,58 @@ fn test_functions() {
     );
 }
 
+#[test]
+fn test_stats_functions() {
+    use crate::expr;
+
+    // assert_eq!(erf(one(), 20), bigdf(0.8427008));
+    // assert_eq!(erf(half(), 20), bigdf(0.52));
+
+    // assert_eq!(pnorm(one(), two(), bigd(3), 20), bigdf(0.3694413));
+
+    // let pnorm1 = pnorm(bigd(1), bigd(2), bigd(3), 100);
+    // assert_eq!(qnorm(pnorm1, bigd(2), bigd(3), 100), Some(bigdf(1.0)));
+
+    // assert_eq!(
+    //     expr!(1.erf())
+    //         .eval(100)
+    //         .unwrap(),
+    //     expr!(0.1257944)
+    // );
+
+    // assert_eq!(
+    //     expr!(1.dnorm(2, 3))
+    //         .eval(100)
+    //         .unwrap(),
+    //     expr!(0.1257944)
+    // );
+
+    assert_eq!(
+        expr!(((1).erf() - 0.8427007929497148693412206350826092592960669979663029).abs() < 1e-20)
+            .eval(20)
+            .unwrap(),
+        expr!(true)
+    );
+
+    assert_eq!(
+        expr!(((1).dnorm(2, 3) - 0.12579440923099772133941284170576695075747160303).abs() < 1e-20)
+            .eval(20)
+            .unwrap(),
+        expr!(true)
+    );
+
+    // R gives 0.36944134018176366663 which is good to 16 digits.
+    assert_eq!(
+        expr!(((1).pnorm(2, 3) - 0.369441340181763638272).abs() < 1e-20)
+            .eval(20)
+            .unwrap(),
+        expr!(true)
+    );
+
+    assert_eq!(
+        expr!((((1).pnorm(2, 3)).qnorm(2, 3) - 1).abs() < 1e-20)
+            .eval(20)
+            .unwrap(),
+        expr!(true)
+    );
+}

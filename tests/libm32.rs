@@ -1,52 +1,28 @@
 fn sin(x: f32) -> f32 {
-    let x = x * (1.0 / (std::f32::consts::PI));
-    let xh = x + 0.5;
-    let xr = x.round();
-    let xhr = xh.round();
-    let s = x - xr;
-    let c = xh - xhr;
-    let sr = (-f32::from_bits(1058437658u32))
-        .mul_add(s * s, f32::from_bits(1076047212u32))
-        .mul_add(s * s, -f32::from_bits(1084579287u32))
-        .mul_add(s * s, f32::from_bits(1078530011u32))
-        * s;
-    let cr = (-f32::from_bits(1047315096u32))
-        .mul_add(c * c, f32::from_bits(1068163708u32))
-        .mul_add(c * c, -f32::from_bits(1082253550u32))
-        .mul_add(c * c, f32::from_bits(1084090854u32))
-        .mul_add(c * c, -f32::from_bits(1065353216u32));
-    let ss = if (xr as i32) & 1 == 0 { sr } else { -sr };
-    let cs = if (xhr as i32 & 1) == 0 { cr } else { -cr };
-    if s.abs() <= 0.25 {
-        ss
-    } else {
-        cs
-    }
+    let x = x * (1.0 / (std::f32::consts::PI * 2.0));
+    let x = x - x.round();
+    (-f32::from_bits(1058770289u32))
+        .mul_add(x * x, f32::from_bits(1081164794u32))
+        .mul_add(x * x, -f32::from_bits(1097945697u32))
+        .mul_add(x * x, f32::from_bits(1109932662u32))
+        .mul_add(x * x, -f32::from_bits(1117350231u32))
+        .mul_add(x * x, f32::from_bits(1117992419u32))
+        .mul_add(x * x, -f32::from_bits(1109745127u32))
+        .mul_add(x * x, f32::from_bits(1086918619u32))
+        * x
 }
 fn cos(x: f32) -> f32 {
-    let x = x * (1.0 / (std::f32::consts::PI));
-    let xh = x + 0.5;
-    let xr = x.round();
-    let xhr = xh.round();
-    let c = x - xr;
-    let s = xh - xhr;
-    let sr = (-f32::from_bits(1058437658u32))
-        .mul_add(s * s, f32::from_bits(1076047212u32))
-        .mul_add(s * s, -f32::from_bits(1084579287u32))
-        .mul_add(s * s, f32::from_bits(1078530011u32))
-        * s;
-    let cr = (f32::from_bits(1047315096u32))
-        .mul_add(c * c, -f32::from_bits(1068163708u32))
-        .mul_add(c * c, f32::from_bits(1082253550u32))
-        .mul_add(c * c, -f32::from_bits(1084090854u32))
-        .mul_add(c * c, f32::from_bits(1065353216u32));
-    let ss = if xhr as i32 & 1 == 0 { sr } else { -sr };
-    let cs = if xr as i32 & 1 == 0 { cr } else { -cr };
-    if s.abs() <= 0.25 {
-        ss
-    } else {
-        cs
-    }
+    let x = x * (1.0 / (std::f32::consts::PI * 2.0));
+    let x = x - x.round();
+    (f32::from_bits(1047347613u32))
+        .mul_add(x * x, -f32::from_bits(1071090146u32))
+        .mul_add(x * x, f32::from_bits(1090295415u32))
+        .mul_add(x * x, -f32::from_bits(1104372952u32))
+        .mul_add(x * x, f32::from_bits(1114700356u32))
+        .mul_add(x * x, -f32::from_bits(1118497250u32))
+        .mul_add(x * x, f32::from_bits(1115807992u32))
+        .mul_add(x * x, -f32::from_bits(1100868070u32))
+        .mul_add(x * x, f32::from_bits(1065353216u32))
 }
 fn tan(x: f32) -> f32 {
     let x = x * (1.0 / (std::f32::consts::PI));
@@ -314,6 +290,10 @@ fn recip(x: f32) -> f32 {
     let r = r * (2.0 - x * r);
     r
 }
+fn negate_on_odd(x: f32, y: f32) -> f32 {
+    let sign_bit = (((x as i32) & 1) << 31i32) as u32;
+    f32::from_bits(sign_bit ^ y.to_bits())
+}
 fn recip_approx(x: f32) -> f32 {
     let y = f32::from_bits(
         ((x.abs().to_bits() as f32).mul_add(-1.0, 0x3f800000_u32 as f32 * 2.0)) as u32,
@@ -484,7 +464,7 @@ fn test_sin() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.00000035762786865234375f64);
+    assert!(max_lib_error <= 0.00000095367431640625f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -518,7 +498,7 @@ fn test_sin() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 0.00000095367431640625f64);
 }
 #[test]
 fn test_cos() {
@@ -678,7 +658,7 @@ fn test_cos() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.000000476837158203125f64);
+    assert!(max_lib_error <= 0.00000095367431640625f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -712,7 +692,7 @@ fn test_cos() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125f64);
+    assert!(max_error < 0.00000095367431640625f64);
 }
 #[test]
 fn test_tan() {
@@ -1054,7 +1034,7 @@ fn test_sin_cos_1() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.00000035762786865234375f64);
+    assert!(max_lib_error <= 0.00000095367431640625f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -1088,7 +1068,7 @@ fn test_sin_cos_1() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.00000035762786865234375f64);
+    assert!(max_error < 0.00000095367431640625f64);
 }
 #[test]
 fn test_sin_cos_2() {
@@ -1248,7 +1228,7 @@ fn test_sin_cos_2() {
         max_ref_error, max_lib_error
     );
     assert!(!max_lib_error.is_nan());
-    assert!(max_lib_error <= 0.000000476837158203125f64);
+    assert!(max_lib_error <= 0.00000095367431640625f64);
     const N: i32 = 0x100000;
     let tmin = -3.141592653589793f64;
     let tmax = 3.141592653589793f64;
@@ -1282,7 +1262,7 @@ fn test_sin_cos_2() {
         xmax, y1max, y2max, max_error
     );
     assert!(!max_error.is_nan());
-    assert!(max_error < 0.000000476837158203125f64);
+    assert!(max_error < 0.00000095367431640625f64);
 }
 #[test]
 fn test_asin() {
@@ -6559,4 +6539,15 @@ fn test_recip_y() {
     );
     assert!(!max_error.is_nan());
     assert!(max_error < 0.1f64);
+}
+#[test]
+fn test_negate_on_odd() {
+    assert_eq!(negate_on_odd(-4.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(-3.0, 1.0), -1.0);
+    assert_eq!(negate_on_odd(-2.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(-1.0, 1.0), -1.0);
+    assert_eq!(negate_on_odd(0.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(1.0, 1.0), -1.0);
+    assert_eq!(negate_on_odd(2.0, 1.0), 1.0);
+    assert_eq!(negate_on_odd(3.0, 1.0), -1.0);
 }

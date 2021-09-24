@@ -2,25 +2,25 @@ use quote::quote;
 use std::io::Write;
 
 mod auxfuncs;
+mod helpers;
 mod hyperbolic;
 mod inv_trig;
 mod log_exp;
 mod recip_sqrt;
 mod test;
 mod trig;
-mod helpers;
 
+use auxfuncs::*;
 use hyperbolic::*;
 use inv_trig::*;
 use log_exp::*;
 use recip_sqrt::*;
 use trig::*;
-use auxfuncs::*;
 
 fn generate_libm(path: &str, num_bits: usize, number_type: &str) -> std::io::Result<()> {
     let mut file = std::fs::File::create(path)?;
 
-    let (trig, trig_tests) = gen_quadrant_trig(num_bits, number_type);
+    let (trig, trig_tests) = gen_single_pass_trig(num_bits, number_type);
     let (inv_trig, inv_trig_tests) = gen_inv_trig(num_bits, number_type);
     let (log_exp, log_exp_tests) = gen_log_exp(num_bits, number_type);
     let (hyperbolic, hyperbolic_tests) = gen_hyperbolic(num_bits, number_type);
@@ -50,7 +50,6 @@ fn generate_libm(path: &str, num_bits: usize, number_type: &str) -> std::io::Res
 
     Ok(())
 }
-
 
 fn main() {
     // let val = doctor_syn::expr!((2.16065388452409390396).cos()).eval(60).unwrap();

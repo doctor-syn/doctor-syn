@@ -1,8 +1,8 @@
-use proc_macro2::TokenStream;
-use quote::quote;
-use doctor_syn::*;
 use doctor_syn::bdmath::*;
 use doctor_syn::bigdecimal::ToPrimitive;
+use doctor_syn::*;
+use proc_macro2::TokenStream;
+use quote::quote;
 
 pub fn gen_test(
     test_name: TokenStream,
@@ -12,14 +12,14 @@ pub fn gen_test(
     tmin: f64,
     tmax: f64,
 ) -> TokenStream {
-    const N : i32 = 128;
+    const N: i32 = 128;
     let num_digits = 20;
-    let refe : Expression = syn::parse2::<syn::Expr>(refexpr.clone()).unwrap().into();
+    let refe: Expression = syn::parse2::<syn::Expr>(refexpr.clone()).unwrap().into();
     let variable = name!(x);
     let mut accurate_values = TokenStream::new();
     for i in 1..N {
         let x = i as f64 * (tmax - tmin) / N as f64 + tmin;
-        let xe : Expression = x.try_into().unwrap();
+        let xe: Expression = x.try_into().unwrap();
         let mut vars = VariableList::new();
         vars.add_var(variable.clone(), xe.into());
         let subst = refe.subst(vars).unwrap();
@@ -80,4 +80,3 @@ pub fn gen_test(
         }
     )
 }
-
