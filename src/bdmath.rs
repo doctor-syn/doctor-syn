@@ -1,8 +1,6 @@
 //! BigDecimal math support
 //!
 
-use core::num;
-
 pub use bigdecimal::{BigDecimal, FromPrimitive, One, Signed, Zero};
 pub use num_bigint::BigInt;
 

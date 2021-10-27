@@ -10,6 +10,8 @@ pub mod visitor;
 
 pub mod bdmath;
 
+pub mod codegen;
+
 // Re-export for use in macros.
 pub use bigdecimal;
 pub use proc_macro2;

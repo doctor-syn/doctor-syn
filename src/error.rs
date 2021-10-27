@@ -4,6 +4,8 @@ use proc_macro2::Span;
 #[derive(Debug)]
 pub enum Error {
     UnsupportedExpr(Span),
+    UnsupportedCodegen(String),
+
     // UnsupportedMethod(Span),
     // UnsupportedStatement(Span),
     // UnsuportedClosureArgument(Span),
@@ -24,3 +26,25 @@ impl From<syn::Error> for Error {
         Error::CouldNotParse(String::new())
     }
 }
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Error::*;
+        match self {
+            UnsupportedExpr(span) => write!(f, "UnsupportedExpr {:?}", span),
+            UnsupportedCodegen(tokens) => write!(f, "UnsupportedCodegen {}", tokens.to_string()),
+            NotFound(span) => write!(f, "NotFound {:?}", span),
+            CouldNotConvertToExpression(span) => {
+                write!(f, "CouldNotConvertToExpression {:?}", span)
+            }
+            CouldNotConvertFromExpression(span) => {
+                write!(f, "CouldNotConvertFromExpression {:?}", span)
+            }
+            CouldNotParse(span) => write!(f, "CouldNotParse {:?}", span),
+            CouldNotEvaulate(span) => write!(f, "CouldNotEvaulate {:?}", span),
+            WrongNumberOfTerms(span) => write!(f, "WrongNumberOfTerms {:?}", span),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
