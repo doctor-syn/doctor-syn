@@ -77,7 +77,7 @@ pub fn gen_hypot(num_bits: usize, _number_type: &str) -> TokenStream {
     //
     quote!(
         fn hypot(x: #fty, y: #fty) -> #fty {
-            let xgty : #fty = x.abs() > y.abs();
+            let xgty : bool = x.abs() > y.abs();
             let x2 : #fty = select(xgty, x, y);
             let y2 : #fty = select(xgty, y, x);
             select(x2.abs() <= #fty::MIN_POSITIVE, x2, x2.abs() * (1.0 + (y2 / x2) * (y2 / x2)).sqrt())

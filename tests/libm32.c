@@ -147,15 +147,15 @@ f32 f32_log(f32 arg, f32 base) {
 
 f32 f32_powi(f32 x, i32 y) {
   f32 a = x;
-  f32 p = f32_abs(y);
+  i32 p = f32_iabs(y);
   f32 b = f32_select((p & (1 << 0)) != 0, a, 1.0);
   f32 a1 = a1 * a1;
   f32 b1 = f32_select((p & (1 << 1)) != 0, b * a, b);
   f32 a2 = a2 * a2;
-  f32 b2 = f32_select((p & (1 << 2)) != 0, b1 * a, b);
+  f32 b2 = f32_select((p & (1 << 2)) != 0, b1 * a, b1);
   f32 a3 = a3 * a3;
-  f32 b3 = f32_select((p & (1 << 3)) != 0, b2 * a, b);
-  b4 = f32_select(p < 16, b3, f32_powf(x, (f32)p));
+  f32 b3 = f32_select((p & (1 << 3)) != 0, b2 * a, b2);
+  f32 b4 = f32_select(p < 16, b3, f32_powf(x, (f32)p));
   return f32_select(y < 0, f32_recip(b4), b4);
 }
 

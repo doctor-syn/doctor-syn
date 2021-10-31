@@ -32,8 +32,8 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     quote!(
         fn exp2(arg: #fty) -> #fty {
             let r: #fty = arg.round();
-            let mul: #fty = #fty::from_bits((r.mul_add(#escale, #one)) as #uty);
-            let x: #fty = x - r;
+            let mul: #fty = #fty::from_bits((r.mul_add(#escale as #fty, #one as #fty)) as #uty);
+            let x: #fty = arg - r;
             #approx * mul
         }
     )
@@ -75,7 +75,7 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> Token
         fn exp_m1(arg: #fty) -> #fty {
             let scaled : #fty = arg * LOG2_E;
             let r : #fty = scaled.round();
-            let mul : #fty = #fty::from_bits((r.mul_add(#escale, #one)) as #uty);
+            let mul : #fty = #fty::from_bits((r.mul_add(#escale as #fty, #one as #fty)) as #uty);
             let x : #fty = scaled - r;
             #approx * mul + (mul - 1.0)
         }
@@ -84,7 +84,7 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> Token
 
 pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
-    let ity = helpers::get_fty(num_bits);
+    let ity = helpers::get_ity(num_bits);
 
     let xmin = 0.0;
     let xmax = 1.0;
@@ -106,7 +106,7 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
     quote!(
         fn ln_1p(arg: #fty) -> #fty {
             let exponent : #ity = ((arg+1.0).to_bits() >> 23) as #ity - 0x7f;
-            let x : #fty = select(exponent == 0, x, #fty::from_bits(((x+1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0 );
+            let x : #fty = select(exponent == 0, arg, #fty::from_bits(((arg+1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0 );
             let y: #fty = #approx;
             (y + (exponent as #fty)) * (1.0 / LOG2_E)
         }
@@ -197,11 +197,11 @@ pub fn gen_powi(_num_terms: usize, num_bits: usize, _number_type: &str) -> Token
             let a : #fty = x;
             let p : #ity = iabs(y);
             let b : #fty = select((p & (1 << 0)) != 0, a, 1.0);
-            let a1 : #fty = a1 * a1;
+            let a1 : #fty = a * a;
             let b1 : #fty = select((p & (1 << 1)) != 0, b * a, b);
-            let a2 : #fty = a2 * a2;
+            let a2 : #fty = a1 * a1;
             let b2 : #fty = select((p & (1 << 2)) != 0, b1 * a, b1);
-            let a3 : #fty = a3 * a3;
+            let a3 : #fty = a2 * a2;
             let b3 : #fty = select((p & (1 << 3)) != 0, b2 * a, b2);
 
             // do 16.. as logs.

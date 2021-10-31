@@ -67,10 +67,9 @@ pub fn gen_asin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             const LIM : #fty = #lim;
             let c : #fty = select(arg < 0.0, -PI/2.0, PI/2.0 );
             let s : #fty = select(arg < 0.0 , -1.0, 1.0  );
-            let x0 : #fty = arg;
-            let x : #fty = select(arg * arg < LIM * LIM, x, (1.0-x*x).sqrt() );
+            let x : #fty = select(arg * arg < LIM * LIM, arg, (1.0-arg*arg).sqrt() );
             let y : #fty = #approx ;
-            select(x0*x0 < LIM * LIM, y, c - y * s)
+            select(arg*arg < LIM * LIM, y, c - y * s)
         }
     )
 }
@@ -98,7 +97,7 @@ pub fn gen_acos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             const LIM : #fty = #lim;
             let c : #fty = select(arg < 0.0, PI, 0.0 );
             let s : #fty = select(arg < 0.0, 1.0, -1.0  );
-            let x : #fty = select(arg * arg < LIM * LIM, x, (1.0-x*x).sqrt() );
+            let x : #fty = select(arg * arg < LIM * LIM, arg, (1.0-arg*arg).sqrt() );
             let y : #fty = #approx ;
             select(arg*arg < LIM * LIM, PI/2.0 - y, c - y * s )
         }
@@ -128,7 +127,7 @@ pub fn gen_atan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             const LIM : #fty = #lim;
 
             let c : #fty = select(arg < 0.0, -PI/2.0, PI/2.0);
-            let small : #fty = arg.abs() < LIM;
+            let small : bool = arg.abs() < LIM;
             let x : #fty = select(small, arg, arg.recip());
             let y : #fty = #approx ;
             select(small, y, c - y)

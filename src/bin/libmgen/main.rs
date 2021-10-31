@@ -1,6 +1,6 @@
 use quote::quote;
-use syn::parse_quote;
 use std::io::Write;
+use syn::parse_quote;
 use syn::Stmt;
 
 mod auxfuncs;
@@ -13,14 +13,19 @@ mod test;
 mod trig;
 
 use auxfuncs::*;
+use doctor_syn::codegen::c;
 use hyperbolic::*;
 use inv_trig::*;
 use log_exp::*;
 use recip_sqrt::*;
 use trig::*;
-use doctor_syn::codegen::c;
 
-fn generate_libm(path: &str, num_bits: usize, number_type: &str, language: &str) -> std::result::Result<(), Box<dyn std::error::Error>> {
+fn generate_libm(
+    path: &str,
+    num_bits: usize,
+    number_type: &str,
+    language: &str,
+) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mut file = std::fs::File::create(path)?;
 
     let (trig, trig_tests) = gen_single_pass_trig(num_bits, number_type);
@@ -30,7 +35,7 @@ fn generate_libm(path: &str, num_bits: usize, number_type: &str, language: &str)
     let (recip_sqrt, recip_sqrt_tests) = gen_recip_sqrt(num_bits, number_type);
     let (aux, aux_tests) = gen_aux(num_bits, number_type);
 
-    let functions : Vec<Stmt> = parse_quote!(
+    let functions: Vec<Stmt> = parse_quote!(
         #trig
         #inv_trig
         #log_exp
@@ -39,7 +44,7 @@ fn generate_libm(path: &str, num_bits: usize, number_type: &str, language: &str)
         #aux
     );
 
-    let tests : Vec<Stmt> = parse_quote!(
+    let tests: Vec<Stmt> = parse_quote!(
         #trig_tests
         #inv_trig_tests
         #log_exp_tests
@@ -50,6 +55,18 @@ fn generate_libm(path: &str, num_bits: usize, number_type: &str, language: &str)
 
     match language {
         "rust" => {
+            file.write_all(b"use std::f32::consts::PI;\n")?;
+            file.write_all(b"use std::f32::consts::LOG2_E;\n")?;
+            file.write_all(b"use std::f32::consts::LOG2_10;\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"fn select(a: bool, b: f32, c: f32) -> f32 {\n")?;
+            file.write_all(b"    if a { b } else { c }\n")?;
+            file.write_all(b"}\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"fn iabs(i: i32) -> i32 {\n")?;
+            file.write_all(b"    i.abs()\n")?;
+            file.write_all(b"}\n")?;
+
             for stmt in functions.iter().chain(tests.iter()) {
                 let tokens = quote!(#stmt);
                 file.write_all(tokens.to_string().as_bytes())?;
@@ -113,14 +130,14 @@ fn main() {
     // let bd : doctor_syn::bigdecimal::BigDecimal = val.into();
     //let val = doctor_syn::expr!(123456789.123456789123456789123456789123456789).eval(60).unwrap();
     //let bd : bigdecimal::BigDecimal = "123456789.123456789123456789123456789123456789".parse().unwrap();
-    //let val = doctor_syn::expr!(123456789.123456789123456789123456789123456789);
+    //let val = doctor_syn::expr!(123456789.12345678912let#fty3456789123456789123456789);
     //let val = doctor_syn::Expression::from(bd);
     // println!("val={}", val);
     // println!("bd={}", bd);
 
-    // generate_libm("tests/libm32.rs", 32, "f32_hex", "rust").unwrap();
+    generate_libm("tests/libm32.rs", 32, "f32_hex", "rust").unwrap();
     // generate_libm("tests/libm64.rs", 64, "f64_hex", "rust").unwrap();
 
-    generate_libm("tests/libm32.c", 32, "f32_hex", "c").unwrap();
+    // generate_libm("tests/libm32.c", 32, "f32_hex", "c").unwrap();
     // generate_libm("tests/libm64.c", 64, "f64_hex", "c").unwrap();
 }

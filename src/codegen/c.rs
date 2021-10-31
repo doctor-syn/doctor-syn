@@ -10,13 +10,17 @@ use std::cell::RefCell;
 
 use quote::ToTokens;
 // use crate::Expression;
-use syn::{
-    BinOp, Expr,
-    Item, Local, Pat, Path, Type, UnOp,
-};
+use syn::{BinOp, Expr, Item, Local, Pat, Path, Type, UnOp};
 
-use syn::Lit;
 use proc_macro2::{Ident, Literal};
+use syn::Lit;
+use syn::{
+    ExprArray, ExprAssign, ExprAssignOp, ExprAsync, ExprAwait, ExprBinary, ExprBlock, ExprBox,
+    ExprBreak, ExprCall, ExprCast, ExprClosure, ExprContinue, ExprField, ExprForLoop, ExprGroup,
+    ExprIf, ExprIndex, ExprLet, ExprLit, ExprLoop, ExprMacro, ExprMatch, ExprMethodCall, ExprParen,
+    ExprPath, ExprRange, ExprReference, ExprRepeat, ExprReturn, ExprStruct, ExprTry, ExprTryBlock,
+    ExprTuple, ExprType, ExprUnary, ExprUnsafe, ExprWhile, ExprYield,
+};
 use syn::{FnArg, ReturnType, Signature, Stmt};
 use syn::{
     ItemConst, ItemEnum, ItemExternCrate, ItemFn, ItemForeignMod, ItemImpl, ItemMacro, ItemMacro2,
@@ -26,7 +30,6 @@ use syn::{
     TypeArray, TypeBareFn, TypeGroup, TypeImplTrait, TypeInfer, TypeMacro, TypeNever, TypeParen,
     TypePath, TypePtr, TypeReference, TypeSlice, TypeTraitObject, TypeTuple,
 };
-use syn::{ExprArray, ExprAssign, ExprAssignOp, ExprAsync, ExprAwait, ExprBinary, ExprBlock, ExprBox, ExprBreak, ExprCall, ExprCast, ExprClosure, ExprContinue, ExprField, ExprForLoop, ExprGroup, ExprIf, ExprIndex, ExprLet, ExprLit, ExprLoop, ExprMacro, ExprMatch, ExprMethodCall, ExprParen, ExprPath, ExprRange, ExprReference, ExprRepeat, ExprReturn, ExprStruct, ExprTry, ExprTryBlock, ExprTuple, ExprType, ExprUnary, ExprUnsafe, ExprWhile, ExprYield};
 
 use std::collections::HashMap;
 
@@ -39,7 +42,12 @@ pub struct State {
 
 impl State {
     fn new() -> Self {
-        Self { depth: 0, var_aliases: HashMap::new(), type_aliases: HashMap::new(), default_type: "f32".into() }
+        Self {
+            depth: 0,
+            var_aliases: HashMap::new(),
+            type_aliases: HashMap::new(),
+            default_type: "f32".into(),
+        }
     }
 
     // Called on every let statement to alias a variable.
@@ -72,7 +80,10 @@ impl State {
         if !self.var_aliases.contains_key(rust_name) {
             Ok(rust_name.into())
         } else {
-            self.var_aliases.get(rust_name).ok_or(Error::UndefinedVariable(rust_name.into())).map(|s| s.clone())
+            self.var_aliases
+                .get(rust_name)
+                .ok_or(Error::UndefinedVariable(rust_name.into()))
+                .map(|s| s.clone())
         }
     }
 
@@ -81,7 +92,10 @@ impl State {
         if !self.type_aliases.contains_key(rust_name) {
             Ok(rust_name.into())
         } else {
-            self.type_aliases.get(rust_name).ok_or(Error::UndefinedVariable(rust_name.into())).map(|s| s.clone())
+            self.type_aliases
+                .get(rust_name)
+                .ok_or(Error::UndefinedVariable(rust_name.into()))
+                .map(|s| s.clone())
         }
     }
 }
@@ -104,7 +118,7 @@ impl Context {
 
     pub fn ind(&self) -> &str {
         let tabs = "                                                                                                                        ";
-        &tabs[0..self.0.borrow().depth*2]
+        &tabs[0..self.0.borrow().depth * 2]
     }
 
     pub fn default_type(&self) -> String {
@@ -131,7 +145,6 @@ impl Context {
     pub fn type_alias(&self, rust_name: &str) -> Result<String> {
         self.0.borrow().type_alias(rust_name)
     }
-
 }
 
 pub struct ContextGuard<'a> {
@@ -264,7 +277,12 @@ impl AsC for Expr {
 impl AsC for ItemConst {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
-        Ok(format!("const {} {} = {};", self.ty.as_c(context)?, self.ident.as_c(context)?, self.expr.as_c(context)?))
+        Ok(format!(
+            "const {} {} = {};",
+            self.ty.as_c(context)?,
+            self.ident.as_c(context)?,
+            self.expr.as_c(context)?
+        ))
     }
 }
 
@@ -289,20 +307,27 @@ impl AsC for ItemFn {
         context.clear_vars();
 
         let inputs = self
-        .sig
-        .inputs
-        .iter()
-        .map(|arg| arg.as_c(context))
-        .collect::<Result<Vec<_>>>()?
-        .join(", ");
+            .sig
+            .inputs
+            .iter()
+            .map(|arg| arg.as_c(context))
+            .collect::<Result<Vec<_>>>()?
+            .join(", ");
 
         let output = self.sig.output.as_c(context)?;
-        let mut res = format!("{}{} {}_{}({}) {{\n", context.ind(), output, context.default_type(), self.sig.ident.to_string(), inputs);
+        let mut res = format!(
+            "{}{} {}_{}({}) {{\n",
+            context.ind(),
+            output,
+            context.default_type(),
+            self.sig.ident.to_string(),
+            inputs
+        );
 
         {
             let g = context.begin();
             let ident = self.sig.ident.as_c(context)?;
-    
+
             for stmt in self.block.stmts.iter() {
                 if let Stmt::Expr(expr) = stmt {
                     let s = format!("{}return {};\n", context.ind(), expr.as_c(context)?);
@@ -510,7 +535,11 @@ impl AsC for ExprCall {
 impl AsC for ExprCast {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
-        Ok(format!("({}){}", self.ty.as_c(context)?, self.expr.as_c(context)?))
+        Ok(format!(
+            "({}){}",
+            self.ty.as_c(context)?,
+            self.expr.as_c(context)?
+        ))
     }
 }
 impl AsC for ExprClosure {
@@ -581,7 +610,7 @@ impl AsC for ExprLit {
             Int(value) => Ok(value.base10_digits().into()),
             Float(value) => Ok(value.base10_digits().into()),
             Bool(value) => Ok(format!("{}", value.to_token_stream())),
-            Verbatim(value) => Ok(format!("{}", value.to_token_stream()))
+            Verbatim(value) => Ok(format!("{}", value.to_token_stream())),
         }
     }
 }
@@ -695,7 +724,7 @@ impl AsC for ExprTuple {
             .elems
             .iter()
             .enumerate()
-            .map(|(t, e)| -> Result<String> {Ok(format!("t{}: {}", t, e.as_c(context)?))})
+            .map(|(t, e)| -> Result<String> { Ok(format!("t{}: {}", t, e.as_c(context)?)) })
             .collect::<Result<Vec<_>>>()?
             .join(", ");
         Ok(format!("(struct Tuple){{{}}}", elems))
@@ -740,7 +769,6 @@ impl AsC for ExprYield {
         make_err(self)
     }
 }
-
 
 impl AsC for Signature {
     fn as_c(&self, context: &Context) -> Result<String> {
@@ -834,7 +862,11 @@ impl AsC for Pat {
             Struct(value) => make_err(self),
             Tuple(value) => make_err(self),
             TupleStruct(value) => make_err(self),
-            Type(value) => Ok(format!("{} {}", value.ty.as_c(context)?, value.pat.as_c(context)?)),
+            Type(value) => Ok(format!(
+                "{} {}",
+                value.ty.as_c(context)?,
+                value.pat.as_c(context)?
+            )),
             Verbatim(value) => make_err(self),
             Wild(value) => make_err(self),
             _ => return make_err(self),
@@ -955,11 +987,9 @@ impl AsC for TypeTuple {
             .elems
             .iter()
             .enumerate()
-            .map(|(t, e)| -> Result<String> {Ok(format!("{} t{}", e.as_c(context)?, t))})
+            .map(|(t, e)| -> Result<String> { Ok(format!("{} t{}", e.as_c(context)?, t)) })
             .collect::<Result<Vec<_>>>()?
             .join("; ");
         Ok(format!("struct Tuple{{ {} }}", elems))
     }
 }
-
-
