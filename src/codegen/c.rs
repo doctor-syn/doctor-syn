@@ -28,33 +28,110 @@ use syn::{
 };
 use syn::{ExprArray, ExprAssign, ExprAssignOp, ExprAsync, ExprAwait, ExprBinary, ExprBlock, ExprBox, ExprBreak, ExprCall, ExprCast, ExprClosure, ExprContinue, ExprField, ExprForLoop, ExprGroup, ExprIf, ExprIndex, ExprLet, ExprLit, ExprLoop, ExprMacro, ExprMatch, ExprMethodCall, ExprParen, ExprPath, ExprRange, ExprReference, ExprRepeat, ExprReturn, ExprStruct, ExprTry, ExprTryBlock, ExprTuple, ExprType, ExprUnary, ExprUnsafe, ExprWhile, ExprYield};
 
-pub struct Context {
-    depth: RefCell<usize>,
-    ty: String,
+use std::collections::HashMap;
+
+pub struct State {
+    depth: usize,
+    var_aliases: HashMap<String, String>,
+    type_aliases: HashMap<String, String>,
+    default_type: String,
 }
+
+impl State {
+    fn new() -> Self {
+        Self { depth: 0, var_aliases: HashMap::new(), type_aliases: HashMap::new(), default_type: "f32".into() }
+    }
+
+    // Called on every let statement to alias a variable.
+    pub fn set_var_alias(&mut self, rust_name: String, c_name: &str) -> String {
+        if !self.var_aliases.contains_key(rust_name.as_str()) {
+            self.var_aliases.insert(rust_name.clone(), c_name.into());
+            rust_name
+        } else {
+            // Add a trailing underscore if not unique.
+            let entry = self.var_aliases.get_mut(rust_name.as_str()).unwrap();
+            *entry += "_";
+            entry.clone()
+        }
+    }
+
+    pub fn set_type_alias(&mut self, rust_name: String, c_name: &str) -> String {
+        if !self.type_aliases.contains_key(rust_name.as_str()) {
+            self.type_aliases.insert(rust_name.clone(), c_name.into());
+            rust_name
+        } else {
+            // Add a trailing underscore if not unique.
+            let entry = self.type_aliases.get_mut(rust_name.as_str()).unwrap();
+            *entry += "_";
+            entry.clone()
+        }
+    }
+
+    // Given a Rust variable, what is its C name.
+    pub fn var_alias(&self, rust_name: &str) -> Result<String> {
+        if !self.var_aliases.contains_key(rust_name) {
+            Ok(rust_name.into())
+        } else {
+            self.var_aliases.get(rust_name).ok_or(Error::UndefinedVariable(rust_name.into())).map(|s| s.clone())
+        }
+    }
+
+    // Given a Rust type, what is its C name.
+    pub fn type_alias(&self, rust_name: &str) -> Result<String> {
+        if !self.type_aliases.contains_key(rust_name) {
+            Ok(rust_name.into())
+        } else {
+            self.type_aliases.get(rust_name).ok_or(Error::UndefinedVariable(rust_name.into())).map(|s| s.clone())
+        }
+    }
+}
+
+pub struct Context(RefCell<State>);
 
 impl Context {
     pub fn new() -> Self {
-        Self { depth: RefCell::new(0), ty: "float".into() }
+        Self(RefCell::new(State::new()))
     }
 
     pub fn begin(&self) -> ContextGuard {
-        *self.depth.borrow_mut() += 1;
+        self.0.borrow_mut().depth += 1;
         ContextGuard { context: self }
     }
 
     pub fn end(&self) {
-        *self.depth.borrow_mut() -= 1;
+        self.0.borrow_mut().depth += 1;
     }
 
     pub fn ind(&self) -> &str {
         let tabs = "                                                                                                                        ";
-        &tabs[0..*self.depth.borrow()*2]
+        &tabs[0..self.0.borrow().depth*2]
     }
 
-    pub fn ty(&self) -> &str {
-        &*self.ty
+    pub fn default_type(&self) -> String {
+        self.0.borrow().default_type.clone()
     }
+
+    pub fn clear_vars(&self) {
+        self.0.borrow_mut().var_aliases = HashMap::new();
+        self.0.borrow_mut().type_aliases = HashMap::new();
+    }
+
+    pub fn set_var_alias(&self, rust_name: String, c_name: &str) -> String {
+        self.0.borrow_mut().set_var_alias(rust_name, c_name)
+    }
+
+    pub fn var_alias(&self, rust_name: &str) -> Result<String> {
+        self.0.borrow().var_alias(rust_name)
+    }
+
+    pub fn set_type_alias(&self, rust_name: String, c_name: &str) -> String {
+        self.0.borrow_mut().set_type_alias(rust_name, c_name)
+    }
+
+    pub fn type_alias(&self, rust_name: &str) -> Result<String> {
+        self.0.borrow().type_alias(rust_name)
+    }
+
 }
 
 pub struct ContextGuard<'a> {
@@ -68,7 +145,9 @@ impl<'a> std::ops::Drop for ContextGuard<'a> {
 }
 
 fn make_err<T: ToTokens>(value: T) -> Result<String> {
-    #[cfg(debug_codegen)]
+    // #[cfg(debug_codegen)]
+    use std::io::Write;
+    std::io::stdout().flush().unwrap();
     panic!("error {}", value.to_token_stream().to_string());
     #[cfg(not(debug_codegen))]
     Err(Error::UnsupportedCodegen(
@@ -76,9 +155,10 @@ fn make_err<T: ToTokens>(value: T) -> Result<String> {
     ))
 }
 
-fn log<T: ToTokens>(value: T) {
-    #[cfg(debug_codegen)]
+fn log<T: ToTokens + std::fmt::Debug>(value: T) {
+    // #[cfg(debug_codegen)]
     println!("log {}", value.to_token_stream().to_string());
+    //println!("log {:?}", value);
 }
 
 pub trait AsC {
@@ -89,8 +169,9 @@ impl AsC for Local {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
         let pat = self.pat.as_c(context)?;
+        let alias = context.set_var_alias(pat.clone(), pat.as_str());
         if let Some((_, init)) = &self.init {
-            Ok(format!("{} {} = {}", context.ty(), pat, init.as_c(context)?))
+            Ok(format!("{} = {}", pat, init.as_c(context)?))
         } else {
             Ok(pat)
         }
@@ -183,7 +264,7 @@ impl AsC for Expr {
 impl AsC for ItemConst {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
-        Ok(format!("{}const {}{} = {}", context.ind(), self.ty.as_c(context)?, self.ident.as_c(context)?, self.expr.as_c(context)?))
+        Ok(format!("const {} {} = {};", self.ty.as_c(context)?, self.ident.as_c(context)?, self.expr.as_c(context)?))
     }
 }
 
@@ -205,6 +286,8 @@ impl AsC for ItemFn {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
 
+        context.clear_vars();
+
         let inputs = self
         .sig
         .inputs
@@ -214,7 +297,7 @@ impl AsC for ItemFn {
         .join(", ");
 
         let output = self.sig.output.as_c(context)?;
-        let mut res = format!("{}{} x_{}({}) {{\n", context.ind(), output, self.sig.ident.to_string(), inputs);
+        let mut res = format!("{}{} {}_{}({}) {{\n", context.ind(), output, context.default_type(), self.sig.ident.to_string(), inputs);
 
         {
             let g = context.begin();
@@ -230,7 +313,7 @@ impl AsC for ItemFn {
                 }
             }
         }
-        res.extend(format!("{}}}\n\n", context.ind()).chars());
+        res.extend(format!("}}\n\n").chars());
         Ok(res)
     }
 }
@@ -411,8 +494,9 @@ impl AsC for ExprCall {
         log(self);
         let func = self.func.as_c(context)?;
         let func = match &*func {
-            "f32 :: from_bits" => "from_bits",
-            f => f,
+            "f32 :: from_bits" => "f32_from_bits".into(),
+            "f64 :: from_bits" => "f64_from_bits".into(),
+            f => format!("{}_{}", context.default_type(), f),
         };
         let args = self
             .args
@@ -426,7 +510,7 @@ impl AsC for ExprCall {
 impl AsC for ExprCast {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
-        make_err(self)
+        Ok(format!("({}){}", self.ty.as_c(context)?, self.expr.as_c(context)?))
     }
 }
 impl AsC for ExprClosure {
@@ -530,7 +614,7 @@ impl AsC for ExprMethodCall {
             .map(|a| a.as_c(context))
             .collect::<Result<Vec<_>>>()?
             .join(", ");
-        let method = self.method.as_c(context)?;
+        let method = format!("{}_{}", context.default_type(), self.method.as_c(context)?);
         if args.is_empty() {
             Ok(format!("{}({})", method, receiver))
         } else {
@@ -735,8 +819,24 @@ impl AsC for Stmt {
 impl AsC for Pat {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
+        use Pat::*;
         match self {
-            Pat::Ident(ident) => ident.ident.as_c(context),
+            Box(value) => make_err(self),
+            Ident(ident) => ident.ident.as_c(context),
+            Lit(value) => make_err(self),
+            Macro(value) => make_err(self),
+            Or(value) => make_err(self),
+            Path(path) => path.path.as_c(context),
+            Range(value) => make_err(self),
+            Reference(value) => make_err(self),
+            Rest(value) => make_err(self),
+            Slice(value) => make_err(self),
+            Struct(value) => make_err(self),
+            Tuple(value) => make_err(self),
+            TupleStruct(value) => make_err(self),
+            Type(value) => Ok(format!("{} {}", value.ty.as_c(context)?, value.pat.as_c(context)?)),
+            Verbatim(value) => make_err(self),
+            Wild(value) => make_err(self),
             _ => return make_err(self),
         }
     }
@@ -745,8 +845,8 @@ impl AsC for Pat {
 impl AsC for Path {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
-        // TODO:
-        Ok(self.to_token_stream().to_string())
+        let s = self.to_token_stream().to_string();
+        context.var_alias(s.as_str())
     }
 }
 
@@ -754,11 +854,8 @@ impl AsC for Ident {
     fn as_c(&self, context: &Context) -> Result<String> {
         log(self);
         let s = self.to_string();
-        if s == "f32" || s == "f64" {
-            Ok(context.ty().into())
-        } else {
-            Ok(s)
-        }
+        //context.var_alias(s.as_str())
+        Ok(s)
     }
 }
 
@@ -864,3 +961,5 @@ impl AsC for TypeTuple {
         Ok(format!("struct Tuple{{ {} }}", elems))
     }
 }
+
+

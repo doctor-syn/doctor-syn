@@ -20,8 +20,8 @@ pub fn gen_sqrt(num_bits: usize, _number_type: &str) -> TokenStream {
 
     quote!(
         fn sqrt(x: #fty) -> #fty {
-            let r = sqrt_approx(x);
-            let y = r + (x - r * r) / (2.0 * r);
+            let r : #fty = sqrt_approx(x);
+            let y : #fty = r + (x - r * r) / (2.0 * r);
             y
         }
     )
@@ -41,8 +41,8 @@ pub fn gen_cbrt(num_bits: usize, _number_type: &str) -> TokenStream {
 
     quote!(
         fn cbrt(x: #fty) -> #fty {
-            let r = cbrt_approx(x.abs());
-            let y = r + (x.abs() - r * r * r) / (3.0 * r * r);
+            let r : #fty = cbrt_approx(x.abs());
+            let y : #fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
             y.copysign(x)
         }
     )
@@ -61,11 +61,11 @@ pub fn gen_recip(num_bits: usize, _number_type: &str) -> TokenStream {
     quote!(
         fn recip(x: #fty) -> #fty {
             //let r = exp2_approx(-log2_approx(x));
-            let r = recip_approx(x);
-            let r = r * (2.0 - x * r);
-            let r = r * (2.0 - x * r);
-            let r = r * (2.0 - x * r);
-            r
+            let r : #fty = recip_approx(x);
+            let r1 : #fty = r * (2.0 - x * r);
+            let r2 : #fty = r1 * (2.0 - x * r1);
+            let r3 : #fty = r2 * (2.0 - x * r2);
+            r3
         }
     )
 }
@@ -77,12 +77,10 @@ pub fn gen_hypot(num_bits: usize, _number_type: &str) -> TokenStream {
     //
     quote!(
         fn hypot(x: #fty, y: #fty) -> #fty {
-            let (x, y) = if x.abs() > y.abs() { (x, y) } else { (y, x) };
-            if x.abs() <= #fty::MIN_POSITIVE {
-                x
-            } else {
-                x.abs() * (1.0 + (y / x) * (y / x)).sqrt()
-            }
+            let xgty : #fty = x.abs() > y.abs();
+            let x2 : #fty = select(xgty, x, y);
+            let y2 : #fty = select(xgty, y, x);
+            select(x2.abs() <= #fty::MIN_POSITIVE, x2, x2.abs() * (1.0 + (y2 / x2) * (y2 / x2)).sqrt())
         }
     )
 }

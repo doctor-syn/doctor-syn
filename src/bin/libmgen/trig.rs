@@ -43,8 +43,8 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize, number_type: &str) ->
         .into_inner();
 
     quote!(
-        fn sin(x: #fty) -> #fty {
-            let x = x * (1.0 / (std::#fty::consts::PI));
+        fn sin(arg: #fty) -> #fty {
+            let scaled = arg * (1.0 / PI);
             let xh = x + 0.5;
             let xr = x.round();
             let xhr = xh.round();
@@ -99,8 +99,8 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize, number_type: &str) ->
         .into_inner();
 
     quote!(
-        fn cos(x: #fty) -> #fty {
-            let x = x * (1.0 / (std::#fty::consts::PI));
+        fn cos(arg: #fty) -> #fty {
+            let x = arg * (1.0 / PI);
             let xh = x + 0.5;
             let xr = x.round();
             let xhr = xh.round();
@@ -137,9 +137,9 @@ pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize, number_type: &str)
         .into_inner();
 
     quote!(
-        fn sin(x: #fty) -> #fty {
-            let x = x * (1.0 / (std::#fty::consts::PI * 2.0));
-            let x = x - x.round();
+        fn sin(arg: #fty) -> #fty {
+            let scaled : #fty = arg * (1.0 / (PI * 2.0));
+            let x : #fty = scaled - scaled.round();
             #approx
         }
     )
@@ -167,9 +167,9 @@ pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize, number_type: &str)
         .into_inner();
 
     quote!(
-        fn cos(x: #fty) -> #fty {
-            let x = x * (1.0 / (std::#fty::consts::PI * 2.0));
-            let x = x - x.round();
+        fn cos(arg: #fty) -> #fty {
+            let scaled : #fty = arg * (1.0 / (PI * 2.0));
+            let x : #fty = scaled - scaled.round();
             #approx
         }
     )
@@ -180,8 +180,8 @@ pub fn gen_sin_cos(_num_terms: usize, num_bits: usize, _number_type: &str) -> To
 
     // There is some synergy between sin and cos, but not as much as ULP-focused approximants.
     quote!(
-        fn sin_cos(x: #fty) -> (#fty, #fty) {
-            (sin(x), cos(x))
+        fn sin_cos(arg: #fty) -> (#fty, #fty) {
+            (sin(arg), cos(arg))
         }
     )
 }
@@ -210,11 +210,11 @@ pub fn gen_tan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStr
 
     // TODO: calculate the recipocal without a divide.
     quote!(
-        fn tan(x: #fty) -> #fty {
-            let x = x * (1.0 / (std::#fty::consts::PI));
-            let x = x - x.round();
-            let recip = 1.0 / (x*x - 0.25);
-            let y = #approx ;
+        fn tan(arg: #fty) -> #fty {
+            let scaled : #fty = arg * (1.0 / PI);
+            let x : #fty = scaled - scaled.round();
+            let recip : #fty = 1.0 / (x*x - 0.25);
+            let y : #fty = #approx ;
             y * recip
         }
     )

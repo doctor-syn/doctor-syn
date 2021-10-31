@@ -30,10 +30,10 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
         .into_inner();
 
     quote!(
-        fn exp2(x: #fty) -> #fty {
-            let r = x.round();
-            let mul = #fty::from_bits((r.mul_add(#escale as #fty, #one as #fty)) as #uty);
-            let x = x - r;
+        fn exp2(arg: #fty) -> #fty {
+            let r: #fty = arg.round();
+            let mul: #fty = #fty::from_bits((r.mul_add(#escale, #one)) as #uty);
+            let x: #fty = x - r;
             #approx * mul
         }
     )
@@ -42,8 +42,8 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
 pub fn gen_exp(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
     quote!(
-        fn exp(x: #fty) -> #fty {
-            exp2(x * std::#fty::consts::LOG2_E)
+        fn exp(arg: #fty) -> #fty {
+            exp2(arg * LOG2_E)
         }
     )
 }
@@ -72,11 +72,11 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> Token
         .into_inner();
 
     quote!(
-        fn exp_m1(x: #fty) -> #fty {
-            let x = x * std::#fty::consts::LOG2_E;
-            let r = x.round();
-            let mul = #fty::from_bits((r.mul_add(#escale as #fty, #one as #fty)) as #uty);
-            let x = x - r;
+        fn exp_m1(arg: #fty) -> #fty {
+            let scaled : #fty = arg * LOG2_E;
+            let r : #fty = scaled.round();
+            let mul : #fty = #fty::from_bits((r.mul_add(#escale, #one)) as #uty);
+            let x : #fty = scaled - r;
             #approx * mul + (mul - 1.0)
         }
     )
@@ -84,6 +84,7 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> Token
 
 pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
+    let ity = helpers::get_fty(num_bits);
 
     let xmin = 0.0;
     let xmax = 1.0;
@@ -103,17 +104,18 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
         .into_inner();
 
     quote!(
-        fn ln_1p(x: #fty) -> #fty {
-            let exponent = ((x+1.0).to_bits() >> 23) as i32 - 0x7f;
-            let x = if exponent == 0 {x} else { #fty::from_bits(((x+1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0 };
+        fn ln_1p(arg: #fty) -> #fty {
+            let exponent : #ity = ((arg+1.0).to_bits() >> 23) as #ity - 0x7f;
+            let x : #fty = select(exponent == 0, x, #fty::from_bits(((x+1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0 );
             let y: #fty = #approx;
-            (y + (exponent as #fty)) * (1.0 / std::#fty::consts::LOG2_E)
+            (y + (exponent as #fty)) * (1.0 / LOG2_E)
         }
     )
 }
 
 pub fn gen_log2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
+    let ity = helpers::get_ity(num_bits);
     let one = helpers::get_one(num_bits);
     let escale = helpers::get_escale(num_bits);
 
@@ -135,10 +137,10 @@ pub fn gen_log2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
         .into_inner();
 
     quote!(
-        fn log2(x: #fty) -> #fty {
-            let exponent = (x.to_bits() >> 23) as i32 - 0x7f;
-            let x = #fty::from_bits((x.to_bits() & (#escale-1)) | #one) - 1.5;
-            let y: #fty = #approx;
+        fn log2(arg: #fty) -> #fty {
+            let exponent : #ity = (arg.to_bits() >> 23) as #ity - 0x7f;
+            let x : #fty = #fty::from_bits((arg.to_bits() & (#escale-1)) | #one) - 1.5;
+            let y : #fty = #approx;
             y + (exponent as #fty)
         }
     )
@@ -148,8 +150,8 @@ pub fn gen_ln(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenSt
     let fty = helpers::get_fty(num_bits);
 
     quote!(
-        fn ln(x: #fty) -> #fty {
-            log2(x) * (1.0 / std::#fty::consts::LOG2_E)
+        fn ln(arg: #fty) -> #fty {
+            log2(arg) * (1.0 / LOG2_E)
         }
     )
 }
@@ -158,8 +160,8 @@ pub fn gen_log10(_num_terms: usize, num_bits: usize, _number_type: &str) -> Toke
     let fty = helpers::get_fty(num_bits);
 
     quote!(
-        fn log10(x: #fty) -> #fty {
-            log2(x) * (1.0 / std::#fty::consts::LOG2_10)
+        fn log10(arg: #fty) -> #fty {
+            log2(arg) * (1.0 / LOG2_10)
         }
     )
 }
@@ -168,8 +170,8 @@ pub fn gen_log(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenS
     let fty = helpers::get_fty(num_bits);
 
     quote!(
-        fn log(x: #fty, base: #fty) -> #fty {
-            log2(x) / log2(base)
+        fn log(arg: #fty, base: #fty) -> #fty {
+            log2(arg) / log2(base)
         }
     )
 }
@@ -178,38 +180,35 @@ pub fn gen_powf(_num_terms: usize, num_bits: usize, _number_type: &str) -> Token
     let fty = helpers::get_fty(num_bits);
 
     quote!(
-        fn powf(x: #fty, y: #fty) -> #fty {
-            exp2(log2(x) * y)
+        fn powf(arg: #fty, y: #fty) -> #fty {
+            exp2(log2(arg) * y)
         }
     )
 }
 
 pub fn gen_powi(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
     let fty = helpers::get_fty(num_bits);
+    let ity = helpers::get_ity(num_bits);
 
     // Note, for constant values under 16, the code path is very short.
     quote!(
-        fn powi(x: #fty, y: i32) -> #fty {
+        fn powi(x: #fty, y: #ity) -> #fty {
             // do 0..15 as multiplies.
-            let a = x;
-            let p = y.abs();
-            let b = if (p & (1 << 0)) != 0 { a } else { 1.0 };
-            let a = a * a;
-            let b = if (p & (1 << 1)) != 0 { b * a } else { b };
-            let a = a * a;
-            let b = if (p & (1 << 2)) != 0 { b * a } else { b };
-            let a = a * a;
-            let b = if (p & (1 << 3)) != 0 { b * a } else { b };
+            let a : #fty = x;
+            let p : #ity = iabs(y);
+            let b : #fty = select((p & (1 << 0)) != 0, a, 1.0);
+            let a1 : #fty = a1 * a1;
+            let b1 : #fty = select((p & (1 << 1)) != 0, b * a, b);
+            let a2 : #fty = a2 * a2;
+            let b2 : #fty = select((p & (1 << 2)) != 0, b1 * a, b1);
+            let a3 : #fty = a3 * a3;
+            let b3 : #fty = select((p & (1 << 3)) != 0, b2 * a, b2);
 
             // do 16.. as logs.
-            let b = if p < 16 { b } else { powf(x, p as #fty) };
+            let b4 : #fty = select(p < 16, b3, powf(x, p as #fty));
 
             // negative powers are reciprocals.
-            if y < 0 {
-                recip(b)
-            } else {
-                b
-            }
+            select(y < 0, recip(b4), b4)
         }
     )
 }

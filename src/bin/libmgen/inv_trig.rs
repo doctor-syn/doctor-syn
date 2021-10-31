@@ -12,12 +12,12 @@ pub fn gen_atan2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
     let xmin = -1.0;
     let xmax = 1.0;
 
-    let approx = expr!(x.atan())
+    let approx = expr!(x3.atan())
         .approx(
             num_terms,
             xmin,
             xmax,
-            name!(x),
+            name!(x3),
             Parity::Odd,
             num_digits_for(num_bits),
         )
@@ -29,14 +29,17 @@ pub fn gen_atan2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
     // TODO: calculate the recipocal without a divide.
     quote!(
         fn atan2(y: #fty, x: #fty) -> #fty {
-            use std::#fty::consts::PI;
-            let offset180 = if y < 0.0 { -PI } else { PI };
-            let (x, y, offset) = if x < 0.0 { (-x, -y, offset180) } else { (x, y, 0.0) };
-            let offset90 = if y < 0.0 { -PI/2.0 } else { PI/2.0 };
-            let (x, y, offset) = if y.abs() > x { (y, -x, offset + offset90) } else { (x, y, offset) };
-            let x = y / x;
-            let y = #approx ;
-            y + offset
+            let offset180 : #fty = select(y < 0.0, -PI, PI );
+            let x1 : #fty = select(x < 0.0, -x, x );
+            let y1 : #fty = select(x < 0.0, -y, y );
+            let offset1 : #fty = select(x < 0.0, offset180, 0.0 );
+            let offset90 : #fty = select(y < 0.0, -PI/2.0, PI/2.0 );
+            let x2 : #fty = select(y1.abs() > x1, y1, x1 );
+            let y2 : #fty = select(y1.abs() > x1, -x1, y1 );
+            let offset2 : #fty = select(y1.abs() > x1, offset1 + offset90, offset1 );
+            let x3 : #fty = y2 / x2;
+            let y3 : #fty = #approx ;
+            y3 + offset2
         }
     )
 }
@@ -60,15 +63,14 @@ pub fn gen_asin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
         .into_inner();
 
     quote!(
-        fn asin(x: #fty) -> #fty {
-            use std::#fty::consts::PI;
+        fn asin(arg: #fty) -> #fty {
             const LIM : #fty = #lim;
-            let c = if x < 0.0 { -PI/2.0 } else { PI/2.0 };
-            let s = if x < 0.0 { -1.0 } else { 1.0  };
-            let x0 = x;
-            let x = if x * x < LIM * LIM { x } else { (1.0-x*x).sqrt() };
-            let y = #approx ;
-            if x0*x0 < LIM * LIM { y } else { c - y * s }
+            let c : #fty = select(arg < 0.0, -PI/2.0, PI/2.0 );
+            let s : #fty = select(arg < 0.0 , -1.0, 1.0  );
+            let x0 : #fty = arg;
+            let x : #fty = select(arg * arg < LIM * LIM, x, (1.0-x*x).sqrt() );
+            let y : #fty = #approx ;
+            select(x0*x0 < LIM * LIM, y, c - y * s)
         }
     )
 }
@@ -92,15 +94,13 @@ pub fn gen_acos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
         .into_inner();
 
     quote!(
-        fn acos(x: #fty) -> #fty {
-            use std::#fty::consts::PI;
+        fn acos(arg: #fty) -> #fty {
             const LIM : #fty = #lim;
-            let c = if x < 0.0 { PI } else { 0.0 };
-            let s = if x < 0.0 { 1.0 } else { -1.0  };
-            let x0 = x;
-            let x = if x * x < LIM * LIM { x } else { (1.0-x*x).sqrt() };
-            let y = #approx ;
-            if x0*x0 < LIM * LIM { PI/2.0 - y } else { c - y * s }
+            let c : #fty = select(arg < 0.0, PI, 0.0 );
+            let s : #fty = select(arg < 0.0, 1.0, -1.0  );
+            let x : #fty = select(arg * arg < LIM * LIM, x, (1.0-x*x).sqrt() );
+            let y : #fty = #approx ;
+            select(arg*arg < LIM * LIM, PI/2.0 - y, c - y * s )
         }
     )
 }
@@ -124,15 +124,14 @@ pub fn gen_atan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
         .into_inner();
 
     quote!(
-        fn atan(x: #fty) -> #fty {
-            use std::#fty::consts::PI;
+        fn atan(arg: #fty) -> #fty {
             const LIM : #fty = #lim;
 
-            let c = if x < 0.0 { -PI/2.0 } else { PI/2.0 };
-            let small = x.abs() < LIM;
-            let x = if small { x } else { x.recip() };
-            let y = #approx ;
-            if small { y } else { c - y }
+            let c : #fty = select(arg < 0.0, -PI/2.0, PI/2.0);
+            let small : #fty = arg.abs() < LIM;
+            let x : #fty = select(small, arg, arg.recip());
+            let y : #fty = #approx ;
+            select(small, y, c - y)
         }
     )
 }

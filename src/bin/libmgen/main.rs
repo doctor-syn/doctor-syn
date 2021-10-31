@@ -58,11 +58,19 @@ fn generate_libm(path: &str, num_bits: usize, number_type: &str, language: &str)
         "c" => {
             file.write_all(b"#include<math.h>\n")?;
             file.write_all(b"\n")?;
-            file.write_all(b"inline float mul_add(float a, float b, float c) {\n")?;
+            file.write_all(b"typedef float f32;\n")?;
+            file.write_all(b"typedef int i32;\n")?;
+            file.write_all(b"typedef unsigned u32;\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"inline f32 f32_mul_add(f32 a, f32 b, f32 c) {\n")?;
             file.write_all(b"    return a * b + c;\n")?;
             file.write_all(b"}\n")?;
             file.write_all(b"\n")?;
-            file.write_all(b"inline float from_bits(unsigned x) {\n")?;
+            file.write_all(b"inline f32 f32_select(int a, f32 b, f32 c) {\n")?;
+            file.write_all(b"    return a ? b : c;\n")?;
+            file.write_all(b"}\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"inline f32 f32_from_bits(u32 x) {\n")?;
             file.write_all(b"    union {\n")?;
             file.write_all(b"        float f;\n")?;
             file.write_all(b"        unsigned x;\n")?;
@@ -71,7 +79,18 @@ fn generate_libm(path: &str, num_bits: usize, number_type: &str, language: &str)
             file.write_all(b"    return u.f;\n")?;
             file.write_all(b"}\n")?;
             file.write_all(b"\n")?;
-            file.write_all(b"typedef float f32;\n")?;
+            file.write_all(b"inline u32 f32_to_bits(f32 f) {\n")?;
+            file.write_all(b"    union {\n")?;
+            file.write_all(b"        float f;\n")?;
+            file.write_all(b"        unsigned x;\n")?;
+            file.write_all(b"    } u;\n")?;
+            file.write_all(b"    u.f = f;\n")?;
+            file.write_all(b"    return u.x;\n")?;
+            file.write_all(b"}\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"const f32 PI = (f32)M_PI;\n")?;
+            file.write_all(b"const f32 LOG2_E = (f32)M_LOG2E;\n")?;
+            file.write_all(b"const f32 LOG2_10 = (f32)M_LN10 / M_LN2;\n")?;
             file.write_all(b"\n")?;
 
             for stmt in functions.iter().chain(tests.iter()) {

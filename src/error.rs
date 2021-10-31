@@ -5,6 +5,7 @@ use proc_macro2::Span;
 pub enum Error {
     UnsupportedExpr(Span),
     UnsupportedCodegen(String),
+    UndefinedVariable(String),
 
     // UnsupportedMethod(Span),
     // UnsupportedStatement(Span),
@@ -33,6 +34,7 @@ impl std::fmt::Display for Error {
         match self {
             UnsupportedExpr(span) => write!(f, "UnsupportedExpr {:?}", span),
             UnsupportedCodegen(tokens) => write!(f, "UnsupportedCodegen {}", tokens.to_string()),
+            UndefinedVariable(tokens) => write!(f, "UndefinedVariable {}", tokens.to_string()),
             NotFound(span) => write!(f, "NotFound {:?}", span),
             CouldNotConvertToExpression(span) => {
                 write!(f, "CouldNotConvertToExpression {:?}", span)
