@@ -12,7 +12,7 @@ pub fn gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
@@ -47,7 +47,7 @@ pub fn gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn sin(arg: #fty) -> #fty {
+        fn sin(arg: fty) -> fty {
             let scaled = arg * (1.0 / PI);
             let xh = x + 0.5;
             let xr = x.round();
@@ -72,7 +72,7 @@ pub fn gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
@@ -107,7 +107,7 @@ pub fn gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn cos(arg: #fty) -> #fty {
+        fn cos(arg: fty) -> fty {
             let x = arg * (1.0 / PI);
             let xh = x + 0.5;
             let xr = x.round();
@@ -129,7 +129,7 @@ pub fn gen_single_pass_sin(num_terms: usize, config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -149,9 +149,9 @@ pub fn gen_single_pass_sin(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn sin(arg: #fty) -> #fty {
-            let scaled : #fty = arg * (1.0 / (PI * 2.0));
-            let x : #fty = scaled - scaled.round();
+        fn sin(arg: fty) -> fty {
+            let scaled : fty = arg * (1.0 / (PI * 2.0));
+            let x : fty = scaled - scaled.round();
             #approx
         }
     )
@@ -163,7 +163,7 @@ pub fn gen_single_pass_cos(num_terms: usize, config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -183,9 +183,9 @@ pub fn gen_single_pass_cos(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn cos(arg: #fty) -> #fty {
-            let scaled : #fty = arg * (1.0 / (PI * 2.0));
-            let x : #fty = scaled - scaled.round();
+        fn cos(arg: fty) -> fty {
+            let scaled : fty = arg * (1.0 / (PI * 2.0));
+            let x : fty = scaled - scaled.round();
             #approx
         }
     )
@@ -196,11 +196,11 @@ pub fn gen_sin_cos(_num_terms: usize, config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
 
     // There is some synergy between sin and cos, but not as much as ULP-focused approximants.
     quote!(
-        fn sin_cos(arg: #fty) -> (#fty, #fty) {
+        fn sin_cos(arg: fty) -> (fty, fty) {
             (sin(arg), cos(arg))
         }
     )
@@ -211,7 +211,7 @@ pub fn gen_tan(num_terms: usize, config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
 
     // Use a Padé approximation. The expression (x*x - pi*pi/4) goes to zero at the poles
     // cancelling the infinities, similar to sinc(x).
@@ -234,11 +234,11 @@ pub fn gen_tan(num_terms: usize, config: &Config) -> TokenStream {
 
     // TODO: calculate the recipocal without a divide.
     quote!(
-        fn tan(arg: #fty) -> #fty {
-            let scaled : #fty = arg * (1.0 / PI);
-            let x : #fty = scaled - scaled.round();
-            let recip : #fty = 1.0 / (x*x - 0.25);
-            let y : #fty = #approx ;
+        fn tan(arg: fty) -> fty {
+            let scaled : fty = arg * (1.0 / PI);
+            let x : fty = scaled - scaled.round();
+            let recip : fty = 1.0 / (x*x - 0.25);
+            let y : fty = #approx ;
             y * recip
         }
     )
@@ -255,7 +255,7 @@ pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
     let tan = gen_tan(tan_num_terms, config);
     let sin_cos = gen_sin_cos(cos_sin_num_terms, config);
 
-    let fty = config.get_fty();
+
 
     let bit = (2.0_f64).powi(if config.num_bits() == 32 { -23 } else { -52 });
 
@@ -263,7 +263,7 @@ pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_sin),
         quote!(x.sin()),
-        quote!(sin(x as #fty) as f64),
+        quote!(sin(x as fty) as f64),
         bit * 3.0,
         -PI,
         PI,
@@ -272,7 +272,7 @@ pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_cos),
         quote!(x.cos()),
-        quote!(cos(x as #fty) as f64),
+        quote!(cos(x as fty) as f64),
         bit * 4.0,
         -PI,
         PI,
@@ -281,7 +281,7 @@ pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_tan),
         quote!(x.tan()),
-        quote!(tan(x as #fty) as f64),
+        quote!(tan(x as fty) as f64),
         bit * 6.0,
         -PI / 4.0,
         PI / 4.0,
@@ -290,7 +290,7 @@ pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_sin_cos_1),
         quote!(x.sin()),
-        quote!(sin_cos(x as #fty).0 as f64),
+        quote!(sin_cos(x as fty).0 as f64),
         bit * 3.0,
         -PI,
         PI,
@@ -299,7 +299,7 @@ pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_sin_cos_2),
         quote!(x.cos()),
-        quote!(sin_cos(x as #fty).1 as f64),
+        quote!(sin_cos(x as fty).1 as f64),
         bit * 4.0,
         -PI,
         PI,
@@ -329,7 +329,7 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
     let tan = gen_tan(tan_num_terms, config);
     let sin_cos = gen_sin_cos(cos_sin_num_terms, config);
 
-    let fty = config.get_fty();
+
 
     let bit = (2.0_f64).powi(if config.num_bits() == 32 { -23 } else { -52 });
 
@@ -337,7 +337,7 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_sin),
         quote!(x.sin()),
-        quote!(sin(x as #fty) as f64),
+        quote!(sin(x as fty) as f64),
         bit * 8.0,
         -PI,
         PI,
@@ -346,7 +346,7 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_cos),
         quote!(x.cos()),
-        quote!(cos(x as #fty) as f64),
+        quote!(cos(x as fty) as f64),
         bit * 8.0,
         -PI,
         PI,
@@ -355,7 +355,7 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_tan),
         quote!(x.tan()),
-        quote!(tan(x as #fty) as f64),
+        quote!(tan(x as fty) as f64),
         bit * 6.0,
         -PI / 4.0,
         PI / 4.0,
@@ -364,7 +364,7 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_sin_cos_1),
         quote!(x.sin()),
-        quote!(sin_cos(x as #fty).0 as f64),
+        quote!(sin_cos(x as fty).0 as f64),
         bit * 8.0,
         -PI,
         PI,
@@ -373,7 +373,7 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_sin_cos_2),
         quote!(x.cos()),
-        quote!(sin_cos(x as #fty).1 as f64),
+        quote!(sin_cos(x as fty).1 as f64),
         bit * 8.0,
         -PI,
         PI,

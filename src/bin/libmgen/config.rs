@@ -53,38 +53,6 @@ impl Config {
         self.functions.push(function_name.into());
     }
 
-    pub fn get_fty(&self) -> syn::Ident {
-        quote::format_ident!("f{}", self.num_bits())
-    }
-    
-    pub fn get_uty(&self) -> syn::Ident {
-        quote::format_ident!("u{}", self.num_bits())
-    }
-    
-    pub fn get_ity(&self) -> syn::Ident {
-        quote::format_ident!("i{}", self.num_bits())
-    }
-    
-    // pub fn get_one(&self) -> proc_macro2::TokenStream {
-    //     if self.num_bits() == 32 {
-    //         let value = 0x3f800000_u32 as f32;
-    //         quote::quote!(#value)
-    //     } else {
-    //         let value = 0x3ff0000000000000_u64 as f64;
-    //         quote::quote!(#value)
-    //     }
-    // }
-    
-    // pub fn get_escale(&self) -> proc_macro2::TokenStream {
-    //     if self.num_bits() == 32 {
-    //         let value = 0x00800000_u32 as f32;
-    //         quote::quote!(#value)
-    //     } else {
-    //         let value = 0x0010000000000000_u64 as f64;
-    //         quote::quote!(#value)
-    //     }
-    // }
-    
     pub fn get_one(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
             quote::quote!(0x3f800000_u32)

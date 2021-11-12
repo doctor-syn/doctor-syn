@@ -21,6 +21,27 @@ use recip_sqrt::*;
 use trig::*;
 use config::Config;
 
+const RUST_SCALAR_HEADER : &'static str = r#"
+fn select(a: bool, b: fty, c: fty) -> fty {
+    if a { b } else { c }
+}
+
+fn iabs(i: ity) -> ity {
+    i.abs()
+}
+
+fn f(f: fty) -> fty {
+    f
+}
+
+fn from_bits(u: uty) -> fty {
+    fty::from_bits(u)
+}
+
+fn to_bits(f: fty) -> uty {
+    fty::to_bits(f)
+}
+"#;
 const C_SCALAR_HEADER : &'static str = r#"
 #include<math.h>
 
@@ -159,38 +180,16 @@ fn generate_libm(
     );
 
     match config.language() {
-        "rust" => {
+        "rust_scalar" => {
             writeln!(file, "type fty = f64;")?;
             writeln!(file, "type ity = i64;")?;
             writeln!(file, "type uty = u64;")?;
             writeln!(file, "")?;
-            file.write_all(b"use std::f64::consts::PI;\n")?;
-            file.write_all(b"use std::f64::consts::LOG2_E;\n")?;
-            file.write_all(b"use std::f64::consts::LOG2_10;\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"fn select(a: bool, b: fty, c: fty) -> fty {\n")?;
-            file.write_all(b"    if a { b } else { c }\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"fn iabs(i: ity) -> ity {\n")?;
-            file.write_all(b"    i.abs()\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"const fn fu(u: uty) -> fty {\n")?;
-            file.write_all(b"    std::f64::from_bits(u)\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"const fn f(f: fty) -> ity {\n")?;
-            file.write_all(b"    f\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"const fn from_bits(u: uty) -> fty {\n")?;
-            file.write_all(b"    std::f64::from_bits(u)\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"const fn to_bits(f: fty) -> uty {\n")?;
-            file.write_all(b"    std::f64::to_bits(f)\n")?;
-            file.write_all(b"}\n")?;
+            writeln!(file, "use std::f64::consts::PI;")?;
+            writeln!(file, "use std::f64::consts::LOG2_E;")?;
+            writeln!(file, "use std::f64::consts::LOG2_10;")?;
+            writeln!(file, "")?;
+            file.write_all(RUST_SCALAR_HEADER.as_bytes())?;
 
             for stmt in functions.iter().chain(tests.iter()) {
                 let tokens = quote!(#stmt);
@@ -228,7 +227,7 @@ fn generate_libm(
     Ok(())
 }
 
-fn main() {
+fn generate() {
     // let val = doctor_syn::expr!((2.16065388452409390396).cos()).eval(60).unwrap();
     // let bd : doctor_syn::bigdecimal::BigDecimal = val.into();
     //let val = doctor_syn::expr!(123456789.123456789123456789123456789123456789).eval(60).unwrap();
@@ -238,15 +237,15 @@ fn main() {
     // println!("val={}", val);
     // println!("bd={}", bd);
 
-    // generate_libm("tests/libm32.rs", 32, "f32_hex", "rust").unwrap();
-    // generate_libm("tests/libm64.rs", 64, "f64_hex", "rust").unwrap();
+    // generate_libm("tests/libm32.rs", 32, "f32_hex", "rust_scalar").unwrap();
+    // generate_libm("tests/libm64.rs", 64, "f64_hex", "rust_scalar").unwrap();
 
     if true {
-        let mut config = Config::new(64, "f64_hex", "rust", false, "");
+        let mut config = Config::new(64, "f64_hex", "rust_scalar", false, "");
         config.add_function("exp");
         config.add_function("qnorm");
     
-        generate_libm("tests/libm32.rs", &config).unwrap();
+        generate_libm("tests/libm64.rs", &config).unwrap();
     }
 
     if false {
@@ -262,4 +261,8 @@ fn main() {
     
         generate_libm("tests/libm64_vector.c", &config).unwrap();
     }
+}
+
+fn main() {
+    generate();
 }

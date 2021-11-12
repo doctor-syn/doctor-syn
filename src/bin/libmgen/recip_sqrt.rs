@@ -9,7 +9,7 @@ pub fn gen_sqrt(config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
     // Probably better done with a reciprocal estimate or bitcast log divide.
     //
     // Given an estimate r of a square root:
@@ -23,9 +23,9 @@ pub fn gen_sqrt(config: &Config) -> TokenStream {
     // ie. the Babylonian!
 
     quote!(
-        fn sqrt(x: #fty) -> #fty {
-            let r : #fty = sqrt_approx(x);
-            let y : #fty = r + (x - r * r) / (2.0 * r);
+        fn sqrt(x: fty) -> fty {
+            let r : fty = sqrt_approx(x);
+            let y : fty = r + (x - r * r) / (2.0 * r);
             y
         }
     )
@@ -36,7 +36,7 @@ pub fn gen_cbrt(config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
     // Probably better done with a bitcast log divide.
     //
     // Given an estimate r of a cube root:
@@ -48,9 +48,9 @@ pub fn gen_cbrt(config: &Config) -> TokenStream {
     // e = (x - r.pow(3)) / 3*r.pow(2) + O(e.pow(2))
 
     quote!(
-        fn cbrt(x: #fty) -> #fty {
-            let r : #fty = cbrt_approx(x.abs());
-            let y : #fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
+        fn cbrt(x: fty) -> fty {
+            let r : fty = cbrt_approx(x.abs());
+            let y : fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
             y.copysign(x)
         }
     )
@@ -61,7 +61,7 @@ pub fn gen_recip(config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
     // Probably better done with a reciprocal estimate and refinement.
     //
     // Given an estimate r of a reciprocal 1/x
@@ -71,12 +71,12 @@ pub fn gen_recip(config: &Config) -> TokenStream {
     // is a better estimate.
 
     quote!(
-        fn recip(x: #fty) -> #fty {
+        fn recip(x: fty) -> fty {
             //let r = exp2_approx(-log2_approx(x));
-            let r : #fty = recip_approx(x);
-            let r1 : #fty = r * (2.0 - x * r);
-            let r2 : #fty = r1 * (2.0 - x * r1);
-            let r3 : #fty = r2 * (2.0 - x * r2);
+            let r : fty = recip_approx(x);
+            let r1 : fty = r * (2.0 - x * r);
+            let r2 : fty = r1 * (2.0 - x * r1);
+            let r3 : fty = r2 * (2.0 - x * r2);
             r3
         }
     )
@@ -87,22 +87,22 @@ pub fn gen_hypot(config: &Config) -> TokenStream {
         return TokenStream::new();
     }
 
-    let fty = config.get_fty();
+
 
     // see https://en.wikipedia.org/wiki/Hypot
     //
     quote!(
-        fn hypot(x: #fty, y: #fty) -> #fty {
+        fn hypot(x: fty, y: fty) -> fty {
             let xgty : bool = x.abs() > y.abs();
-            let x2 : #fty = select(xgty, x, y);
-            let y2 : #fty = select(xgty, y, x);
+            let x2 : fty = select(xgty, x, y);
+            let y2 : fty = select(xgty, y, x);
             select(x2.abs() <= MIN_POSITIVE, x2, x2.abs() * (1.0 + (y2 / x2) * (y2 / x2)).sqrt())
         }
     )
 }
 
 pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
-    let fty = config.get_fty();
+
 
     let sqrt = gen_sqrt(config);
     let cbrt = gen_cbrt(config);
@@ -115,7 +115,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_hypot_a),
         quote!(x.hypot(1.0)),
-        quote!(hypot(x as #fty, 1.0) as f64),
+        quote!(hypot(x as fty, 1.0) as f64),
         bit * 3.0,
         -1.0,
         1.0,
@@ -124,7 +124,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_hypot_b),
         quote!(x.hypot(-1.0)),
-        quote!(hypot(x as #fty, -1.0) as f64),
+        quote!(hypot(x as fty, -1.0) as f64),
         bit * 3.0,
         -1.0,
         1.0,
@@ -133,7 +133,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_hypot_c),
         quote!((1.0_f64).hypot(x)),
-        quote!(hypot(1.0, x as #fty) as f64),
+        quote!(hypot(1.0, x as fty) as f64),
         bit * 3.0,
         -1.0,
         1.0,
@@ -142,7 +142,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_hypot_d),
         quote!((-1.0_f64).hypot(x)),
-        quote!(hypot(-1.0, x as #fty) as f64),
+        quote!(hypot(-1.0, x as fty) as f64),
         bit * 3.0,
         -1.0,
         1.0,
@@ -152,7 +152,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_sqrt),
         quote!(x.sqrt()),
-        quote!(sqrt(x as #fty) as f64),
+        quote!(sqrt(x as fty) as f64),
         bit * 1.0,
         0.5,
         2.0,
@@ -161,7 +161,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_cbrt),
         quote!(x.cbrt()),
-        quote!(cbrt(x as #fty) as f64),
+        quote!(cbrt(x as fty) as f64),
         bit * 1.0,
         -2.0,
         2.0,
@@ -170,7 +170,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_recip),
         quote!(x.recip()),
-        quote!(recip(x as #fty) as f64),
+        quote!(recip(x as fty) as f64),
         bit * 2.0,
         0.5,
         1.5,
@@ -179,7 +179,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_recip_n),
         quote!(x.recip()),
-        quote!(recip(x as #fty) as f64),
+        quote!(recip(x as fty) as f64),
         bit * 2.0,
         -1.5,
         -0.5,
@@ -188,7 +188,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_recip_x),
         quote!(x.recip()),
-        quote!(recip_approx(x as #fty) as f64),
+        quote!(recip_approx(x as fty) as f64),
         0.1,
         0.5,
         1.5,
@@ -197,7 +197,7 @@ pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
         config,
         quote!(test_recip_y),
         quote!(x.recip()),
-        quote!(recip_approx(x as #fty) as f64),
+        quote!(recip_approx(x as fty) as f64),
         0.1,
         -1.5,
         -0.5,
