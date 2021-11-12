@@ -38,15 +38,17 @@ pub struct State {
     var_aliases: HashMap<String, String>,
     type_aliases: HashMap<String, String>,
     default_type: String,
+    prefix: String,
 }
 
 impl State {
-    fn new() -> Self {
+    fn new(prefix: &str) -> Self {
         Self {
             depth: 0,
             var_aliases: HashMap::new(),
             type_aliases: HashMap::new(),
             default_type: "f32".into(),
+            prefix: prefix.into(),
         }
     }
 
@@ -103,8 +105,8 @@ impl State {
 pub struct Context(RefCell<State>);
 
 impl Context {
-    pub fn new() -> Self {
-        Self(RefCell::new(State::new()))
+    pub fn new(prefix: &str) -> Self {
+        Self(RefCell::new(State::new(prefix)))
     }
 
     pub fn begin(&self) -> ContextGuard {
@@ -123,6 +125,10 @@ impl Context {
 
     pub fn default_type(&self) -> String {
         self.0.borrow().default_type.clone()
+    }
+
+    pub fn prefix(&self) -> String {
+        self.0.borrow().prefix.clone()
     }
 
     pub fn clear_vars(&self) {
@@ -161,16 +167,16 @@ fn make_err<T: ToTokens>(value: T) -> Result<String> {
     // #[cfg(debug_codegen)]
     use std::io::Write;
     std::io::stdout().flush().unwrap();
-    panic!("error {}", value.to_token_stream().to_string());
+    // panic!("error {}", value.to_token_stream().to_string());
     #[cfg(not(debug_codegen))]
     Err(Error::UnsupportedCodegen(
         value.to_token_stream().to_string(),
     ))
 }
 
-fn log<T: ToTokens + std::fmt::Debug>(value: T) {
+fn log<T: ToTokens + std::fmt::Debug>(name: &str, value: T) {
     // #[cfg(debug_codegen)]
-    println!("log {}", value.to_token_stream().to_string());
+    println!("log {} {}", name, value.to_token_stream().to_string());
     //println!("log {:?}", value);
 }
 
@@ -180,20 +186,24 @@ pub trait AsC {
 
 impl AsC for Local {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Local", self);
+        match self.pat {
+            Pat::Type(_) => (),
+            _ => { return make_err(self); }
+        }
         let pat = self.pat.as_c(context)?;
         let alias = context.set_var_alias(pat.clone(), pat.as_str());
         if let Some((_, init)) = &self.init {
             Ok(format!("{} = {}", pat, init.as_c(context)?))
         } else {
-            Ok(pat)
+            make_err(self)
         }
     }
 }
 
 impl AsC for Item {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Item", self);
         use Item::*;
         match self {
             Const(value) => value.as_c(context),
@@ -223,7 +233,7 @@ impl AsC for Item {
 
 impl AsC for Expr {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Expr", self);
         use Expr::*;
         match self {
             Array(value) => value.as_c(context),
@@ -276,7 +286,7 @@ impl AsC for Expr {
 
 impl AsC for ItemConst {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemConst", self);
         Ok(format!(
             "const {} {} = {};",
             self.ty.as_c(context)?,
@@ -288,21 +298,21 @@ impl AsC for ItemConst {
 
 impl AsC for ItemEnum {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemEnum", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemExternCrate {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemExternCrate", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemFn {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemFn", self);
 
         context.clear_vars();
 
@@ -316,10 +326,10 @@ impl AsC for ItemFn {
 
         let output = self.sig.output.as_c(context)?;
         let mut res = format!(
-            "{}{} {}_{}({}) {{\n",
+            "{}{} {}{}({}) {{\n",
             context.ind(),
             output,
-            context.default_type(),
+            context.prefix(),
             self.sig.ident.to_string(),
             inputs
         );
@@ -345,121 +355,125 @@ impl AsC for ItemFn {
 
 impl AsC for ItemForeignMod {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemForeignMod", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemImpl {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemImpl", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemMacro {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemMacro", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemMacro2 {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemMacro2", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemMod {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemMod", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemStatic {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemStatic", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemStruct {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemStruct", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemTrait {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemTrait", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemTraitAlias {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemTraitAlias", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemType {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemType", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemUnion {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemUnion", self);
         make_err(self)
     }
 }
 
 impl AsC for ItemUse {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ItemUse", self);
         Ok(String::new())
     }
 }
 
 impl AsC for ExprArray {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
-        make_err(self)
+        log("ExprArray", self);
+        use std::fmt::Write;
+        let mut res = String::new();
+        write!(res, "[").unwrap();
+        write!(res, "]").unwrap();
+        Ok(res)
     }
 }
 impl AsC for ExprAssign {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprAssign", self);
         make_err(self)
     }
 }
 impl AsC for ExprAssignOp {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprAssignOp", self);
         make_err(self)
     }
 }
 impl AsC for ExprAsync {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprAsync", self);
         make_err(self)
     }
 }
 impl AsC for ExprAwait {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprAwait", self);
         make_err(self)
     }
 }
 impl AsC for ExprBinary {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprBinary", self);
         let left = self.left.as_c(context)?;
         let right = self.right.as_c(context)?;
         use BinOp::*;
@@ -498,30 +512,30 @@ impl AsC for ExprBinary {
 
 impl AsC for ExprBlock {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprBlock", self);
         make_err(self)
     }
 }
 impl AsC for ExprBox {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprBox", self);
         make_err(self)
     }
 }
 impl AsC for ExprBreak {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprBreak", self);
         make_err(self)
     }
 }
 impl AsC for ExprCall {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprCall", self);
         let func = self.func.as_c(context)?;
         let func = match &*func {
-            "f32 :: from_bits" => "f32_from_bits".into(),
-            "f64 :: from_bits" => "f64_from_bits".into(),
-            f => format!("{}_{}", context.default_type(), f),
+            "f32 :: from_bits" => format!("{}from_bits", context.prefix()),
+            "f64 :: from_bits" => format!("{}from_bits", context.prefix()),
+            f => format!("{}{}", context.prefix(), f),
         };
         let args = self
             .args
@@ -534,7 +548,7 @@ impl AsC for ExprCall {
 }
 impl AsC for ExprCast {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprCast", self);
         Ok(format!(
             "({}){}",
             self.ty.as_c(context)?,
@@ -544,37 +558,37 @@ impl AsC for ExprCast {
 }
 impl AsC for ExprClosure {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprClosure", self);
         make_err(self)
     }
 }
 impl AsC for ExprContinue {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprContinue", self);
         make_err(self)
     }
 }
 impl AsC for ExprField {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprField", self);
         make_err(self)
     }
 }
 impl AsC for ExprForLoop {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprForLoop", self);
         make_err(self)
     }
 }
 impl AsC for ExprGroup {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprGroup", self);
         make_err(self)
     }
 }
 impl AsC for ExprIf {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprIf", self);
 
         // pub attrs: Vec<Attribute>,
         // pub if_token: Token![if],
@@ -588,26 +602,26 @@ impl AsC for ExprIf {
 }
 impl AsC for ExprIndex {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprIndex", self);
         make_err(self)
     }
 }
 impl AsC for ExprLet {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprLet", self);
         make_err(self)
     }
 }
 impl AsC for ExprLit {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprLit", self);
         use Lit::*;
         match &self.lit {
             Str(value) => Ok(format!("{}", value.to_token_stream())),
             ByteStr(value) => Ok(format!("{}", value.to_token_stream())),
             Byte(value) => Ok(format!("{}", value.to_token_stream())),
             Char(value) => Ok(format!("{}", value.to_token_stream())),
-            Int(value) => Ok(value.base10_digits().into()),
+            Int(value) => Ok(format!("{}ull", value.base10_digits())),
             Float(value) => Ok(value.base10_digits().into()),
             Bool(value) => Ok(format!("{}", value.to_token_stream())),
             Verbatim(value) => Ok(format!("{}", value.to_token_stream())),
@@ -617,25 +631,25 @@ impl AsC for ExprLit {
 
 impl AsC for ExprLoop {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprLoop", self);
         make_err(self)
     }
 }
 impl AsC for ExprMacro {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprMacro", self);
         make_err(self)
     }
 }
 impl AsC for ExprMatch {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprMatch", self);
         make_err(self)
     }
 }
 impl AsC for ExprMethodCall {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprMethodCall", self);
         let receiver = self.receiver.as_c(context)?;
         let args = self
             .args
@@ -643,7 +657,7 @@ impl AsC for ExprMethodCall {
             .map(|a| a.as_c(context))
             .collect::<Result<Vec<_>>>()?
             .join(", ");
-        let method = format!("{}_{}", context.default_type(), self.method.as_c(context)?);
+        let method = format!("{}{}", context.prefix(), self.method.as_c(context)?);
         if args.is_empty() {
             Ok(format!("{}({})", method, receiver))
         } else {
@@ -654,7 +668,7 @@ impl AsC for ExprMethodCall {
 
 impl AsC for ExprParen {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprParen", self);
         let e = self.expr.as_c(context)?;
         Ok(format!("({})", e))
     }
@@ -662,7 +676,7 @@ impl AsC for ExprParen {
 
 impl AsC for ExprPath {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprPath", self);
         if let Some(qself) = &self.qself {
             return make_err(self);
         }
@@ -677,49 +691,49 @@ impl AsC for ExprPath {
 }
 impl AsC for ExprRange {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprRange", self);
         make_err(self)
     }
 }
 impl AsC for ExprReference {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
-        make_err(self)
+        log("ExprReference", self);
+        Ok(format!("&{}", self.expr.as_c(context)?))
     }
 }
 impl AsC for ExprRepeat {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprRepeat", self);
         make_err(self)
     }
 }
 impl AsC for ExprReturn {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprReturn", self);
         make_err(self)
     }
 }
 impl AsC for ExprStruct {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprStruct", self);
         make_err(self)
     }
 }
 impl AsC for ExprTry {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprTry", self);
         make_err(self)
     }
 }
 impl AsC for ExprTryBlock {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprTryBlock", self);
         make_err(self)
     }
 }
 impl AsC for ExprTuple {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprTuple", self);
         let elems = self
             .elems
             .iter()
@@ -732,14 +746,14 @@ impl AsC for ExprTuple {
 }
 impl AsC for ExprType {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprType", self);
         make_err(self)
     }
 }
 
 impl AsC for ExprUnary {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprUnary", self);
         let e = self.expr.as_c(context)?;
         match self.op {
             UnOp::Deref(_) => Ok(format!("*{}", e)),
@@ -751,35 +765,35 @@ impl AsC for ExprUnary {
 
 impl AsC for ExprUnsafe {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprUnsafe", self);
         make_err(self)
     }
 }
 
 impl AsC for ExprWhile {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprWhile", self);
         make_err(self)
     }
 }
 
 impl AsC for ExprYield {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ExprYield", self);
         make_err(self)
     }
 }
 
 impl AsC for Signature {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Signature", self);
         make_err(self)
     }
 }
 
 impl AsC for ReturnType {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("ReturnType", self);
         use ReturnType::*;
         match self {
             Default => Ok("()".into()),
@@ -790,7 +804,7 @@ impl AsC for ReturnType {
 
 impl AsC for Type {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Type", self);
         use Type::*;
         match self {
             Array(value) => value.as_c(context),
@@ -818,7 +832,7 @@ impl AsC for Type {
 
 impl AsC for FnArg {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("FnArg", self);
         use FnArg::*;
         match self {
             Receiver(value) => Ok("self".to_string()),
@@ -833,7 +847,7 @@ impl AsC for FnArg {
 
 impl AsC for Stmt {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Stmt", self);
         use Stmt::*;
         match self {
             Local(value) => value.as_c(context),
@@ -846,7 +860,7 @@ impl AsC for Stmt {
 
 impl AsC for Pat {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Pat", self);
         use Pat::*;
         match self {
             Box(value) => make_err(self),
@@ -876,7 +890,7 @@ impl AsC for Pat {
 
 impl AsC for Path {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Path", self);
         let s = self.to_token_stream().to_string();
         context.var_alias(s.as_str())
     }
@@ -884,7 +898,7 @@ impl AsC for Path {
 
 impl AsC for Ident {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Ident", self);
         let s = self.to_string();
         //context.var_alias(s.as_str())
         Ok(s)
@@ -893,7 +907,7 @@ impl AsC for Ident {
 
 impl AsC for Literal {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("Literal", self);
         // TODO:
         Ok(self.to_string())
     }
@@ -901,55 +915,55 @@ impl AsC for Literal {
 
 impl AsC for TypeArray {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeArray", self);
         make_err(self)
     }
 }
 impl AsC for TypeBareFn {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeBareFn", self);
         make_err(self)
     }
 }
 impl AsC for TypeGroup {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeGroup", self);
         make_err(self)
     }
 }
 impl AsC for TypeImplTrait {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeImplTrait", self);
         make_err(self)
     }
 }
 impl AsC for TypeInfer {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeInfer", self);
         make_err(self)
     }
 }
 impl AsC for TypeMacro {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeMacro", self);
         make_err(self)
     }
 }
 impl AsC for TypeNever {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeNever", self);
         make_err(self)
     }
 }
 impl AsC for TypeParen {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeParen", self);
         make_err(self)
     }
 }
 impl AsC for TypePath {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypePath", self);
         if let Some(qself) = &self.qself {
             return make_err(self);
         }
@@ -958,31 +972,31 @@ impl AsC for TypePath {
 }
 impl AsC for TypePtr {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypePtr", self);
         make_err(self)
     }
 }
 impl AsC for TypeReference {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
-        make_err(self)
+        log("TypeReference", self);
+        Ok(format!("{} *", self.elem.as_c(context)?))
     }
 }
 impl AsC for TypeSlice {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
-        make_err(self)
+        log("TypeSlice", self);
+        Ok(format!("{}[]", self.elem.as_c(context)?))
     }
 }
 impl AsC for TypeTraitObject {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeTraitObject", self);
         make_err(self)
     }
 }
 impl AsC for TypeTuple {
     fn as_c(&self, context: &Context) -> Result<String> {
-        log(self);
+        log("TypeTuple", self);
         let elems = self
             .elems
             .iter()

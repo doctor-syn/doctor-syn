@@ -1,11 +1,15 @@
-use crate::helpers;
 use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::test::gen_test;
+use crate::Config;
 
-pub fn gen_sqrt(num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_sqrt(config: &Config) -> TokenStream {
+    if !config.enabled("sqrt") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
     // Probably better done with a reciprocal estimate or bitcast log divide.
     //
     // Given an estimate r of a square root:
@@ -27,8 +31,12 @@ pub fn gen_sqrt(num_bits: usize, _number_type: &str) -> TokenStream {
     )
 }
 
-pub fn gen_cbrt(num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_cbrt(config: &Config) -> TokenStream {
+    if !config.enabled("cbrt") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
     // Probably better done with a bitcast log divide.
     //
     // Given an estimate r of a cube root:
@@ -48,8 +56,12 @@ pub fn gen_cbrt(num_bits: usize, _number_type: &str) -> TokenStream {
     )
 }
 
-pub fn gen_recip(num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_recip(config: &Config) -> TokenStream {
+    if !config.enabled("recip") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
     // Probably better done with a reciprocal estimate and refinement.
     //
     // Given an estimate r of a reciprocal 1/x
@@ -70,8 +82,12 @@ pub fn gen_recip(num_bits: usize, _number_type: &str) -> TokenStream {
     )
 }
 
-pub fn gen_hypot(num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_hypot(config: &Config) -> TokenStream {
+    if !config.enabled("hypot") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     // see https://en.wikipedia.org/wiki/Hypot
     //
@@ -80,22 +96,23 @@ pub fn gen_hypot(num_bits: usize, _number_type: &str) -> TokenStream {
             let xgty : bool = x.abs() > y.abs();
             let x2 : #fty = select(xgty, x, y);
             let y2 : #fty = select(xgty, y, x);
-            select(x2.abs() <= #fty::MIN_POSITIVE, x2, x2.abs() * (1.0 + (y2 / x2) * (y2 / x2)).sqrt())
+            select(x2.abs() <= MIN_POSITIVE, x2, x2.abs() * (1.0 + (y2 / x2) * (y2 / x2)).sqrt())
         }
     )
 }
 
-pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_recip_sqrt(config: &Config) -> (TokenStream, TokenStream) {
+    let fty = config.get_fty();
 
-    let sqrt = gen_sqrt(num_bits, number_type);
-    let cbrt = gen_cbrt(num_bits, number_type);
-    let hypot = gen_hypot(num_bits, number_type);
-    let recip = gen_recip(num_bits, number_type);
+    let sqrt = gen_sqrt(config);
+    let cbrt = gen_cbrt(config);
+    let hypot = gen_hypot(config);
+    let recip = gen_recip(config);
 
-    let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
+    let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
 
     let test_hypot_a = gen_test(
+        config,
         quote!(test_hypot_a),
         quote!(x.hypot(1.0)),
         quote!(hypot(x as #fty, 1.0) as f64),
@@ -104,6 +121,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         1.0,
     );
     let test_hypot_b = gen_test(
+        config,
         quote!(test_hypot_b),
         quote!(x.hypot(-1.0)),
         quote!(hypot(x as #fty, -1.0) as f64),
@@ -112,6 +130,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         1.0,
     );
     let test_hypot_c = gen_test(
+        config,
         quote!(test_hypot_c),
         quote!((1.0_f64).hypot(x)),
         quote!(hypot(1.0, x as #fty) as f64),
@@ -120,6 +139,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         1.0,
     );
     let test_hypot_d = gen_test(
+        config,
         quote!(test_hypot_d),
         quote!((-1.0_f64).hypot(x)),
         quote!(hypot(-1.0, x as #fty) as f64),
@@ -129,6 +149,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
     );
 
     let test_sqrt = gen_test(
+        config,
         quote!(test_sqrt),
         quote!(x.sqrt()),
         quote!(sqrt(x as #fty) as f64),
@@ -137,6 +158,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         2.0,
     );
     let test_cbrt = gen_test(
+        config,
         quote!(test_cbrt),
         quote!(x.cbrt()),
         quote!(cbrt(x as #fty) as f64),
@@ -145,6 +167,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         2.0,
     );
     let test_recip = gen_test(
+        config,
         quote!(test_recip),
         quote!(x.recip()),
         quote!(recip(x as #fty) as f64),
@@ -153,6 +176,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         1.5,
     );
     let test_recip_n = gen_test(
+        config,
         quote!(test_recip_n),
         quote!(x.recip()),
         quote!(recip(x as #fty) as f64),
@@ -161,6 +185,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         -0.5,
     );
     let test_recip_x = gen_test(
+        config,
         quote!(test_recip_x),
         quote!(x.recip()),
         quote!(recip_approx(x as #fty) as f64),
@@ -169,6 +194,7 @@ pub fn gen_recip_sqrt(num_bits: usize, number_type: &str) -> (TokenStream, Token
         1.5,
     );
     let test_recip_y = gen_test(
+        config,
         quote!(test_recip_y),
         quote!(x.recip()),
         quote!(recip_approx(x as #fty) as f64),

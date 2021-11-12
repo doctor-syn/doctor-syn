@@ -366,7 +366,7 @@ impl Expression {
     /// ```ignore
     /// use doctor_syn::{expr, name, Parity};
     ///
-    /// let e = expr!(x).approx(2, 0.0, 1.0, name!(x), Parity::Neither, num_digits_for(num_bits)).unwrap();
+    /// let e = expr!(x).approx(2, 0.0, 1.0, name!(x), Parity::Neither, num_digits_for(config.num_bits())).unwrap();
     /// let expected = expr!(1f64 . mul_add (x , 0f64));
     /// assert_eq!(e, expected));
     /// ```

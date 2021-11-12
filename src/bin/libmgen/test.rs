@@ -3,8 +3,10 @@ use doctor_syn::bigdecimal::ToPrimitive;
 use doctor_syn::*;
 use proc_macro2::TokenStream;
 use quote::quote;
+use crate::Config;
 
 pub fn gen_test(
+    config: &Config,
     test_name: TokenStream,
     refexpr: TokenStream,
     expr: TokenStream,
@@ -12,6 +14,9 @@ pub fn gen_test(
     tmin: f64,
     tmax: f64,
 ) -> TokenStream {
+    if !config.generate_tests() {
+        return TokenStream::new();
+    }
     const N: i32 = 128;
     let num_digits = 20;
     let refe: Expression = syn::parse2::<syn::Expr>(refexpr.clone()).unwrap().into();

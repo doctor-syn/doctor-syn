@@ -3,8 +3,8 @@ use std::io::Write;
 use syn::parse_quote;
 use syn::Stmt;
 
+mod config;
 mod auxfuncs;
-mod helpers;
 mod hyperbolic;
 mod inv_trig;
 mod log_exp;
@@ -19,21 +19,126 @@ use inv_trig::*;
 use log_exp::*;
 use recip_sqrt::*;
 use trig::*;
+use config::Config;
+
+const C_SCALAR_HEADER : &'static str = r#"
+#include<math.h>
+
+typedef double f64;
+typedef long long i64;
+typedef unsigned long long u64;
+typedef long long bool;
+
+#define REP(X) {X, X, X, X, X, X, X, X}
+#define REINTERP(from, F, T) union { F f; T t; } u; u.f = from; return u.t;
+
+inline f64 f64_mul_add(f64 a, f64 b, f64 c) {
+    return a * b + c;
+}
+
+inline f64 f64_select(bool a, f64 b, f64 c) {
+    return a ? b : c;
+}
+
+inline f64 f64_round(f64 a) {
+    return round(a);
+}
+
+inline f64 f64_f(double f) {
+    return (f64)f;
+}
+
+inline u64 f64_mkuty(long long v) {
+    return (u64)v;
+}
+
+inline f64 f64_mkfty(long long v) {
+    REINTERP(v, long long, double)
+}
+
+inline u64 f64_reinterpret_fty_uty(f64 f) {
+    REINTERP(f, f64, u64)
+}
+
+inline f64 f64_reinterpret_uty_fty(u64 f) {
+    REINTERP(f, u64, f64)
+}
+
+const f64 PI = M_PI;
+const f64 LOG2_E = M_LOG2E;
+const f64 LOG2_10 = M_LN10 / M_LN2;
+const f64 MIN_POSITIVE = 2.2250738585072014E-308;
+"#;
+
+const C_VECTOR_HEADER : &'static str = r#"
+#include<math.h>
+
+typedef double f64 __attribute__ ((vector_size (64)));
+typedef long long i64 __attribute__ ((vector_size (64)));
+typedef unsigned long long u64 __attribute__ ((vector_size (64)));
+typedef int bool __attribute__ ((vector_size (64)));
+
+#define REP(X) {X, X, X, X, X, X, X, X}
+#define REINTERP(f, F, T) { union { f: F, t: T } u; u.f = f; u.t }
+
+inline f64 f64_mul_add(f64 a, f64 b, f64 c) {
+    return a * b + c;
+}
+
+inline f64 f64_select(bool a, f64 b, f64 c) {
+    return (f64)(((i64)b & (i64)a) | ((i64)c & ~(i64)a));
+}
+
+inline f64 f64_round(f64 a) {
+    return (f64){ round(a[0]), round(a[1]), round(a[2]), round(a[3]), round(a[4]), round(a[5]), round(a[6]), round(a[7]) };
+}
+
+inline i64 f64_reinterpret_fi(f64 f) {
+    return REINTERP(f, f64, i64)
+  }
+  
+inline i64 f64_reinterpret_if(i64 f) {
+    return REINTERP(f, i64, f64)
+}
+
+inline f64 f64_f(double v) {
+    return (f64)REP(v);
+}
+
+inline i64 f64_i(long long v) {
+    return (i64)REP(v);
+}
+    
+inline i64 f64_u(long long v) {
+    return (i64)REP(v);
+}
+    
+inline f64 f64_uf(unsigned long v) {
+  double x = REINTERP(v, unsigned long, double);
+  return (f64)REP(x);
+}
+
+inline f64 f64_cvt_if(i64 v) {
+    return __builtin_convertvector(v, f64);
+}
+
+const f64 PI = REP(M_PI);
+const f64 LOG2_E = REP(M_LOG2E);
+const f64 LOG2_10 = REP(M_LN10 / M_LN2);
+"#;
 
 fn generate_libm(
     path: &str,
-    num_bits: usize,
-    number_type: &str,
-    language: &str,
+    config: &Config,
 ) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mut file = std::fs::File::create(path)?;
 
-    let (trig, trig_tests) = gen_single_pass_trig(num_bits, number_type);
-    let (inv_trig, inv_trig_tests) = gen_inv_trig(num_bits, number_type);
-    let (log_exp, log_exp_tests) = gen_log_exp(num_bits, number_type);
-    let (hyperbolic, hyperbolic_tests) = gen_hyperbolic(num_bits, number_type);
-    let (recip_sqrt, recip_sqrt_tests) = gen_recip_sqrt(num_bits, number_type);
-    let (aux, aux_tests) = gen_aux(num_bits, number_type);
+    let (trig, trig_tests) = gen_single_pass_trig(&config);
+    let (inv_trig, inv_trig_tests) = gen_inv_trig(&config);
+    let (log_exp, log_exp_tests) = gen_log_exp(&config);
+    let (hyperbolic, hyperbolic_tests) = gen_hyperbolic(&config);
+    let (recip_sqrt, recip_sqrt_tests) = gen_recip_sqrt(&config);
+    let (aux, aux_tests) = gen_aux(&config);
 
     let functions: Vec<Stmt> = parse_quote!(
         #trig
@@ -53,18 +158,38 @@ fn generate_libm(
         #aux_tests
     );
 
-    match language {
+    match config.language() {
         "rust" => {
-            file.write_all(b"use std::f32::consts::PI;\n")?;
-            file.write_all(b"use std::f32::consts::LOG2_E;\n")?;
-            file.write_all(b"use std::f32::consts::LOG2_10;\n")?;
+            writeln!(file, "type fty = f64;")?;
+            writeln!(file, "type ity = i64;")?;
+            writeln!(file, "type uty = u64;")?;
+            writeln!(file, "")?;
+            file.write_all(b"use std::f64::consts::PI;\n")?;
+            file.write_all(b"use std::f64::consts::LOG2_E;\n")?;
+            file.write_all(b"use std::f64::consts::LOG2_10;\n")?;
             file.write_all(b"\n")?;
-            file.write_all(b"fn select(a: bool, b: f32, c: f32) -> f32 {\n")?;
+            file.write_all(b"fn select(a: bool, b: fty, c: fty) -> fty {\n")?;
             file.write_all(b"    if a { b } else { c }\n")?;
             file.write_all(b"}\n")?;
             file.write_all(b"\n")?;
-            file.write_all(b"fn iabs(i: i32) -> i32 {\n")?;
+            file.write_all(b"fn iabs(i: ity) -> ity {\n")?;
             file.write_all(b"    i.abs()\n")?;
+            file.write_all(b"}\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"const fn fu(u: uty) -> fty {\n")?;
+            file.write_all(b"    std::f64::from_bits(u)\n")?;
+            file.write_all(b"}\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"const fn f(f: fty) -> ity {\n")?;
+            file.write_all(b"    f\n")?;
+            file.write_all(b"}\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"const fn from_bits(u: uty) -> fty {\n")?;
+            file.write_all(b"    std::f64::from_bits(u)\n")?;
+            file.write_all(b"}\n")?;
+            file.write_all(b"\n")?;
+            file.write_all(b"const fn to_bits(f: fty) -> uty {\n")?;
+            file.write_all(b"    std::f64::to_bits(f)\n")?;
             file.write_all(b"}\n")?;
 
             for stmt in functions.iter().chain(tests.iter()) {
@@ -72,48 +197,26 @@ fn generate_libm(
                 file.write_all(tokens.to_string().as_bytes())?;
             }
         }
-        "c" => {
-            file.write_all(b"#include<math.h>\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"typedef float f32;\n")?;
-            file.write_all(b"typedef int i32;\n")?;
-            file.write_all(b"typedef unsigned u32;\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"inline f32 f32_mul_add(f32 a, f32 b, f32 c) {\n")?;
-            file.write_all(b"    return a * b + c;\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"inline f32 f32_select(int a, f32 b, f32 c) {\n")?;
-            file.write_all(b"    return a ? b : c;\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"inline f32 f32_from_bits(u32 x) {\n")?;
-            file.write_all(b"    union {\n")?;
-            file.write_all(b"        float f;\n")?;
-            file.write_all(b"        unsigned x;\n")?;
-            file.write_all(b"    } u;\n")?;
-            file.write_all(b"    u.x = x;\n")?;
-            file.write_all(b"    return u.f;\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"inline u32 f32_to_bits(f32 f) {\n")?;
-            file.write_all(b"    union {\n")?;
-            file.write_all(b"        float f;\n")?;
-            file.write_all(b"        unsigned x;\n")?;
-            file.write_all(b"    } u;\n")?;
-            file.write_all(b"    u.f = f;\n")?;
-            file.write_all(b"    return u.x;\n")?;
-            file.write_all(b"}\n")?;
-            file.write_all(b"\n")?;
-            file.write_all(b"const f32 PI = (f32)M_PI;\n")?;
-            file.write_all(b"const f32 LOG2_E = (f32)M_LOG2E;\n")?;
-            file.write_all(b"const f32 LOG2_10 = (f32)M_LN10 / M_LN2;\n")?;
-            file.write_all(b"\n")?;
+        "c_scalar" => {
+            file.write_all(C_SCALAR_HEADER.as_bytes())?;
 
             for stmt in functions.iter().chain(tests.iter()) {
                 if let Stmt::Item(item) = stmt {
                     use c::AsC;
-                    let context = c::Context::new();
+                    let context = c::Context::new(config.prefix());
+                    let code = item.as_c(&context)?;
+                    file.write_all(code.as_bytes())?;
+                }
+            }
+        }
+        "c_vector" => {
+            file.write_all(b"#define USE_F64\n\n")?;
+            file.write_all(C_VECTOR_HEADER.as_bytes())?;
+
+            for stmt in functions.iter().chain(tests.iter()) {
+                if let Stmt::Item(item) = stmt {
+                    use c::AsC;
+                    let context = c::Context::new(config.prefix());
                     let code = item.as_c(&context)?;
                     file.write_all(code.as_bytes())?;
                 }
@@ -135,9 +238,28 @@ fn main() {
     // println!("val={}", val);
     // println!("bd={}", bd);
 
-    generate_libm("tests/libm32.rs", 32, "f32_hex", "rust").unwrap();
+    // generate_libm("tests/libm32.rs", 32, "f32_hex", "rust").unwrap();
     // generate_libm("tests/libm64.rs", 64, "f64_hex", "rust").unwrap();
 
-    // generate_libm("tests/libm32.c", 32, "f32_hex", "c").unwrap();
-    // generate_libm("tests/libm64.c", 64, "f64_hex", "c").unwrap();
+    if true {
+        let mut config = Config::new(64, "f64_hex", "rust", false, "");
+        config.add_function("exp");
+        config.add_function("qnorm");
+    
+        generate_libm("tests/libm32.rs", &config).unwrap();
+    }
+
+    if false {
+        let mut config = Config::new(64, "f64_hex", "c_scalar", false, "f64_");
+        config.add_function("ln");
+    
+        generate_libm("tests/libm64_scalar.c", &config).unwrap();
+    }
+
+    if false {
+        let mut config = Config::new(64, "f64_hex", "c_vector", false, "f64x8_");
+        config.add_function("ln");
+    
+        generate_libm("tests/libm64_vector.c", &config).unwrap();
+    }
 }

@@ -1,4 +1,4 @@
-use crate::helpers;
+use crate::Config;
 use crate::test::gen_test;
 use doctor_syn::num_digits_for;
 use doctor_syn::Parity;
@@ -7,8 +7,12 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use std::f64::consts::PI;
 
-pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("quadrant_sin") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
@@ -21,10 +25,10 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize, number_type: &str) ->
             xmax,
             name!(s),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -35,10 +39,10 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize, number_type: &str) ->
             xmax,
             name!(c),
             Parity::Even,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -63,8 +67,12 @@ pub fn gen_quadrant_sin(num_terms: usize, num_bits: usize, number_type: &str) ->
     )
 }
 
-pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("quadrant_cos") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
@@ -77,10 +85,10 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize, number_type: &str) ->
             xmax,
             name!(s),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -91,10 +99,10 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize, number_type: &str) ->
             xmax,
             name!(c),
             Parity::Even,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -116,8 +124,12 @@ pub fn gen_quadrant_cos(num_terms: usize, num_bits: usize, number_type: &str) ->
 }
 
 #[allow(dead_code)]
-pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_single_pass_sin(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("single_pass_sin") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -129,10 +141,10 @@ pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize, number_type: &str)
             xmax,
             name!(x),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -146,8 +158,12 @@ pub fn gen_single_pass_sin(num_terms: usize, num_bits: usize, number_type: &str)
 }
 
 #[allow(dead_code)]
-pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_single_pass_cos(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("single_pass_cos") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -159,10 +175,10 @@ pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize, number_type: &str)
             xmax,
             name!(x),
             Parity::Even,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -175,8 +191,12 @@ pub fn gen_single_pass_cos(num_terms: usize, num_bits: usize, number_type: &str)
     )
 }
 
-pub fn gen_sin_cos(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_sin_cos(_num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("sin_cos") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     // There is some synergy between sin and cos, but not as much as ULP-focused approximants.
     quote!(
@@ -186,8 +206,12 @@ pub fn gen_sin_cos(_num_terms: usize, num_bits: usize, _number_type: &str) -> To
     )
 }
 
-pub fn gen_tan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_tan(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("tan") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     // Use a Padé approximation. The expression (x*x - pi*pi/4) goes to zero at the poles
     // cancelling the infinities, similar to sinc(x).
@@ -201,10 +225,10 @@ pub fn gen_tan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStr
             xmax,
             name!(x),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -223,19 +247,20 @@ pub fn gen_tan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStr
 // Generate accurate sin, cos, tan, sin_cos.
 // Return functions and tests.
 #[allow(dead_code)]
-pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
-    let cos_sin_num_terms = helpers::get_quadrant_terms(num_bits);
-    let tan_num_terms = helpers::get_tan_terms(num_bits);
-    let sin = gen_quadrant_sin(cos_sin_num_terms, num_bits, number_type);
-    let cos = gen_quadrant_cos(cos_sin_num_terms, num_bits, number_type);
-    let tan = gen_tan(tan_num_terms, num_bits, number_type);
-    let sin_cos = gen_sin_cos(cos_sin_num_terms, num_bits, number_type);
+pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
+    let cos_sin_num_terms = config.get_quadrant_terms();
+    let tan_num_terms = config.get_tan_terms();
+    let sin = gen_quadrant_sin(cos_sin_num_terms, config);
+    let cos = gen_quadrant_cos(cos_sin_num_terms, config);
+    let tan = gen_tan(tan_num_terms, config);
+    let sin_cos = gen_sin_cos(cos_sin_num_terms, config);
 
-    let fty = helpers::get_fty(num_bits);
+    let fty = config.get_fty();
 
-    let bit = (2.0_f64).powi(if num_bits == 32 { -23 } else { -52 });
+    let bit = (2.0_f64).powi(if config.num_bits() == 32 { -23 } else { -52 });
 
     let test_sin = gen_test(
+        config,
         quote!(test_sin),
         quote!(x.sin()),
         quote!(sin(x as #fty) as f64),
@@ -244,6 +269,7 @@ pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, To
         PI,
     );
     let test_cos = gen_test(
+        config,
         quote!(test_cos),
         quote!(x.cos()),
         quote!(cos(x as #fty) as f64),
@@ -252,6 +278,7 @@ pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, To
         PI,
     );
     let test_tan = gen_test(
+        config,
         quote!(test_tan),
         quote!(x.tan()),
         quote!(tan(x as #fty) as f64),
@@ -260,6 +287,7 @@ pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, To
         PI / 4.0,
     );
     let test_sin_cos_1 = gen_test(
+        config,
         quote!(test_sin_cos_1),
         quote!(x.sin()),
         quote!(sin_cos(x as #fty).0 as f64),
@@ -268,6 +296,7 @@ pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, To
         PI,
     );
     let test_sin_cos_2 = gen_test(
+        config,
         quote!(test_sin_cos_2),
         quote!(x.cos()),
         quote!(sin_cos(x as #fty).1 as f64),
@@ -286,25 +315,26 @@ pub fn gen_quadrant_trig(num_bits: usize, number_type: &str) -> (TokenStream, To
     )
 }
 
-pub fn gen_single_pass_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
+pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
     // let cos_sin_num_terms = helpers::get_quadrant_terms(num_bits);
     // let tan_num_terms = helpers::get_tan_terms(num_bits);
-    // let sin = gen_quadrant_sin(cos_sin_num_terms, num_bits, number_type);
-    // let cos = gen_quadrant_cos(cos_sin_num_terms, num_bits, number_type);
+    // let sin = gen_quadrant_sin(cos_sin_num_terms, config);
+    // let cos = gen_quadrant_cos(cos_sin_num_terms, config);
 
-    let cos_sin_num_terms = helpers::get_single_pass_terms(num_bits);
-    let tan_num_terms = helpers::get_tan_terms(num_bits);
-    let sin = gen_single_pass_sin(cos_sin_num_terms, num_bits, number_type);
-    let cos = gen_single_pass_cos(cos_sin_num_terms + 1, num_bits, number_type);
+    let cos_sin_num_terms = config.get_single_pass_terms();
+    let tan_num_terms = config.get_tan_terms();
+    let sin = gen_single_pass_sin(cos_sin_num_terms, config);
+    let cos = gen_single_pass_cos(cos_sin_num_terms + 1, config);
 
-    let tan = gen_tan(tan_num_terms, num_bits, number_type);
-    let sin_cos = gen_sin_cos(cos_sin_num_terms, num_bits, number_type);
+    let tan = gen_tan(tan_num_terms, config);
+    let sin_cos = gen_sin_cos(cos_sin_num_terms, config);
 
-    let fty = helpers::get_fty(num_bits);
+    let fty = config.get_fty();
 
-    let bit = (2.0_f64).powi(if num_bits == 32 { -23 } else { -52 });
+    let bit = (2.0_f64).powi(if config.num_bits() == 32 { -23 } else { -52 });
 
     let test_sin = gen_test(
+        config,
         quote!(test_sin),
         quote!(x.sin()),
         quote!(sin(x as #fty) as f64),
@@ -313,6 +343,7 @@ pub fn gen_single_pass_trig(num_bits: usize, number_type: &str) -> (TokenStream,
         PI,
     );
     let test_cos = gen_test(
+        config,
         quote!(test_cos),
         quote!(x.cos()),
         quote!(cos(x as #fty) as f64),
@@ -321,6 +352,7 @@ pub fn gen_single_pass_trig(num_bits: usize, number_type: &str) -> (TokenStream,
         PI,
     );
     let test_tan = gen_test(
+        config,
         quote!(test_tan),
         quote!(x.tan()),
         quote!(tan(x as #fty) as f64),
@@ -329,6 +361,7 @@ pub fn gen_single_pass_trig(num_bits: usize, number_type: &str) -> (TokenStream,
         PI / 4.0,
     );
     let test_sin_cos_1 = gen_test(
+        config,
         quote!(test_sin_cos_1),
         quote!(x.sin()),
         quote!(sin_cos(x as #fty).0 as f64),
@@ -337,6 +370,7 @@ pub fn gen_single_pass_trig(num_bits: usize, number_type: &str) -> (TokenStream,
         PI,
     );
     let test_sin_cos_2 = gen_test(
+        config,
         quote!(test_sin_cos_2),
         quote!(x.cos()),
         quote!(sin_cos(x as #fty).1 as f64),

@@ -1,13 +1,17 @@
-use crate::helpers;
 use doctor_syn::Parity;
 use doctor_syn::{expr, name, num_digits_for};
 use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::test::gen_test;
+use crate::Config;
 
-pub fn gen_atan2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("atan2") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     let xmin = -1.0;
     let xmax = 1.0;
@@ -19,10 +23,10 @@ pub fn gen_atan2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
             xmax,
             name!(x3),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -44,8 +48,12 @@ pub fn gen_atan2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
     )
 }
 
-pub fn gen_asin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("asin") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
@@ -55,10 +63,10 @@ pub fn gen_asin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             0.9,
             name!(x),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -74,8 +82,12 @@ pub fn gen_asin(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     )
 }
 
-pub fn gen_acos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("acos") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
@@ -85,10 +97,10 @@ pub fn gen_acos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             0.9,
             name!(x),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -104,8 +116,12 @@ pub fn gen_acos(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     )
 }
 
-pub fn gen_atan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_atan(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("atan") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
     let lim = quote!(1.0);
 
     let approx = expr!(x.atan())
@@ -115,10 +131,10 @@ pub fn gen_atan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             1.0,
             name!(x),
             Parity::Odd,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -137,17 +153,18 @@ pub fn gen_atan(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
 
 // Generate accurate sin, cos, tan, sin_cos.
 // Return functions and tests.
-pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
-    let atan2 = gen_atan2(16, num_bits, number_type);
-    let asin = gen_asin(22, num_bits, number_type);
-    let acos = gen_acos(22, num_bits, number_type);
-    let atan = gen_atan(22, num_bits, number_type);
+pub fn gen_inv_trig(config: &Config) -> (TokenStream, TokenStream) {
+    let atan2 = gen_atan2(16, config);
+    let asin = gen_asin(22, config);
+    let acos = gen_acos(22, config);
+    let atan = gen_atan(22, config);
 
-    let fty = helpers::get_fty(num_bits);
+    let fty = config.get_fty();
 
-    let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
+    let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
 
     let test_asin = gen_test(
+        config,
         quote!(test_asin),
         quote!(x.asin()),
         quote!(asin(x as #fty) as f64),
@@ -156,6 +173,7 @@ pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenSt
         0.99,
     );
     let test_acos = gen_test(
+        config,
         quote!(test_acos),
         quote!(x.acos()),
         quote!(acos(x as #fty) as f64),
@@ -164,6 +182,7 @@ pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenSt
         0.99,
     );
     let test_atan = gen_test(
+        config,
         quote!(test_atan),
         quote!(x.atan()),
         quote!(atan(x as #fty) as f64),
@@ -173,6 +192,7 @@ pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenSt
     );
 
     let test_atan2_a = gen_test(
+        config,
         quote!(test_atan2_a),
         quote!(x.atan2(1.0)),
         quote!(atan2(x as #fty, 1.0) as f64),
@@ -181,6 +201,7 @@ pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenSt
         1.0,
     );
     let test_atan2_b = gen_test(
+        config,
         quote!(test_atan2_b),
         quote!(x.atan2(-1.0)),
         quote!(atan2(x as #fty, -1.0) as f64),
@@ -189,6 +210,7 @@ pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenSt
         1.0,
     );
     let test_atan2_c = gen_test(
+        config,
         quote!(test_atan2_c),
         quote!((1.0_f64).atan2(x)),
         quote!(atan2(1.0, x as #fty) as f64),
@@ -197,6 +219,7 @@ pub fn gen_inv_trig(num_bits: usize, number_type: &str) -> (TokenStream, TokenSt
         1.0,
     );
     let test_atan2_d = gen_test(
+        config,
         quote!(test_atan2_d),
         quote!((-1.0_f64).atan2(x)),
         quote!(atan2(-1.0, x as #fty) as f64),

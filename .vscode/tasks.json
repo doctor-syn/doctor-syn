@@ -6,14 +6,14 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "clear && RUST_BACKTRACE=1 cargo run --release --bin libmgen && rustfmt tests/libm*.rs && cargo test --release ",
+            "command": "clear && RUST_BACKTRACE=1 cargo run --release --bin libmgen && rustfmt tests/libm*.rs && cargo test --release",
+            "problemMatcher": [
+                "$rustc"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
-            },
-            "problemMatcher": [
-                "$rustc"
-            ]
+            }
         }
     ]
 }

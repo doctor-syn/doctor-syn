@@ -1,16 +1,20 @@
-use crate::helpers;
 use doctor_syn::Parity;
 use doctor_syn::{expr, name, num_digits_for};
 use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::test::*;
+use crate::Config;
 
-pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
-    let uty = helpers::get_uty(num_bits);
-    let one = helpers::get_one(num_bits);
-    let escale = helpers::get_escale(num_bits);
+pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("exp2") && !config.enabled("exp") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
+    let uty = config.get_uty();
+    let one = config.get_one();
+    let escale = config.get_escale();
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -22,10 +26,10 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             xmax,
             name!(x),
             Parity::Neither,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -39,8 +43,12 @@ pub fn gen_exp2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
     )
 }
 
-pub fn gen_exp(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_exp(_num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("exp") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
     quote!(
         fn exp(arg: #fty) -> #fty {
             exp2(arg * LOG2_E)
@@ -48,11 +56,15 @@ pub fn gen_exp(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenS
     )
 }
 
-pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
-    let uty = helpers::get_uty(num_bits);
-    let one = helpers::get_one(num_bits);
-    let escale = helpers::get_escale(num_bits);
+pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("exp_m1") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
+    let uty = config.get_uty();
+    let one = config.get_one();
+    let escale = config.get_escale();
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -64,10 +76,10 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> Token
             xmax,
             name!(x),
             Parity::Neither,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
@@ -82,9 +94,13 @@ pub fn gen_exp_m1(num_terms: usize, num_bits: usize, number_type: &str) -> Token
     )
 }
 
-pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
-    let ity = helpers::get_ity(num_bits);
+pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("ln_1p") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
+    let ity = config.get_ity();
 
     let xmin = 0.0;
     let xmax = 1.0;
@@ -96,15 +112,16 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
             xmax,
             name!(x),
             Parity::Neither,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
     quote!(
         fn ln_1p(arg: #fty) -> #fty {
+            //let exponent : #uty = (arg_bits >> mkuty(#eshift)) - mkuty(#eoffset);
             let exponent : #ity = ((arg+1.0).to_bits() >> 23) as #ity - 0x7f;
             let x : #fty = select(exponent == 0, arg, #fty::from_bits(((arg+1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0 );
             let y: #fty = #approx;
@@ -113,11 +130,17 @@ pub fn gen_ln_1p(num_terms: usize, num_bits: usize, number_type: &str) -> TokenS
     )
 }
 
-pub fn gen_log2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
-    let ity = helpers::get_ity(num_bits);
-    let one = helpers::get_one(num_bits);
-    let escale = helpers::get_escale(num_bits);
+pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("log2") && !config.enabled("ln") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
+    let uty = config.get_uty();
+    let one = config.get_one();
+    let escale = config.get_escale();
+    let eshift = config.get_shift();
+    let eoffset = config.get_eoffset();
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -129,35 +152,44 @@ pub fn gen_log2(num_terms: usize, num_bits: usize, number_type: &str) -> TokenSt
             xmax,
             name!(x),
             Parity::Neither,
-            num_digits_for(num_bits),
+            num_digits_for(config.num_bits()),
         )
         .unwrap()
-        .use_number_type(number_type)
+        .use_number_type(config.number_type())
         .unwrap()
         .into_inner();
 
     quote!(
         fn log2(arg: #fty) -> #fty {
-            let exponent : #ity = (arg.to_bits() >> 23) as #ity - 0x7f;
-            let x : #fty = #fty::from_bits((arg.to_bits() & (#escale-1)) | #one) - 1.5;
+            let arg_bits : #uty = reinterpret_fty_uty(arg);
+            let exponent : #uty = (arg_bits >> mkuty(#eshift)) - mkuty(#eoffset);
+            let x : #fty = reinterpret_uty_fty((arg_bits & mkuty(#escale-1)) | mkuty(#one)) - f(1.5);
             let y : #fty = #approx;
             y + (exponent as #fty)
         }
     )
 }
 
-pub fn gen_ln(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_ln(_num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("ln") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     quote!(
         fn ln(arg: #fty) -> #fty {
-            log2(arg) * (1.0 / LOG2_E)
+            log2(arg) * f(1.0 / LOG2_E)
         }
     )
 }
 
-pub fn gen_log10(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_log10(_num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("log10") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     quote!(
         fn log10(arg: #fty) -> #fty {
@@ -166,8 +198,12 @@ pub fn gen_log10(_num_terms: usize, num_bits: usize, _number_type: &str) -> Toke
     )
 }
 
-pub fn gen_log(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_log(_num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("log") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     quote!(
         fn log(arg: #fty, base: #fty) -> #fty {
@@ -176,8 +212,12 @@ pub fn gen_log(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenS
     )
 }
 
-pub fn gen_powf(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
+pub fn gen_powf(_num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("powf") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
 
     quote!(
         fn powf(arg: #fty, y: #fty) -> #fty {
@@ -186,9 +226,13 @@ pub fn gen_powf(_num_terms: usize, num_bits: usize, _number_type: &str) -> Token
     )
 }
 
-pub fn gen_powi(_num_terms: usize, num_bits: usize, _number_type: &str) -> TokenStream {
-    let fty = helpers::get_fty(num_bits);
-    let ity = helpers::get_ity(num_bits);
+pub fn gen_powi(_num_terms: usize, config: &Config) -> TokenStream {
+    if !config.enabled("powi") {
+        return TokenStream::new();
+    }
+
+    let fty = config.get_fty();
+    let ity = config.get_ity();
 
     // Note, for constant values under 16, the code path is very short.
     quote!(
@@ -198,11 +242,11 @@ pub fn gen_powi(_num_terms: usize, num_bits: usize, _number_type: &str) -> Token
             let p : #ity = iabs(y);
             let b : #fty = select((p & (1 << 0)) != 0, a, 1.0);
             let a1 : #fty = a * a;
-            let b1 : #fty = select((p & (1 << 1)) != 0, b * a, b);
+            let b1 : #fty = select((p & (1 << 1)) != 0, b * a1, b);
             let a2 : #fty = a1 * a1;
-            let b2 : #fty = select((p & (1 << 2)) != 0, b1 * a, b1);
+            let b2 : #fty = select((p & (1 << 2)) != 0, b1 * a2, b1);
             let a3 : #fty = a2 * a2;
-            let b3 : #fty = select((p & (1 << 3)) != 0, b2 * a, b2);
+            let b3 : #fty = select((p & (1 << 3)) != 0, b2 * a3, b2);
 
             // do 16.. as logs.
             let b4 : #fty = select(p < 16, b3, powf(x, p as #fty));
@@ -213,23 +257,24 @@ pub fn gen_powi(_num_terms: usize, num_bits: usize, _number_type: &str) -> Token
     )
 }
 
-pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStream) {
-    let exp = gen_exp(7, num_bits, number_type);
-    let exp2 = gen_exp2(7, num_bits, number_type);
-    let exp_m1 = gen_exp_m1(7, num_bits, number_type);
+pub fn gen_log_exp(config: &Config) -> (TokenStream, TokenStream) {
+    let exp = gen_exp(7, config);
+    let exp2 = gen_exp2(7, config);
+    let exp_m1 = gen_exp_m1(7, config);
 
-    let ln = gen_ln(9, num_bits, number_type);
-    let ln_1p = gen_ln_1p(9, num_bits, number_type);
-    let log2 = gen_log2(9, num_bits, number_type);
-    let log10 = gen_log10(9, num_bits, number_type);
-    let log = gen_log(9, num_bits, number_type);
-    let powf = gen_powf(16, num_bits, number_type);
-    let powi = gen_powi(16, num_bits, number_type);
+    let log2 = gen_log2(if config.num_bits() == 32 { 9 } else { 19 }, config);
+    let ln = gen_ln(9, config);
+    let ln_1p = gen_ln_1p(9, config);
+    let log10 = gen_log10(9, config);
+    let log = gen_log(9, config);
+    let powf = gen_powf(16, config);
+    let powi = gen_powi(16, config);
 
-    let bit = (2.0_f64).powi(if num_bits == 32 { 23 } else { 52 });
-    let fty = helpers::get_fty(num_bits);
+    let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
+    let fty = config.get_fty();
 
     let test_exp_a = gen_test(
+        config,
         quote!(test_exp_a),
         quote!(x.exp()),
         quote!(exp(x as #fty) as f64),
@@ -238,6 +283,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.0,
     );
     let test_exp_b = gen_test(
+        config,
         quote!(test_exp_b),
         quote!(x.exp()),
         quote!(exp(x as #fty) as f64),
@@ -246,6 +292,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         2.0,
     );
     let test_exp_m1 = gen_test(
+        config,
         quote!(test_exp_m1),
         quote!(x.exp_m1()),
         quote!(exp_m1(x as #fty) as f64),
@@ -254,6 +301,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.0,
     );
     let test_exp2 = gen_test(
+        config,
         quote!(test_exp2),
         quote!(x.exp2()),
         quote!(exp2(x as #fty) as f64),
@@ -262,6 +310,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.0,
     );
     // let test_exp2_x = gen_test(
+    //     config,
     //     quote!(test_exp2_x),
     //     quote!(x.exp2()),
     //     quote!(exp2_approx(x as #fty) as f64),
@@ -271,6 +320,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
     // );
 
     let test_ln = gen_test(
+        config,
         quote!(test_ln),
         quote!(x.ln()),
         quote!(ln(x as #fty) as f64),
@@ -279,6 +329,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         std::f64::consts::E,
     );
     let test_ln_1p_a = gen_test(
+        config,
         quote!(test_ln_1p_a),
         quote!(x.ln_1p()),
         quote!(ln_1p(x as #fty) as f64),
@@ -287,6 +338,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.0,
     );
     let test_ln_1p_b = gen_test(
+        config,
         quote!(test_ln_1p_b),
         quote!(x.ln_1p()),
         quote!(ln_1p(x as #fty) as f64),
@@ -295,6 +347,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         std::f64::consts::E * 3.0 - 1.0,
     );
     let test_log2 = gen_test(
+        config,
         quote!(test_log2),
         quote!(x.log2()),
         quote!(log2(x as #fty) as f64),
@@ -303,6 +356,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         4.25,
     );
     let test_log10 = gen_test(
+        config,
         quote!(test_log10),
         quote!(x.log10()),
         quote!(log10(x as #fty) as f64),
@@ -311,6 +365,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         10.1,
     );
     let test_log_2 = gen_test(
+        config,
         quote!(test_log_2),
         quote!(x.log(2.0)),
         quote!(log(x as #fty, 2.0) as f64),
@@ -319,6 +374,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.5,
     );
     let test_log_e = gen_test(
+        config,
         quote!(test_log_e),
         quote!(x.log(std::f64::consts::E)),
         quote!(log(x as #fty, std::f64::consts::E as #fty) as f64),
@@ -328,6 +384,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
     );
 
     let test_powf_2 = gen_test(
+        config,
         quote!(test_powf_2),
         quote!(x.powf(2.0)),
         quote!(powf(x as #fty, 2.0) as f64),
@@ -336,6 +393,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.5,
     );
     let test_powf_m1 = gen_test(
+        config,
         quote!(test_powf_m1),
         quote!(x.powf(-1.0)),
         quote!(powf(x as #fty, -1.0) as f64),
@@ -345,6 +403,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
     );
 
     let test_powi_2 = gen_test(
+        config,
         quote!(test_powi_2),
         quote!(x.powi(2)),
         quote!(powi(x as #fty, 2) as f64),
@@ -353,6 +412,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.5,
     );
     let test_powi_3 = gen_test(
+        config,
         quote!(test_powi_3),
         quote!(x.powi(3)),
         quote!(powi(x as #fty, 3) as f64),
@@ -361,6 +421,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.2,
     );
     let test_powi_m1 = gen_test(
+        config,
         quote!(test_powi_m1),
         quote!(x.powi(-1)),
         quote!(powi(x as #fty, -1) as f64),
@@ -369,6 +430,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.5,
     );
     let test_powi_m2 = gen_test(
+        config,
         quote!(test_powi_m2),
         quote!(x.powi(-2)),
         quote!(powi(x as #fty, -2) as f64),
@@ -377,6 +439,7 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
         1.5,
     );
     let test_powi_16 = gen_test(
+        config,
         quote!(test_powi_16),
         quote!(x.powi(16)),
         quote!(powi(x as #fty, 16) as f64),
@@ -387,12 +450,12 @@ pub fn gen_log_exp(num_bits: usize, number_type: &str) -> (TokenStream, TokenStr
 
     (
         quote!(
-            #exp
             #exp2
+            #exp
             #exp_m1
+            #log2
             #ln
             #ln_1p
-            #log2
             #log10
             #log
             #powi
