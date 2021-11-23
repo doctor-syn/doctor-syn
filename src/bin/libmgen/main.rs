@@ -11,6 +11,7 @@ mod log_exp;
 mod recip_sqrt;
 mod test;
 mod trig;
+mod stats_norm;
 
 use auxfuncs::*;
 use doctor_syn::codegen::c;
@@ -19,6 +20,7 @@ use inv_trig::*;
 use log_exp::*;
 use recip_sqrt::*;
 use trig::*;
+use stats_norm::gen_stats_norm;
 use config::Config;
 
 const RUST_SCALAR_HEADER : &'static str = r#"
@@ -159,6 +161,7 @@ fn generate_libm(
     let (log_exp, log_exp_tests) = gen_log_exp(&config);
     let (hyperbolic, hyperbolic_tests) = gen_hyperbolic(&config);
     let (recip_sqrt, recip_sqrt_tests) = gen_recip_sqrt(&config);
+    let (stats_norm, stats_norm_tests) = gen_stats_norm(&config);
     let (aux, aux_tests) = gen_aux(&config);
 
     let functions: Vec<Stmt> = parse_quote!(
@@ -167,6 +170,7 @@ fn generate_libm(
         #log_exp
         #hyperbolic
         #recip_sqrt
+        #stats_norm
         #aux
     );
 
@@ -176,6 +180,7 @@ fn generate_libm(
         #log_exp_tests
         #hyperbolic_tests
         #recip_sqrt_tests
+        #stats_norm_tests
         #aux_tests
     );
 

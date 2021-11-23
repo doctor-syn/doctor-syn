@@ -47,3 +47,21 @@ fn exp2(arg: fty) -> fty {
 fn exp(arg: fty) -> fty {
     exp2(arg * LOG2_E)
 }
+fn qnorm(arg: fty) -> fty {
+    let scaled: fty = arg - 0.5;
+    let recip: fty = 1.0 / (x * x - 0.25);
+    let y: fty = (from_bits(4730221388428958202u64))
+        .mul_add(x * x, -from_bits(4731626383781768040u64))
+        .mul_add(x * x, from_bits(4727627778628654481u64))
+        .mul_add(x * x, -from_bits(4720012863723153492u64))
+        .mul_add(x * x, from_bits(4708869911609092829u64))
+        .mul_add(x * x, -from_bits(4695087533321972728u64))
+        .mul_add(x * x, from_bits(4678670384600451257u64))
+        .mul_add(x * x, -from_bits(4658680898319303328u64))
+        .mul_add(x * x, from_bits(4635605149421499302u64))
+        .mul_add(x * x, from_bits(4578476110820645018u64))
+        .mul_add(x * x, from_bits(4611041379213747643u64))
+        .mul_add(x * x, -from_bits(4603819697584151827u64))
+        * x;
+    y * recip
+}

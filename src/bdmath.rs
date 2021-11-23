@@ -342,9 +342,11 @@ pub fn qnorm(
     sd: BigDecimal,
     num_digits: i64,
 ) -> Option<BigDecimal> {
+    // println!("x={}", x);
     if let Some(logit) = ln(&x / (one() - &x), num_digits) {
         let mut guess = logit * bigdf(0.6);
         loop {
+            // println!("guess={}", guess);
             let pnorm = pnorm(guess.clone(), mean.clone(), sd.clone(), num_digits);
             let err = pnorm - &x;
             if round(err.abs(), num_digits).is_zero() {
