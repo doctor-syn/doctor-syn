@@ -17,7 +17,7 @@ pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
     let xmin = -0.49;
     let xmax = 0.49;
 
-    let approx = expr!((x + 0.5).qnorm(0, 1) * (x * x - 0.25))
+    let approx = expr!((x + 0.5).qnorm(0, 1) * (x * x - 0.5 * 0.5))
         .approx(
             num_terms,
             xmin,
@@ -33,9 +33,17 @@ pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         fn qnorm(arg: fty) -> fty {
+            // Range reduction
             let scaled : fty = arg - 0.5;
-            let recip : fty = 1.0 / (x*x - 0.25);
+            let x = scaled;
+
+            // Pole elimination
+            let recip : fty = 1.0 / (x * x - 0.5 * 0.5);
+
+            // Polynomial approximation
             let y : fty = #approx ;
+
+            // Reassembly.
             y * recip
         }
     )

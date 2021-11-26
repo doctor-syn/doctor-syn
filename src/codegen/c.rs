@@ -1,8 +1,6 @@
 #![allow(unused_variables)]
 
-//! This module translates Rust expressions and items into C
-//!
-//!
+//! This module translates a limited subset of Rust expressions and items into C
 
 use crate::error::{Error, Result};
 
@@ -188,6 +186,7 @@ impl AsC for Local {
     fn as_c(&self, context: &Context) -> Result<String> {
         log("Local", self);
         match self.pat {
+            // let x : type = expr;
             Pat::Type(_) => (),
             _ => { return make_err(self); }
         }

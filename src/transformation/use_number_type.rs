@@ -17,6 +17,8 @@ impl<'a> Visitor for UseNumberType<'a> {
                 let bits32 = bd.to_f32().unwrap().to_bits();
                 let bits64 = bd.to_f64().unwrap().to_bits();
                 let e: Expr = match self.number_type {
+                    "f32" => parse_quote!(#litfloat as fty),
+                    "f64" => parse_quote!(#litfloat as fty),
                     "f32_hex" => parse_quote!(from_bits(#bits32)),
                     "f32_simd" => parse_quote!(from_bits(#bits32)),
                     "f64_hex" => parse_quote!(from_bits(#bits64)),

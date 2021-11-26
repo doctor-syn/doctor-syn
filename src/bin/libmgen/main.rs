@@ -246,7 +246,7 @@ fn generate() {
     // generate_libm("tests/libm64.rs", 64, "f64_hex", "rust_scalar").unwrap();
 
     if true {
-        let mut config = Config::new(64, "f64_hex", "rust_scalar", false, "");
+        let mut config = Config::new(64, "f64", "rust_scalar", false, "");
         config.add_function("exp");
         config.add_function("qnorm");
     
@@ -254,7 +254,7 @@ fn generate() {
     }
 
     if false {
-        let mut config = Config::new(64, "f64_hex", "c_scalar", false, "f64_");
+        let mut config = Config::new(64, "f64", "c_scalar", false, "f64_");
         config.add_function("ln");
     
         generate_libm("tests/libm64_scalar.c", &config).unwrap();

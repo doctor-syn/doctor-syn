@@ -35,13 +35,13 @@ fn exp2(arg: fty) -> fty {
         (r.mul_add(0x0010000000000000_u64 as fty, 0x3ff0000000000000_u64 as fty)) as uty,
     );
     let x: fty = arg - r;
-    (from_bits(4549839347750377909u64))
-        .mul_add(x, from_bits(4563827094295188139u64))
-        .mul_add(x, from_bits(4576698039041613846u64))
-        .mul_add(x, from_bits(4588159642448921967u64))
-        .mul_add(x, from_bits(4597823092488205992u64))
-        .mul_add(x, from_bits(4604418534717280147u64))
-        .mul_add(x, from_bits(4607182418800017408u64))
+    (0.000154697319774755481135 as fty)
+        .mul_add(x, 0.001341000096610015706912 as fty)
+        .mul_add(x, 0.009618030782505153797811 as fty)
+        .mul_add(x, 0.055502973141993247574765 as fty)
+        .mul_add(x, 0.240226510841172935738043 as fty)
+        .mul_add(x, 0.693147225395011086525471 as fty)
+        .mul_add(x, 1.000000000000000000000000 as fty)
         * mul
 }
 fn exp(arg: fty) -> fty {
@@ -49,19 +49,21 @@ fn exp(arg: fty) -> fty {
 }
 fn qnorm(arg: fty) -> fty {
     let scaled: fty = arg - 0.5;
-    let recip: fty = 1.0 / (x * x - 0.25);
-    let y: fty = (from_bits(4730221388428958202u64))
-        .mul_add(x * x, -from_bits(4731626383781768040u64))
-        .mul_add(x * x, from_bits(4727627778628654481u64))
-        .mul_add(x * x, -from_bits(4720012863723153492u64))
-        .mul_add(x * x, from_bits(4708869911609092829u64))
-        .mul_add(x * x, -from_bits(4695087533321972728u64))
-        .mul_add(x * x, from_bits(4678670384600451257u64))
-        .mul_add(x * x, -from_bits(4658680898319303328u64))
-        .mul_add(x * x, from_bits(4635605149421499302u64))
-        .mul_add(x * x, from_bits(4578476110820645018u64))
-        .mul_add(x * x, from_bits(4611041379213747643u64))
-        .mul_add(x * x, -from_bits(4603819697584151827u64))
+    let x = scaled;
+    let recip: fty = 1.0 / (x * x - 0.5 * 0.5);
+    let y: fty = (177186111.131545818686411653000483 as fty)
+        .mul_add(x * x, -219058235.58919835 as fty)
+        .mul_add(x * x, 117054121.857504129646289572504640 as fty)
+        .mul_add(x * x, -35345955.68660036 as fty)
+        .mul_add(x * x, 6623473.609141078534685775398250 as fty)
+        .mul_add(x * x, -796318.1973069897 as fty)
+        .mul_add(x * x, 61391.409088151006196662227193 as fty)
+        .mul_add(x * x, -2938.7971360761 as fty)
+        .mul_add(x * x, 83.911295471202339471921364 as fty)
+        .mul_add(x * x, 0.012702493639562371692090 as fty)
+        .mul_add(x * x, 1.856861340488065073103038 as fty)
+        .mul_add(x * x, -0.626662948075053 as fty)
         * x;
+    #[doc("Re-assembly.")]
     y * recip
 }
