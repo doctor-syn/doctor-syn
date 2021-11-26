@@ -1,0 +1,28 @@
+[package]
+name = "doctor-syn"
+version = "0.1.0"
+authors = [
+    "andy-thomason <andy@andythomason.com>",
+    "Claus O. Wilke <wilke@austin.utexas.edu>"
+]
+edition = "2018"
+license = "MIT"
+description = "Computer algebra system for Rust expressions."
+
+[[bench]]
+name = "doctor-syn"
+harness = false
+
+[lib]
+
+[dependencies]
+syn = { version = "1.0", features = ["full", "extra-traits"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+num-traits = "0.2"
+bigdecimal = "0.2"
+num-bigint = "0.3"
+
+[dev-dependencies]
+criterion = "0.3"
+rand = "0.8.3"
