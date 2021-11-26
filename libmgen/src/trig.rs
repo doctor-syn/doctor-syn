@@ -125,12 +125,6 @@ pub fn gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
 
 #[allow(dead_code)]
 pub fn gen_single_pass_sin(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("single_pass_sin") {
-        return TokenStream::new();
-    }
-
-
-
     let xmin = -0.5;
     let xmax = 0.5;
 
@@ -159,12 +153,6 @@ pub fn gen_single_pass_sin(num_terms: usize, config: &Config) -> TokenStream {
 
 #[allow(dead_code)]
 pub fn gen_single_pass_cos(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("single_pass_cos") {
-        return TokenStream::new();
-    }
-
-
-
     let xmin = -0.5;
     let xmax = 0.5;
 
@@ -388,3 +376,4 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
         },
     )
 }
+

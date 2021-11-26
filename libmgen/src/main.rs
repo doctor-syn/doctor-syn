@@ -1,3 +1,5 @@
+use proc_macro2::{TokenStream, TokenTree, Delimiter};
+
 use quote::quote;
 use std::io::Write;
 use syn::parse_quote;
@@ -12,6 +14,7 @@ mod recip_sqrt;
 mod test;
 mod trig;
 mod stats_norm;
+mod functions;
 
 use auxfuncs::*;
 use doctor_syn::codegen::c;
@@ -23,6 +26,49 @@ use trig::*;
 use stats_norm::gen_stats_norm;
 use config::Config;
 
+use std::path::PathBuf;
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "libmgen", about = "Generate maths and stats functions in many languages.")]
+struct Opt {
+    /// Activate debug mode
+    #[structopt(short, long)]
+    debug: bool,
+
+    /// Generate tests.
+    #[structopt(long)]
+    generate_tests: bool,
+
+    /// Output file, stdout if not present
+    #[structopt(short, long, parse(from_os_str))]
+    output: Option<PathBuf>,
+
+    /// List of functions and groups of functions to generate
+    /// as a comma-separated list. Use "help" for a list.
+    /// 
+    /// Examples: sin,cos,ln,exp
+    #[structopt(long, default_value = "sin")]
+    functions: String,
+
+    /// Number of floating point bits: 32 or 64.
+    #[structopt(long, default_value = "64")]
+    num_bits: usize,
+
+    /// Number format - hex or decimal.
+    #[structopt(long, default_value = "decimal")]
+    number_type: String,
+
+    /// Target language. C, C++, rust, fortran.
+    #[structopt(long, default_value = "rust")]
+    language: String,
+
+    /// Function prefix
+    #[structopt(long, default_value = "")]
+    function_prefix: String,
+}
+
+/*
 const RUST_SCALAR_HEADER : &'static str = r#"
 fn select(a: bool, b: fty, c: fty) -> fty {
     if a { b } else { c }
@@ -267,7 +313,33 @@ fn generate() {
         generate_libm("tests/libm64_vector.c", &config).unwrap();
     }
 }
+*/
 
 fn main() {
-    generate();
+    // generate();
+    let opt = Opt::from_args();
+    if opt.debug { println!("opt={:?}", opt); }
+
+    let names = opt.functions.split(',').map(str::to_string).collect::<Vec<_>>();
+    let funcs = functions::get_functions_and_deps(&names);
+
+    let config : Config = Config::new(opt.num_bits, &opt.number_type, &opt.language, opt.generate_tests, &opt.function_prefix);
+
+    let mut tokens = TokenStream::new();
+    for f in funcs {
+        eprintln!("f={}", f.name);
+        if let Some(gen) = f.gen {
+            let num_terms = if config.num_bits() == 32 { f.num_terms[0] } else { f.num_terms[1] };
+            tokens.extend(gen(num_terms, &config));
+        }
+    }
+
+    let text = doctor_syn::codegen::rust::format_token_stream(tokens);
+
+    if let Some(path) = &opt.output {
+        std::fs::write(path, text.as_bytes()).unwrap();
+    } else {
+        std::io::stdout().write_all(text.as_bytes()).unwrap();
+    }
 }
+

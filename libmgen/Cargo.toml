@@ -13,3 +13,4 @@ proc-macro2 = "1.0"
 num-traits = "0.2"
 bigdecimal = "0.2"
 num-bigint = "0.3"
+structopt = { version = "0.3", default-features = false }
