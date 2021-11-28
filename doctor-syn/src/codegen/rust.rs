@@ -1,8 +1,8 @@
-use proc_macro2::{TokenStream, TokenTree, Delimiter};
+use proc_macro2::{Delimiter, TokenStream, TokenTree};
 
 fn indent(depth: usize) -> &'static str {
     let i = "                                                            ";
-    &i[0..depth*2]
+    &i[0..depth * 2]
 }
 
 fn append_token(text: &mut String, tt: &TokenTree, depth: usize) {
@@ -13,9 +13,9 @@ fn append_token(text: &mut String, tt: &TokenTree, depth: usize) {
             }
             Delimiter::Brace => {
                 text.extend("{\n".chars());
-                text.extend(indent(depth+1).chars());
+                text.extend(indent(depth + 1).chars());
                 for tt in g.stream() {
-                    append_token(text, &tt, depth+1);
+                    append_token(text, &tt, depth + 1);
                 }
                 text.extend("\n".chars());
                 text.extend(indent(depth).chars());

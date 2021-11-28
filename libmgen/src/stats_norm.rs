@@ -6,11 +6,19 @@ use quote::quote;
 // use crate::test::*;
 use crate::Config;
 
-pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("qnorm") {
-        return TokenStream::new();
-    }
+pub fn gen_dnorm(num_terms: usize, config: &Config) -> TokenStream {
+    quote! ()
+}
 
+pub fn gen_pnorm(num_terms: usize, config: &Config) -> TokenStream {
+    quote! ()
+}
+
+pub fn gen_rnorm(num_terms: usize, config: &Config) -> TokenStream {
+    quote! ()
+}
+
+pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
     // Note this function is very similar to tan and logit.
     // let xmin = -0.499999;
     // let xmax = 0.499999;

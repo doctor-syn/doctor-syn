@@ -188,7 +188,9 @@ impl AsC for Local {
         match self.pat {
             // let x : type = expr;
             Pat::Type(_) => (),
-            _ => { return make_err(self); }
+            _ => {
+                return make_err(self);
+            }
         }
         let pat = self.pat.as_c(context)?;
         let alias = context.set_var_alias(pat.clone(), pat.as_str());

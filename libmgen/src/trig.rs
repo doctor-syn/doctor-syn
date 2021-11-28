@@ -1,5 +1,5 @@
-use crate::Config;
 use crate::test::gen_test;
+use crate::Config;
 use doctor_syn::num_digits_for;
 use doctor_syn::Parity;
 use doctor_syn::{expr, name};
@@ -8,12 +8,6 @@ use quote::quote;
 use std::f64::consts::PI;
 
 pub fn gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("quadrant_sin") {
-        return TokenStream::new();
-    }
-
-
-
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
     let xmax = 0.25;
@@ -68,12 +62,6 @@ pub fn gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("quadrant_cos") {
-        return TokenStream::new();
-    }
-
-
-
     // Quadrant sin/cos over a smaller range.
     let xmin = -0.25;
     let xmax = 0.25;
@@ -180,12 +168,6 @@ pub fn gen_single_pass_cos(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_sin_cos(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("sin_cos") {
-        return TokenStream::new();
-    }
-
-
-
     // There is some synergy between sin and cos, but not as much as ULP-focused approximants.
     quote!(
         fn sin_cos(arg: fty) -> (fty, fty) {
@@ -195,12 +177,6 @@ pub fn gen_sin_cos(_num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_tan(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("tan") {
-        return TokenStream::new();
-    }
-
-
-
     // Use a Padé approximation. The expression (x*x - pi*pi/4) goes to zero at the poles
     // cancelling the infinities, similar to sinc(x).
     let xmin = -0.499999;
@@ -242,8 +218,6 @@ pub fn gen_quadrant_trig(config: &Config) -> (TokenStream, TokenStream) {
     let cos = gen_quadrant_cos(cos_sin_num_terms, config);
     let tan = gen_tan(tan_num_terms, config);
     let sin_cos = gen_sin_cos(cos_sin_num_terms, config);
-
-
 
     let bit = (2.0_f64).powi(if config.num_bits() == 32 { -23 } else { -52 });
 
@@ -317,8 +291,6 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
     let tan = gen_tan(tan_num_terms, config);
     let sin_cos = gen_sin_cos(cos_sin_num_terms, config);
 
-
-
     let bit = (2.0_f64).powi(if config.num_bits() == 32 { -23 } else { -52 });
 
     let test_sin = gen_test(
@@ -376,4 +348,3 @@ pub fn gen_single_pass_trig(config: &Config) -> (TokenStream, TokenStream) {
         },
     )
 }
-

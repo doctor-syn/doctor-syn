@@ -7,12 +7,6 @@ use crate::test::gen_test;
 use crate::Config;
 
 pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("atan2") {
-        return TokenStream::new();
-    }
-
-
-
     let xmin = -1.0;
     let xmax = 1.0;
 
@@ -49,11 +43,6 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("asin") {
-        return TokenStream::new();
-    }
-
-
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
@@ -83,11 +72,6 @@ pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("acos") {
-        return TokenStream::new();
-    }
-
-
     let lim = quote!(0.9);
 
     let approx = expr!(x.asin())
@@ -117,11 +101,6 @@ pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_atan(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("atan") {
-        return TokenStream::new();
-    }
-
-
     let lim = quote!(1.0);
 
     let approx = expr!(x.atan())
@@ -158,8 +137,6 @@ pub fn gen_inv_trig(config: &Config) -> (TokenStream, TokenStream) {
     let asin = gen_asin(22, config);
     let acos = gen_acos(22, config);
     let atan = gen_atan(22, config);
-
-
 
     let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
 

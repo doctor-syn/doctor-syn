@@ -1,19 +1,14 @@
-use crate::Config;
 use crate::test::*;
+use crate::Config;
 use proc_macro2::TokenStream;
 use quote::quote;
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
 pub fn gen_sinh(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("sinh") {
-        return TokenStream::new();
-    }
-
-
     quote!(
         fn sinh(x: fty) -> fty {
-            let a : fty = x.mul_add(LOG2_E, -1.0);
-            let b : fty = x.mul_add(-LOG2_E, -1.0);
+            let a: fty = x.mul_add(LOG2_E, -1.0);
+            let b: fty = x.mul_add(-LOG2_E, -1.0);
             exp2(a) - exp2(b)
         }
     )
@@ -21,15 +16,10 @@ pub fn gen_sinh(_num_terms: usize, config: &Config) -> TokenStream {
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
 pub fn gen_cosh(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("cosh") {
-        return TokenStream::new();
-    }
-
-
     quote!(
         fn cosh(x: fty) -> fty {
-            let a : fty  = x.mul_add(LOG2_E, -1.0);
-            let b : fty  = x.mul_add(-LOG2_E, -1.0);
+            let a: fty = x.mul_add(LOG2_E, -1.0);
+            let b: fty = x.mul_add(-LOG2_E, -1.0);
             exp2(a) + exp2(b)
         }
     )
@@ -37,14 +27,9 @@ pub fn gen_cosh(_num_terms: usize, config: &Config) -> TokenStream {
 
 // https://en.wikipedia.org/wiki/Hyperbolic_functions
 pub fn gen_tanh(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("tanh") {
-        return TokenStream::new();
-    }
-
-
     quote!(
         fn tanh(x: fty) -> fty {
-            let exp2x : fty  = exp2(x * (LOG2_E * 2.0));
+            let exp2x: fty = exp2(x * (LOG2_E * 2.0));
             (exp2x - 1.0) / (exp2x + 1.0)
         }
     )
@@ -52,11 +37,6 @@ pub fn gen_tanh(_num_terms: usize, config: &Config) -> TokenStream {
 
 // https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
 pub fn gen_asinh(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("asinh") {
-        return TokenStream::new();
-    }
-
-
     quote!(
         fn asinh(x: fty) -> fty {
             ln(x + (x * x + 1.0).sqrt())
@@ -66,11 +46,6 @@ pub fn gen_asinh(_num_terms: usize, config: &Config) -> TokenStream {
 
 // https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
 pub fn gen_acosh(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("acosh") {
-        return TokenStream::new();
-    }
-
-
     quote!(
         fn acosh(x: fty) -> fty {
             ln(x + (x * x - 1.0).sqrt())
@@ -80,11 +55,6 @@ pub fn gen_acosh(_num_terms: usize, config: &Config) -> TokenStream {
 
 // https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions
 pub fn gen_atanh(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("atanh") {
-        return TokenStream::new();
-    }
-
-
     quote!(
         fn atanh(x: fty) -> fty {
             (ln(1.0 + x) - ln(1.0 - x)) * 0.5
@@ -102,7 +72,6 @@ pub fn gen_hyperbolic(config: &Config) -> (TokenStream, TokenStream) {
     let atanh = gen_atanh(7, config);
 
     let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
-
 
     let test_cosh = gen_test(
         config,

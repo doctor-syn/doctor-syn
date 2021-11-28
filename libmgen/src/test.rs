@@ -1,9 +1,9 @@
+use crate::Config;
 use doctor_syn::bdmath::*;
 use doctor_syn::bigdecimal::ToPrimitive;
 use doctor_syn::*;
 use proc_macro2::TokenStream;
 use quote::quote;
-use crate::Config;
 
 pub fn gen_test(
     config: &Config,

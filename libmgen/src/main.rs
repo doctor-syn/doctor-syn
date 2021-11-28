@@ -1,36 +1,39 @@
-use proc_macro2::{TokenStream, TokenTree, Delimiter};
+use proc_macro2::{Delimiter, TokenStream, TokenTree};
 
 use quote::quote;
 use std::io::Write;
 use syn::parse_quote;
 use syn::Stmt;
 
-mod config;
 mod auxfuncs;
+mod config;
+mod functions;
 mod hyperbolic;
 mod inv_trig;
 mod log_exp;
 mod recip_sqrt;
+mod stats_norm;
 mod test;
 mod trig;
-mod stats_norm;
-mod functions;
 
 use auxfuncs::*;
+use config::Config;
 use doctor_syn::codegen::c;
 use hyperbolic::*;
 use inv_trig::*;
 use log_exp::*;
 use recip_sqrt::*;
-use trig::*;
 use stats_norm::gen_stats_norm;
-use config::Config;
+use trig::*;
 
 use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "libmgen", about = "Generate maths and stats functions in many languages.")]
+#[structopt(
+    name = "libmgen",
+    about = "Generate maths and stats functions in many languages."
+)]
 struct Opt {
     /// Activate debug mode
     #[structopt(short, long)]
@@ -46,7 +49,7 @@ struct Opt {
 
     /// List of functions and groups of functions to generate
     /// as a comma-separated list. Use "help" for a list.
-    /// 
+    ///
     /// Examples: sin,cos,ln,exp
     #[structopt(long, default_value = "sin")]
     functions: String,
@@ -165,7 +168,7 @@ inline f64 f64_round(f64 a) {
 inline i64 f64_reinterpret_fi(f64 f) {
     return REINTERP(f, f64, i64)
   }
-  
+
 inline i64 f64_reinterpret_if(i64 f) {
     return REINTERP(f, i64, f64)
 }
@@ -177,11 +180,11 @@ inline f64 f64_f(double v) {
 inline i64 f64_i(long long v) {
     return (i64)REP(v);
 }
-    
+
 inline i64 f64_u(long long v) {
     return (i64)REP(v);
 }
-    
+
 inline f64 f64_uf(unsigned long v) {
   double x = REINTERP(v, unsigned long, double);
   return (f64)REP(x);
@@ -295,21 +298,21 @@ fn generate() {
         let mut config = Config::new(64, "f64", "rust_scalar", false, "");
         config.add_function("exp");
         config.add_function("qnorm");
-    
+
         generate_libm("tests/libm64.rs", &config).unwrap();
     }
 
     if false {
         let mut config = Config::new(64, "f64", "c_scalar", false, "f64_");
         config.add_function("ln");
-    
+
         generate_libm("tests/libm64_scalar.c", &config).unwrap();
     }
 
     if false {
         let mut config = Config::new(64, "f64_hex", "c_vector", false, "f64x8_");
         config.add_function("ln");
-    
+
         generate_libm("tests/libm64_vector.c", &config).unwrap();
     }
 }
@@ -318,18 +321,33 @@ fn generate() {
 fn main() {
     // generate();
     let opt = Opt::from_args();
-    if opt.debug { println!("opt={:?}", opt); }
+    if opt.debug {
+        println!("opt={:?}", opt);
+    }
 
-    let names = opt.functions.split(',').map(str::to_string).collect::<Vec<_>>();
+    let names = opt
+        .functions
+        .split(',')
+        .map(str::to_string)
+        .collect::<Vec<_>>();
     let funcs = functions::get_functions_and_deps(&names);
 
-    let config : Config = Config::new(opt.num_bits, &opt.number_type, &opt.language, opt.generate_tests, &opt.function_prefix);
+    let config: Config = Config::new(
+        opt.num_bits,
+        &opt.number_type,
+        &opt.language,
+        opt.generate_tests,
+        &opt.function_prefix,
+    );
 
     let mut tokens = TokenStream::new();
     for f in funcs {
-        eprintln!("f={}", f.name);
         if let Some(gen) = f.gen {
-            let num_terms = if config.num_bits() == 32 { f.num_terms[0] } else { f.num_terms[1] };
+            let num_terms = if config.num_bits() == 32 {
+                f.num_terms[0]
+            } else {
+                f.num_terms[1]
+            };
             tokens.extend(gen(num_terms, &config));
         }
     }
@@ -342,4 +360,3 @@ fn main() {
         std::io::stdout().write_all(text.as_bytes()).unwrap();
     }
 }
-

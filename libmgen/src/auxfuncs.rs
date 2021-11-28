@@ -2,46 +2,36 @@ use crate::Config;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub fn gen_negate_on_odd(config: &Config) -> (TokenStream, TokenStream) {
-    if !config.enabled("negate_on_odd") {
-        return (TokenStream::new(), TokenStream::new());
-    }
-
+pub fn gen_negate_on_odd(_terms: usize, config: &Config) -> TokenStream {
     let shift = (config.num_bits() - 1) as i32;
 
+    quote!(
+        // If x is odd, negate y.
+        fn negate_on_odd(x: fty, y: fty) -> fty {
+            let sign_bit : uty = (((x as ity) & 1) << #shift) as uty;
+            fty::from_bits(sign_bit ^ y.to_bits())
+        }
+    )
+}
 
-
-    let func = 
-        quote!(
-            // If x is odd, negate y.
-            fn negate_on_odd(x: fty, y: fty) -> fty {
-                let sign_bit : uty = (((x as ity) & 1) << #shift) as uty;
-                fty::from_bits(sign_bit ^ y.to_bits())
-            }
-        );
-    let test = if config.generate_tests() {
-        quote!(
-            #[test]
-            fn test_negate_on_odd() {
-                assert_eq!(negate_on_odd(-4.0, 1.0), 1.0);
-                assert_eq!(negate_on_odd(-3.0, 1.0), -1.0);
-                assert_eq!(negate_on_odd(-2.0, 1.0), 1.0);
-                assert_eq!(negate_on_odd(-1.0, 1.0), -1.0);
-                assert_eq!(negate_on_odd(0.0, 1.0), 1.0);
-                assert_eq!(negate_on_odd(1.0, 1.0), -1.0);
-                assert_eq!(negate_on_odd(2.0, 1.0), 1.0);
-                assert_eq!(negate_on_odd(3.0, 1.0), -1.0);
-            }
-        )
-    } else {
-        TokenStream::new()
-    };
-
-    (func, test)
+pub fn _gen_negate_on_odd_test(_config: &Config) -> TokenStream {
+    quote!(
+        #[test]
+        fn test_negate_on_odd() {
+            assert_eq!(negate_on_odd(-4.0, 1.0), 1.0);
+            assert_eq!(negate_on_odd(-3.0, 1.0), -1.0);
+            assert_eq!(negate_on_odd(-2.0, 1.0), 1.0);
+            assert_eq!(negate_on_odd(-1.0, 1.0), -1.0);
+            assert_eq!(negate_on_odd(0.0, 1.0), 1.0);
+            assert_eq!(negate_on_odd(1.0, 1.0), -1.0);
+            assert_eq!(negate_on_odd(2.0, 1.0), 1.0);
+            assert_eq!(negate_on_odd(3.0, 1.0), -1.0);
+        }
+    )
 }
 
 // pub fn gen_exp2_approx(config: &Config) -> TokenStream {
-// 
+//
 //     // A very approximate 2.pow(x) used for estimates +/- 0.05
 //     quote!(
 //         fn exp2_approx(x: fty) -> fty {
@@ -62,8 +52,6 @@ fn gen_power_scale(
     offset: TokenStream,
     correction: TokenStream,
 ) -> TokenStream {
-
-
     let one = config.get_one();
 
     // A very approximate x.recip() used for estimates +/- 0.1
@@ -77,33 +65,21 @@ fn gen_power_scale(
     )
 }
 
-pub fn gen_recip_approx(config: &Config) -> TokenStream {
-    if !config.enabled("recip_approx") {
-        return TokenStream::new();
-    }
-
+pub fn gen_recip_approx(_terms: usize, config: &Config) -> TokenStream {
     let scale = quote!(-1.0);
     let offset = quote!(2.0);
     let correction = quote!((y - 0.08).copysign(x));
     gen_power_scale(config, quote!(recip_approx), scale, offset, correction)
 }
 
-pub fn gen_sqrt_approx(config: &Config) -> TokenStream {
-    if !config.enabled("sqrt_approx") {
-        return TokenStream::new();
-    }
-
+pub fn gen_sqrt_approx(_terms: usize, config: &Config) -> TokenStream {
     let scale = quote!(0.5);
     let offset = quote!(0.5);
     let correction = quote!(y - 0.08);
     gen_power_scale(config, quote!(sqrt_approx), scale, offset, correction)
 }
 
-pub fn gen_cbrt_approx(config: &Config) -> TokenStream {
-    if !config.enabled("cbrt_approx") {
-        return TokenStream::new();
-    }
-
+pub fn gen_cbrt_approx(_terms: usize, config: &Config) -> TokenStream {
     let scale = quote!(1.0 / 3.0);
     let offset = quote!(2.0 / 3.0);
     let correction = quote!((y - 0.08).copysign(x));
@@ -111,7 +87,7 @@ pub fn gen_cbrt_approx(config: &Config) -> TokenStream {
 }
 
 // pub fn gen_log2_approx(config: &Config) -> TokenStream {
-// 
+//
 //     // A very approximate x.log2() used for estimates.
 //     quote!(
 //         fn log2_approx(x: fty) -> fty {
@@ -123,26 +99,3 @@ pub fn gen_cbrt_approx(config: &Config) -> TokenStream {
 //     )
 // }
 
-pub fn gen_aux(config: &Config) -> (TokenStream, TokenStream) {
-    // let fty = config.get_fty();
-    // let suffix = helpers::get_suffix(num_bits);
-
-    let (negate_on_odd, negate_on_odd_test) = gen_negate_on_odd(config);
-    // let _exp2_approx = gen_exp2_approx(num_bits);
-    let recip_approx = gen_recip_approx(config);
-    let sqrt_approx = gen_sqrt_approx(config);
-    let cbrt_approx = gen_cbrt_approx(config);
-    // let _log2_approx = gen_log2_approx(num_bits);
-
-    (
-        quote!(
-            #negate_on_odd
-            #recip_approx
-            #sqrt_approx
-            #cbrt_approx
-        ),
-        quote!(
-            #negate_on_odd_test
-        ),
-    )
-}

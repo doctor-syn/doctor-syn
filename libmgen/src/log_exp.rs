@@ -7,12 +7,6 @@ use crate::test::*;
 use crate::Config;
 
 pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("exp2") && !config.enabled("exp") {
-        return TokenStream::new();
-    }
-
-
-
     let one = config.get_one();
     let escale = config.get_escale();
 
@@ -44,11 +38,6 @@ pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_exp(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("exp") {
-        return TokenStream::new();
-    }
-
-
     quote!(
         fn exp(arg: fty) -> fty {
             exp2(arg * LOG2_E)
@@ -57,12 +46,6 @@ pub fn gen_exp(_num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("exp_m1") {
-        return TokenStream::new();
-    }
-
-
-
     let one = config.get_one();
     let escale = config.get_escale();
 
@@ -95,13 +78,6 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("ln_1p") {
-        return TokenStream::new();
-    }
-
-
-
-
     let xmin = 0.0;
     let xmax = 1.0;
 
@@ -131,12 +107,6 @@ pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("log2") && !config.enabled("ln") {
-        return TokenStream::new();
-    }
-
-
-
     let one = config.get_one();
     let escale = config.get_escale();
     let eshift = config.get_shift();
@@ -171,12 +141,6 @@ pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_ln(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("ln") {
-        return TokenStream::new();
-    }
-
-
-
     quote!(
         fn ln(arg: fty) -> fty {
             log2(arg) * f(1.0 / LOG2_E)
@@ -185,12 +149,6 @@ pub fn gen_ln(_num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_log10(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("log10") {
-        return TokenStream::new();
-    }
-
-
-
     quote!(
         fn log10(arg: fty) -> fty {
             log2(arg) * (1.0 / LOG2_10)
@@ -199,12 +157,6 @@ pub fn gen_log10(_num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_log(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("log") {
-        return TokenStream::new();
-    }
-
-
-
     quote!(
         fn log(arg: fty, base: fty) -> fty {
             log2(arg) / log2(base)
@@ -213,12 +165,6 @@ pub fn gen_log(_num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_powf(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("powf") {
-        return TokenStream::new();
-    }
-
-
-
     quote!(
         fn powf(arg: fty, y: fty) -> fty {
             exp2(log2(arg) * y)
@@ -227,29 +173,22 @@ pub fn gen_powf(_num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_powi(_num_terms: usize, config: &Config) -> TokenStream {
-    if !config.enabled("powi") {
-        return TokenStream::new();
-    }
-
-
-
-
     // Note, for constant values under 16, the code path is very short.
     quote!(
         fn powi(x: fty, y: ity) -> fty {
             // do 0..15 as multiplies.
-            let a : fty = x;
-            let p : ity = iabs(y);
-            let b : fty = select((p & (1 << 0)) != 0, a, 1.0);
-            let a1 : fty = a * a;
-            let b1 : fty = select((p & (1 << 1)) != 0, b * a1, b);
-            let a2 : fty = a1 * a1;
-            let b2 : fty = select((p & (1 << 2)) != 0, b1 * a2, b1);
-            let a3 : fty = a2 * a2;
-            let b3 : fty = select((p & (1 << 3)) != 0, b2 * a3, b2);
+            let a: fty = x;
+            let p: ity = iabs(y);
+            let b: fty = select((p & (1 << 0)) != 0, a, 1.0);
+            let a1: fty = a * a;
+            let b1: fty = select((p & (1 << 1)) != 0, b * a1, b);
+            let a2: fty = a1 * a1;
+            let b2: fty = select((p & (1 << 2)) != 0, b1 * a2, b1);
+            let a3: fty = a2 * a2;
+            let b3: fty = select((p & (1 << 3)) != 0, b2 * a3, b2);
 
             // do 16.. as logs.
-            let b4 : fty = select(p < 16, b3, powf(x, p as fty));
+            let b4: fty = select(p < 16, b3, powf(x, p as fty));
 
             // negative powers are reciprocals.
             select(y < 0, recip(b4), b4)
@@ -271,7 +210,6 @@ pub fn gen_log_exp(config: &Config) -> (TokenStream, TokenStream) {
     let powi = gen_powi(16, config);
 
     let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
-
 
     let test_exp_a = gen_test(
         config,

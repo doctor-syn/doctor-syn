@@ -46,7 +46,8 @@ impl Config {
     }
 
     pub fn enabled(&self, function_name: &str) -> bool {
-        self.functions.contains(&function_name.into())
+        // self.functions.contains(&function_name.into())
+        true
     }
 
     pub fn add_function(&mut self, function_name: &str) {
@@ -60,7 +61,7 @@ impl Config {
             quote::quote!(0x3ff0000000000000_u64)
         }
     }
-    
+
     pub fn get_escale(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
             quote::quote!(0x00800000_u32)
@@ -68,7 +69,7 @@ impl Config {
             quote::quote!(0x0010000000000000_u64)
         }
     }
-    
+
     pub fn get_shift(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
             quote::quote!(23)
@@ -76,7 +77,7 @@ impl Config {
             quote::quote!(52)
         }
     }
-    
+
     pub fn get_eoffset(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
             quote::quote!(0x7f)
@@ -84,7 +85,7 @@ impl Config {
             quote::quote!(0x3ff)
         }
     }
-    
+
     pub fn get_quadrant_terms(&self) -> usize {
         if self.num_bits() == 32 {
             8
@@ -92,7 +93,7 @@ impl Config {
             24
         }
     }
-    
+
     pub fn get_single_pass_terms(&self) -> usize {
         if self.num_bits() == 32 {
             16
@@ -100,7 +101,7 @@ impl Config {
             24
         }
     }
-    
+
     pub fn get_tan_terms(&self) -> usize {
         if self.num_bits() == 32 {
             16
@@ -108,6 +109,4 @@ impl Config {
             24
         }
     }
-
 }
-
