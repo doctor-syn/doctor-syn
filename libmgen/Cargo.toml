@@ -2,11 +2,12 @@
 name = "libmgen"
 version = "0.1.0"
 edition = "2021"
+description = "Mathematical library generator."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-doctor-syn = { path = "../doctor-syn" }
+doctor-syn = { version = "0.1.0", path = "../doctor-syn" }
 syn = { version = "1.0", features = ["full", "extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
