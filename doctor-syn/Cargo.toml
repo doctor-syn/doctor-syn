@@ -1,12 +1,9 @@
 [package]
 name = "doctor-syn"
 version = "0.1.0"
-authors = [
-    "andy-thomason <andy@andythomason.com>",
-    "Claus O. Wilke <wilke@austin.utexas.edu>"
-]
+authors = ["andy-thomason <andy@andythomason.com>"]
 edition = "2018"
-license = "MIT"
+license = "GPL3"
 description = "Computer algebra system for Rust expressions."
 
 [[bench]]

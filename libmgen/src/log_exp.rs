@@ -1,5 +1,5 @@
 use doctor_syn::Parity;
-use doctor_syn::{expr, name, num_digits_for};
+use doctor_syn::{expr, name};
 use proc_macro2::TokenStream;
 use quote::quote;
 

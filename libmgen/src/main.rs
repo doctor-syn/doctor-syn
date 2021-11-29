@@ -1,3 +1,27 @@
+//!    Libmgen - generates maths libraries for many targets.
+//!    Copyright (C) 2021 Andy Thomason
+//!
+//!    This program is free software: you can redistribute it and/or modify
+//!    it under the terms of the GNU General Public License as published by
+//!    the Free Software Foundation, either version 3 of the License, or
+//!    (at your option) any later version.
+//!
+//!    This program is distributed in the hope that it will be useful,
+//!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//!    GNU General Public License for more details.
+//!
+//!    You should have received a copy of the GNU General Public License
+//!    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//! 
+//! 
+//! Note that generated code is not covered by any license but is also
+//! WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//! 
+//! It is up to the user to test that results match the requirements of your
+//! project.
+
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
@@ -43,7 +67,7 @@ struct Opt {
     /// as a comma-separated list. Use "help" for a list.
     ///
     /// Examples: sin,cos,ln,exp
-    #[structopt(short, long, default_value = "sin")]
+    #[structopt(short, long, default_value = "")]
     functions: String,
 
     /// Number of floating point bits: 32 or 64.
@@ -311,10 +335,14 @@ fn generate() {
 */
 
 fn main() {
-    // generate();
     let opt = Opt::from_args();
     if opt.debug {
         println!("opt={:?}", opt);
+    }
+
+    if opt.functions.is_empty() {
+        eprintln!("re-run with -f or -h");
+        return;
     }
 
     if opt.functions == "help" {

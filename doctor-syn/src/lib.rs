@@ -1,4 +1,7 @@
 //! Doctor Syn a computer algebra system for rust macros.
+//! 
+//! (C) 2021 Andy Thomason
+//! (C) 2021 Genomics PLC
 
 pub mod error;
 pub mod expression;
