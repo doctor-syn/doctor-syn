@@ -21,9 +21,6 @@ pub use proc_macro2;
 pub use quote;
 pub use syn;
 
-#[cfg(test)]
-mod tests;
-
 pub use bdmath::num_digits_for;
 pub use error::*;
 pub use expression::{Expression, Parity};

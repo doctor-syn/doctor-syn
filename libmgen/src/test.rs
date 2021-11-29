@@ -1,6 +1,4 @@
 use crate::Config;
-use doctor_syn::bdmath::*;
-use doctor_syn::bigdecimal::ToPrimitive;
 use doctor_syn::*;
 use proc_macro2::TokenStream;
 use syn::{Expr, parse_quote};
