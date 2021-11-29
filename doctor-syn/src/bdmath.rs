@@ -100,9 +100,9 @@ pub fn two() -> BigDecimal {
 /// Return the number of decimal digits to calculate for a floating point size.
 pub fn num_digits_for(num_bits: usize) -> i64 {
     if num_bits == 32 {
-        10
+        20
     } else {
-        24
+        40
     }
 }
 

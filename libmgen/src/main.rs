@@ -1,9 +1,9 @@
-use proc_macro2::{Delimiter, TokenStream, TokenTree};
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+use proc_macro2::{TokenStream};
 
-use quote::quote;
 use std::io::Write;
-use syn::parse_quote;
-use syn::Stmt;
 
 mod auxfuncs;
 mod config;
@@ -12,20 +12,12 @@ mod hyperbolic;
 mod inv_trig;
 mod log_exp;
 mod recip_sqrt;
+mod stats_random;
 mod stats_norm;
 mod test;
 mod trig;
 
-use auxfuncs::*;
 use config::Config;
-use doctor_syn::codegen::c;
-use hyperbolic::*;
-use inv_trig::*;
-use log_exp::*;
-use recip_sqrt::*;
-use stats_norm::gen_stats_norm;
-use trig::*;
-
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -51,7 +43,7 @@ struct Opt {
     /// as a comma-separated list. Use "help" for a list.
     ///
     /// Examples: sin,cos,ln,exp
-    #[structopt(long, default_value = "sin")]
+    #[structopt(short, long, default_value = "sin")]
     functions: String,
 
     /// Number of floating point bits: 32 or 64.
@@ -59,7 +51,7 @@ struct Opt {
     num_bits: usize,
 
     /// Number format - hex or decimal.
-    #[structopt(long, default_value = "decimal")]
+    #[structopt(long, default_value = "f64")]
     number_type: String,
 
     /// Target language. C, C++, rust, fortran.
@@ -325,6 +317,13 @@ fn main() {
         println!("opt={:?}", opt);
     }
 
+    if opt.functions == "help" {
+        for f in functions::FUNCTIONS {
+            println!("{}", f.name);
+        }
+        return;
+    }
+
     let names = opt
         .functions
         .split(',')
@@ -341,7 +340,8 @@ fn main() {
     );
 
     let mut tokens = TokenStream::new();
-    for f in funcs {
+
+    for f in funcs.iter() {
         if let Some(gen) = f.gen {
             let num_terms = if config.num_bits() == 32 {
                 f.num_terms[0]
@@ -349,6 +349,16 @@ fn main() {
                 f.num_terms[1]
             };
             tokens.extend(gen(num_terms, &config));
+        }
+    }
+
+    if opt.generate_tests {
+        tokens.extend(crate::auxfuncs::gen_test_function(0, &config));
+        for f in funcs {
+            for t in f.test_specs {
+                tokens.extend(crate::test::gen_test(t, &config));
+    
+            }
         }
     }
 

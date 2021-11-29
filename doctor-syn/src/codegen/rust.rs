@@ -28,20 +28,32 @@ fn append_token(text: &mut String, tt: &TokenTree, depth: usize) {
             }
             Delimiter::Bracket => {
                 text.extend(tt.to_string().chars());
+                if depth == 0 { text.extend("\n".chars()); }
             }
             Delimiter::None => {
                 text.extend(tt.to_string().chars());
             }
         }
+    } else if let TokenTree::Ident(_) = &tt {
+        let tok = tt.to_string();
+        text.extend(tok.chars());
+        text.extend(" ".chars());
     } else {
         let tok = tt.to_string();
-        if tok == ";" {
-            text.extend(tok.chars());
-            text.extend("\n".chars());
-            text.extend(indent(depth).chars());
-        } else {
-            text.extend(tok.chars());
-            text.extend(" ".chars());
+        match tok.as_str() {
+            ";" => {
+                text.extend(tok.chars());
+                text.extend("\n".chars());
+                if depth == 0 { text.extend("\n".chars()); }
+                text.extend(indent(depth).chars());
+            }
+            // ":" | "-" | "." => {
+            //     text.extend(tok.chars());
+            // }
+            _ => {
+                text.extend(tok.chars());
+                // text.extend(" ".chars());
+            }
         }
     }
 }

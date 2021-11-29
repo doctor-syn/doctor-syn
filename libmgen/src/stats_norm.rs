@@ -7,15 +7,34 @@ use quote::quote;
 use crate::Config;
 
 pub fn gen_dnorm(num_terms: usize, config: &Config) -> TokenStream {
-    quote! ()
+    quote!(
+        pub fn dnorm(arg: fty, mean: fty, sigma: fty) -> fty {
+            let DNORM_CONST : fty = recip_sqrt(PI*2);
+            let rsigma : fty = recip(sigma);
+            let y : fty = (arg - mean) * rsigma;
+            let e : fty = (0.5 * LOG2_E) * y * y;
+            rsigma * DNORM_CONST * exp2(e)
+        }
+    )
 }
 
 pub fn gen_pnorm(num_terms: usize, config: &Config) -> TokenStream {
-    quote! ()
+    quote!(
+        // pub fn pnorm(arg: fty, mean: fty, sigma: fty) -> fty {
+        //     0.0
+        // }
+    )
 }
 
 pub fn gen_rnorm(num_terms: usize, config: &Config) -> TokenStream {
-    quote! ()
+    quote!(
+        pub fn rnorm(index: usize, mean: fty, sigma: fty) -> fty {
+            const MIN: fty = 0.000001;
+            const MAX: fty = 1.0 - MIN;
+            let x : fty = runif(index, MIN, MAX);
+            qnorm(x, mean, sigma)
+        }
+    )
 }
 
 pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
@@ -32,7 +51,7 @@ pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
             xmax,
             name!(x),
             Parity::Odd,
-            num_digits_for(config.num_bits()),
+            config.num_digits(),
         )
         .unwrap()
         .use_number_type(config.number_type())
@@ -40,35 +59,19 @@ pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn qnorm(arg: fty) -> fty {
+        pub fn qnorm(arg: fty, mean: fty, sigma: fty) -> fty {
             // Range reduction
             let scaled : fty = arg - 0.5;
             let x = scaled;
 
             // Pole elimination
-            let recip : fty = 1.0 / (x * x - 0.5 * 0.5);
+            let recip : fty = sigma / (x * x - 0.5 * 0.5);
 
             // Polynomial approximation
             let y : fty = #approx ;
 
             // Reassembly.
-            y * recip
+            y * recip + mean
         }
-    )
-}
-
-pub fn gen_stats_norm(config: &Config) -> (TokenStream, TokenStream) {
-    let tan_num_terms = config.get_tan_terms();
-    let qnorm = gen_qnorm(tan_num_terms, config);
-
-    let test_qnorm = TokenStream::new();
-
-    (
-        quote!(
-            #qnorm
-        ),
-        quote!(
-            #test_qnorm
-        ),
     )
 }

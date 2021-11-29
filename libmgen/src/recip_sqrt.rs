@@ -18,7 +18,7 @@ pub fn gen_sqrt(_num_terms: usize, _config: &Config) -> TokenStream {
     // ie. the Babylonian!
 
     quote!(
-        fn sqrt(x: fty) -> fty {
+        pub fn sqrt(x: fty) -> fty {
             let r: fty = sqrt_approx(x);
             let y: fty = r + (x - r * r) / (2.0 * r);
             y
@@ -38,7 +38,7 @@ pub fn gen_cbrt(_num_terms: usize, _config: &Config) -> TokenStream {
     // e = (x - r.pow(3)) / 3*r.pow(2) + O(e.pow(2))
 
     quote!(
-        fn cbrt(x: fty) -> fty {
+        pub fn cbrt(x: fty) -> fty {
             let r: fty = cbrt_approx(x.abs());
             let y: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
             y.copysign(x)
@@ -56,7 +56,7 @@ pub fn gen_recip(_num_terms: usize, _config: &Config) -> TokenStream {
     // is a better estimate.
 
     quote!(
-        fn recip(x: fty) -> fty {
+        pub fn recip(x: fty) -> fty {
             //let r = exp2_approx(-log2_approx(x));
             let r: fty = recip_approx(x);
             let r1: fty = r * (2.0 - x * r);
@@ -71,7 +71,7 @@ pub fn gen_hypot(_num_terms: usize, _config: &Config) -> TokenStream {
     // see https://en.wikipedia.org/wiki/Hypot
     //
     quote!(
-        fn hypot(x: fty, y: fty) -> fty {
+        pub fn hypot(x: fty, y: fty) -> fty {
             let xgty: bool = x.abs() > y.abs();
             let x2: fty = select(xgty, x, y);
             let y2: fty = select(xgty, y, x);

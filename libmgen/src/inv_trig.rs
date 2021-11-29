@@ -17,7 +17,7 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
             xmax,
             name!(x3),
             Parity::Odd,
-            num_digits_for(config.num_bits()),
+            config.num_digits(),
         )
         .unwrap()
         .use_number_type(config.number_type())
@@ -26,7 +26,7 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
 
     // TODO: calculate the recipocal without a divide.
     quote!(
-        fn atan2(y: fty, x: fty) -> fty {
+        pub fn atan2(y: fty, x: fty) -> fty {
             let offset180 : fty = select(y < 0.0, -PI, PI );
             let x1 : fty = select(x < 0.0, -x, x );
             let y1 : fty = select(x < 0.0, -y, y );
@@ -52,7 +52,7 @@ pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
             0.9,
             name!(x),
             Parity::Odd,
-            num_digits_for(config.num_bits()),
+            config.num_digits(),
         )
         .unwrap()
         .use_number_type(config.number_type())
@@ -60,7 +60,7 @@ pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn asin(arg: fty) -> fty {
+        pub fn asin(arg: fty) -> fty {
             const LIM : fty = #lim;
             let c : fty = select(arg < 0.0, -PI/2.0, PI/2.0 );
             let s : fty = select(arg < 0.0 , -1.0, 1.0  );
@@ -81,7 +81,7 @@ pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
             0.9,
             name!(x),
             Parity::Odd,
-            num_digits_for(config.num_bits()),
+            config.num_digits(),
         )
         .unwrap()
         .use_number_type(config.number_type())
@@ -89,7 +89,7 @@ pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn acos(arg: fty) -> fty {
+        pub fn acos(arg: fty) -> fty {
             const LIM : fty = #lim;
             let c : fty = select(arg < 0.0, PI, 0.0 );
             let s : fty = select(arg < 0.0, 1.0, -1.0  );
@@ -110,7 +110,7 @@ pub fn gen_atan(num_terms: usize, config: &Config) -> TokenStream {
             1.0,
             name!(x),
             Parity::Odd,
-            num_digits_for(config.num_bits()),
+            config.num_digits(),
         )
         .unwrap()
         .use_number_type(config.number_type())
@@ -118,7 +118,7 @@ pub fn gen_atan(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
-        fn atan(arg: fty) -> fty {
+        pub fn atan(arg: fty) -> fty {
             const LIM : fty = #lim;
 
             let c : fty = select(arg < 0.0, -PI/2.0, PI/2.0);
@@ -132,85 +132,85 @@ pub fn gen_atan(num_terms: usize, config: &Config) -> TokenStream {
 
 // Generate accurate sin, cos, tan, sin_cos.
 // Return functions and tests.
-pub fn gen_inv_trig(config: &Config) -> (TokenStream, TokenStream) {
-    let atan2 = gen_atan2(16, config);
-    let asin = gen_asin(22, config);
-    let acos = gen_acos(22, config);
-    let atan = gen_atan(22, config);
+// pub fn gen_inv_trig(config: &Config) -> (TokenStream, TokenStream) {
+//     let atan2 = gen_atan2(16, config);
+//     let asin = gen_asin(22, config);
+//     let acos = gen_acos(22, config);
+//     let atan = gen_atan(22, config);
 
-    let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
+//     let bit = (2.0_f64).powi(if config.num_bits() == 32 { 23 } else { 52 });
 
-    let test_asin = gen_test(
-        config,
-        quote!(test_asin),
-        quote!(x.asin()),
-        quote!(asin(x as fty) as f64),
-        bit * 9.0,
-        -0.99,
-        0.99,
-    );
-    let test_acos = gen_test(
-        config,
-        quote!(test_acos),
-        quote!(x.acos()),
-        quote!(acos(x as fty) as f64),
-        bit * 9.0,
-        -0.99,
-        0.99,
-    );
-    let test_atan = gen_test(
-        config,
-        quote!(test_atan),
-        quote!(x.atan()),
-        quote!(atan(x as fty) as f64),
-        bit * 2.0,
-        -2.0,
-        2.0,
-    );
+//     let test_asin = gen_test(
+//         config,
+//         quote!(test_asin),
+//         quote!(x.asin()),
+//         quote!(asin(x as fty) as f64),
+//         bit * 9.0,
+//         -0.99,
+//         0.99,
+//     );
+//     let test_acos = gen_test(
+//         config,
+//         quote!(test_acos),
+//         quote!(x.acos()),
+//         quote!(acos(x as fty) as f64),
+//         bit * 9.0,
+//         -0.99,
+//         0.99,
+//     );
+//     let test_atan = gen_test(
+//         config,
+//         quote!(test_atan),
+//         quote!(x.atan()),
+//         quote!(atan(x as fty) as f64),
+//         bit * 2.0,
+//         -2.0,
+//         2.0,
+//     );
 
-    let test_atan2_a = gen_test(
-        config,
-        quote!(test_atan2_a),
-        quote!(x.atan2(1.0)),
-        quote!(atan2(x as fty, 1.0) as f64),
-        bit * 3.0,
-        -1.0,
-        1.0,
-    );
-    let test_atan2_b = gen_test(
-        config,
-        quote!(test_atan2_b),
-        quote!(x.atan2(-1.0)),
-        quote!(atan2(x as fty, -1.0) as f64),
-        bit * 3.0,
-        -1.0,
-        1.0,
-    );
-    let test_atan2_c = gen_test(
-        config,
-        quote!(test_atan2_c),
-        quote!((1.0_f64).atan2(x)),
-        quote!(atan2(1.0, x as fty) as f64),
-        bit * 3.0,
-        -1.0,
-        1.0,
-    );
-    let test_atan2_d = gen_test(
-        config,
-        quote!(test_atan2_d),
-        quote!((-1.0_f64).atan2(x)),
-        quote!(atan2(-1.0, x as fty) as f64),
-        bit * 3.0,
-        -1.0,
-        1.0,
-    );
+//     let test_atan2_a = gen_test(
+//         config,
+//         quote!(test_atan2_a),
+//         quote!(x.atan2(1.0)),
+//         quote!(atan2(x as fty, 1.0) as f64),
+//         bit * 3.0,
+//         -1.0,
+//         1.0,
+//     );
+//     let test_atan2_b = gen_test(
+//         config,
+//         quote!(test_atan2_b),
+//         quote!(x.atan2(-1.0)),
+//         quote!(atan2(x as fty, -1.0) as f64),
+//         bit * 3.0,
+//         -1.0,
+//         1.0,
+//     );
+//     let test_atan2_c = gen_test(
+//         config,
+//         quote!(test_atan2_c),
+//         quote!((1.0_f64).atan2(x)),
+//         quote!(atan2(1.0, x as fty) as f64),
+//         bit * 3.0,
+//         -1.0,
+//         1.0,
+//     );
+//     let test_atan2_d = gen_test(
+//         config,
+//         quote!(test_atan2_d),
+//         quote!((-1.0_f64).atan2(x)),
+//         quote!(atan2(-1.0, x as fty) as f64),
+//         bit * 3.0,
+//         -1.0,
+//         1.0,
+//     );
 
-    (
-        quote! {
-            #asin #acos #atan #atan2
-        },
-        quote! {
-            #test_asin #test_acos #test_atan #test_atan2_a #test_atan2_b #test_atan2_c #test_atan2_d
-        },
-    )
-}
+//     (
+//         quote! {
+//             #asin #acos #atan #atan2
+//         },
+//         quote! {
+//             #test_asin #test_acos #test_atan #test_atan2_a #test_atan2_b #test_atan2_c #test_atan2_d
+//         },
+//     )
+// }

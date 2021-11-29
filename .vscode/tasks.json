@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "test",
+            "label": "test2",
             "type": "shell",
-            "command": "clear && RUST_BACKTRACE=1 cargo run --release --bin libmgen && rustfmt tests/libm*.rs && cargo test --release",
+            "command": "clear && RUST_BACKTRACE=1 cargo run -- --generate-tests --functions trig >libmgen/tests/trig.rs && rustfmt tests/libm*.rs && cargo test --release",
             "problemMatcher": [
                 "$rustc"
             ],
