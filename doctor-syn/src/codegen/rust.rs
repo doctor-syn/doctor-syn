@@ -28,7 +28,9 @@ fn append_token(text: &mut String, tt: &TokenTree, depth: usize) {
             }
             Delimiter::Bracket => {
                 text.extend(tt.to_string().chars());
-                if depth == 0 { text.extend("\n".chars()); }
+                if depth == 0 {
+                    text.extend("\n".chars());
+                }
             }
             Delimiter::None => {
                 text.extend(tt.to_string().chars());
@@ -44,7 +46,9 @@ fn append_token(text: &mut String, tt: &TokenTree, depth: usize) {
             ";" => {
                 text.extend(tok.chars());
                 text.extend("\n".chars());
-                if depth == 0 { text.extend("\n".chars()); }
+                if depth == 0 {
+                    text.extend("\n".chars());
+                }
                 text.extend(indent(depth).chars());
             }
             // ":" | "-" | "." => {

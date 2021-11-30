@@ -13,19 +13,19 @@
 //!
 //!    You should have received a copy of the GNU General Public License
 //!    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-//! 
-//! 
+//!
+//!
 //! Note that generated code is not covered by any license but is also
 //! WITHOUT ANY WARRANTY; without even the implied warranty of
 //! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//! 
+//!
 //! It is up to the user to test that results match the requirements of your
 //! project.
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
-use proc_macro2::{TokenStream};
+use proc_macro2::TokenStream;
 
 use std::io::Write;
 
@@ -36,8 +36,8 @@ mod hyperbolic;
 mod inv_trig;
 mod log_exp;
 mod recip_sqrt;
-mod stats_random;
 mod stats_norm;
+mod stats_random;
 mod test;
 mod trig;
 
@@ -385,7 +385,6 @@ fn main() {
         for f in funcs {
             for t in f.test_specs {
                 tokens.extend(crate::test::gen_test(t, &config));
-    
             }
         }
     }

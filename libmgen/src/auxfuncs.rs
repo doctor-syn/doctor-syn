@@ -1,25 +1,31 @@
 use crate::Config;
+use doctor_syn::expr;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use doctor_syn::expr;
 
 #[allow(non_snake_case)]
 pub fn gen_PI(_terms: usize, config: &Config) -> TokenStream {
-    let value : syn::Expr = expr!(PI).eval(config.num_digits()).unwrap().into();
-    quote!( const PI : fty = value; )
+    let value: syn::Expr = expr!(PI).eval(config.num_digits()).unwrap().into();
+    quote!(
+        const PI: fty = value;
+    )
 }
 
 #[allow(non_snake_case)]
 pub fn gen_RECIP_2PI(_terms: usize, config: &Config) -> TokenStream {
-    let value : syn::Expr = expr!(1/(2*PI)).eval(config.num_digits()).unwrap().into();
+    let value: syn::Expr = expr!(1 / (2 * PI))
+        .eval(config.num_digits())
+        .unwrap()
+        .into();
     quote!( const RECIP_2PI : fty = #value; )
 }
 
 pub fn gen_fty(_terms: usize, config: &Config) -> TokenStream {
     let fty = format_ident!("f{}", config.num_bits());
-    quote!( 
+    quote!(
         #[allow(non_camel_case_types)]
-        type fty = #fty; )
+        type fty = #fty;
+    )
 }
 
 pub fn gen_ity(_terms: usize, config: &Config) -> TokenStream {
@@ -123,7 +129,11 @@ pub fn gen_cbrt_approx(_terms: usize, config: &Config) -> TokenStream {
 pub fn gen_select(_terms: usize, _config: &Config) -> TokenStream {
     quote!(
         fn select(a: bool, b: fty, c: fty) -> fty {
-            if a {b} else {c}
+            if a {
+                b
+            } else {
+                c
+            }
         }
     )
 }
@@ -131,7 +141,7 @@ pub fn gen_select(_terms: usize, _config: &Config) -> TokenStream {
 pub fn gen_nextafter(_terms: usize, _config: &Config) -> TokenStream {
     quote!(
         pub fn nextafter(arg: fty) -> fty {
-            fty::from_bits(arg.to_bits()+1)
+            fty::from_bits(arg.to_bits() + 1)
         }
     )
 }

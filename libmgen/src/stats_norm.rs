@@ -9,10 +9,10 @@ use crate::Config;
 pub fn gen_dnorm(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn dnorm(arg: fty, mean: fty, sigma: fty) -> fty {
-            let DNORM_CONST : fty = recip_sqrt(PI*2);
-            let rsigma : fty = recip(sigma);
-            let y : fty = (arg - mean) * rsigma;
-            let e : fty = (0.5 * LOG2_E) * y * y;
+            let DNORM_CONST: fty = recip_sqrt(PI * 2);
+            let rsigma: fty = recip(sigma);
+            let y: fty = (arg - mean) * rsigma;
+            let e: fty = (0.5 * LOG2_E) * y * y;
             rsigma * DNORM_CONST * exp2(e)
         }
     )
@@ -31,7 +31,7 @@ pub fn gen_rnorm(num_terms: usize, config: &Config) -> TokenStream {
         pub fn rnorm(index: usize, mean: fty, sigma: fty) -> fty {
             const MIN: fty = 0.000001;
             const MAX: fty = 1.0 - MIN;
-            let x : fty = runif(index, MIN, MAX);
+            let x: fty = runif(index, MIN, MAX);
             qnorm(x, mean, sigma)
         }
     )

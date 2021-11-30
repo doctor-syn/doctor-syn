@@ -1,13 +1,10 @@
 use crate::Config;
 use doctor_syn::*;
 use proc_macro2::TokenStream;
-use syn::{Expr, parse_quote};
-use quote::{ToTokens, format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
+use syn::{parse_quote, Expr};
 
-pub fn gen_test(
-    t: &crate::functions::TestSpec,
-    config: &Config,
-) -> TokenStream {
+pub fn gen_test(t: &crate::functions::TestSpec, config: &Config) -> TokenStream {
     const N: i32 = 128;
     let num_digits = if config.num_bits() == 32 { 20 } else { 40 };
     use std::str::FromStr;
@@ -18,14 +15,14 @@ pub fn gen_test(
     let tmin = TokenStream::from_str(&t.min).unwrap();
     let tmax = TokenStream::from_str(&t.max).unwrap();
     for i in 0..N {
-        let xee : Expr = parse_quote!((#i * ((#tmax) - (#tmin)) / (#N) + (#tmin)));
-        let xeee : Expression = xee.clone().into();
-        let x : Expr = xeee.eval(num_digits).unwrap().into();
+        let xee: Expr = parse_quote!((#i * ((#tmax) - (#tmin)) / (#N) + (#tmin)));
+        let xeee: Expression = xee.clone().into();
+        let x: Expr = xeee.eval(num_digits).unwrap().into();
         let mut vars = VariableList::new();
         vars.add_var(variable.clone(), xee.into());
         let subst = refe.subst(vars).unwrap();
         if let Ok(ye) = subst.eval(num_digits) {
-            let ye : Expr = ye.into();
+            let ye: Expr = ye.into();
             let row = quote!((#x as fty,#ye as fty),);
             accurate_values.extend(row.into_iter());
         } else {
