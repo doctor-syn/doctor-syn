@@ -1,11 +1,19 @@
+use crate::functions::{TestSpec, TestType};
 use crate::Config;
 use doctor_syn::*;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Expr};
-use crate::functions::{TestSpec, TestType};
 
-fn gen_max_abs(t: &TestSpec, config: &Config, min: &str, max: &str, bits32: f64, bits64: f64, n: usize) -> TokenStream {
+fn gen_max_abs(
+    t: &TestSpec,
+    config: &Config,
+    min: &str,
+    max: &str,
+    bits32: f64,
+    bits64: f64,
+    n: usize,
+) -> TokenStream {
     let num_digits = config.num_digits();
     use std::str::FromStr;
     let refexpr = TokenStream::from_str(&t.ref_expr).unwrap();
@@ -45,7 +53,6 @@ fn gen_max_abs(t: &TestSpec, config: &Config, min: &str, max: &str, bits32: f64,
             test_function(#test_name_str, accurate_values, #accuracy as fty, |x| #expr);
         }
     )
-
 }
 
 pub fn gen_test(t: &TestSpec, config: &Config) -> TokenStream {

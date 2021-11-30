@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use std::f64::consts::PI;
 
 pub enum TestType {
-    MaxAbs(&'static str, &'static str, f64, f64, usize)
+    MaxAbs(&'static str, &'static str, f64, f64, usize),
 }
 
 pub struct TestSpec {
@@ -390,14 +390,27 @@ pub static FUNCTIONS: &[Function] = &[
     Function {
         name: "tan",
         deps: &["fty", "PI", "select"],
-        num_terms: [16, 24],
+        num_terms: [12, 24],
         gen: Some(crate::trig::gen_tan),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_tan",
+                ref_expr: "x.tan()",
+                rust_expr: "tan(x)",
+                test: TestType::MaxAbs("-0.7", "-0.7", 1.0, 1.0, 237),
+            },
+            TestSpec {
+                test_name: "test_tan2",
+                ref_expr: "x.tan()",
+                rust_expr: "tan(x)",
+                test: TestType::MaxAbs("-1.1", "-1.1", 2.0, 2.0, 237),
+            },
+        ],
     },
     Function {
         name: "sin_cos",
         deps: &["fty", "sin", "cos"],
-        num_terms: [16, 24],
+        num_terms: [0, 0],
         gen: Some(crate::trig::gen_sin_cos),
         test_specs: &[],
     },
