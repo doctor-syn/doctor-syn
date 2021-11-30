@@ -20,7 +20,7 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -55,7 +55,7 @@ pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -84,7 +84,7 @@ pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -113,7 +113,7 @@ pub fn gen_atan(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 

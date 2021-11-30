@@ -3,19 +3,19 @@ use doctor_syn::*;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Expr};
+use crate::functions::{TestSpec, TestType};
 
-pub fn gen_test(t: &crate::functions::TestSpec, config: &Config) -> TokenStream {
-    const N: i32 = 128;
-    let num_digits = if config.num_bits() == 32 { 20 } else { 40 };
+fn gen_max_abs(t: &TestSpec, config: &Config, min: &str, max: &str, bits32: f64, bits64: f64, n: usize) -> TokenStream {
+    let num_digits = config.num_digits();
     use std::str::FromStr;
     let refexpr = TokenStream::from_str(&t.ref_expr).unwrap();
     let refe: Expression = syn::parse2::<syn::Expr>(refexpr.clone()).unwrap().into();
     let variable = name!(x);
     let mut accurate_values = TokenStream::new();
-    let tmin = TokenStream::from_str(&t.min).unwrap();
-    let tmax = TokenStream::from_str(&t.max).unwrap();
-    for i in 0..N {
-        let xee: Expr = parse_quote!((#i * ((#tmax) - (#tmin)) / (#N) + (#tmin)));
+    let tmin = TokenStream::from_str(min).unwrap();
+    let tmax = TokenStream::from_str(max).unwrap();
+    for i in 0..n {
+        let xee: Expr = parse_quote!((#i * ((#tmax) - (#tmin)) / (#n) + (#tmin)));
         let xeee: Expression = xee.clone().into();
         let x: Expr = xeee.eval(num_digits).unwrap().into();
         let mut vars = VariableList::new();
@@ -34,9 +34,9 @@ pub fn gen_test(t: &crate::functions::TestSpec, config: &Config) -> TokenStream 
     let test_name_str = t.test_name;
     let expr = TokenStream::from_str(&t.rust_expr).unwrap();
     let accuracy = if config.num_bits() == 32 {
-        t.max_rel[0] * 2.0_f64.powi(-23)
+        bits32 * 2.0_f64.powi(-23)
     } else {
-        t.max_rel[1] * 2.0_f64.powi(-53)
+        bits64 * 2.0_f64.powi(-53)
     };
     quote!(
         #[test]
@@ -45,4 +45,13 @@ pub fn gen_test(t: &crate::functions::TestSpec, config: &Config) -> TokenStream 
             test_function(#test_name_str, accurate_values, #accuracy as fty, |x| #expr);
         }
     )
+
+}
+
+pub fn gen_test(t: &TestSpec, config: &Config) -> TokenStream {
+    match t.test {
+        TestType::MaxAbs(min, max, bits32, bits64, n) => {
+            gen_max_abs(t, config, min, max, bits32, bits64, n)
+        }
+    }
 }

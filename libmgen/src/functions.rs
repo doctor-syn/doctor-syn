@@ -2,13 +2,15 @@ use crate::config::Config;
 use proc_macro2::TokenStream;
 use std::f64::consts::PI;
 
+pub enum TestType {
+    MaxAbs(&'static str, &'static str, f64, f64, usize)
+}
+
 pub struct TestSpec {
     pub test_name: &'static str,
     pub ref_expr: &'static str,
     pub rust_expr: &'static str,
-    pub min: &'static str,
-    pub max: &'static str,
-    pub max_rel: [f64; 2],
+    pub test: TestType,
 }
 
 pub struct Function {
@@ -120,9 +122,7 @@ pub static FUNCTIONS: &[Function] = &[
             test_name: "test_nextafter",
             ref_expr: "x",
             rust_expr: "nextafter(x)",
-            min: "0",
-            max: "1",
-            max_rel: [1.0, 1.0],
+            test: TestType::MaxAbs("0", "1", 1.0, 1.0, 237),
         }],
     },
     Function {
@@ -345,26 +345,47 @@ pub static FUNCTIONS: &[Function] = &[
                 test_name: "test_sin",
                 ref_expr: "x.sin()",
                 rust_expr: "sin(x)",
-                min: "-PI",
-                max: "PI",
-                max_rel: [3.0, 6.0],
+                test: TestType::MaxAbs("-PI", "PI", 6.0, 6.0, 237),
             },
             TestSpec {
                 test_name: "test_sin2",
                 ref_expr: "x.sin()",
                 rust_expr: "sin(x)",
-                min: "-PI/2",
-                max: "PI/2",
-                max_rel: [2.0, 2.0],
+                test: TestType::MaxAbs("-PI/2", "PI/2", 2.0, 2.0, 237),
+            },
+            TestSpec {
+                test_name: "test_sin3",
+                ref_expr: "x.sin()",
+                rust_expr: "sin(x)",
+                test: TestType::MaxAbs("-PI/4", "PI/4", 1.0, 1.0, 237),
             },
         ],
     },
     Function {
         name: "cos",
-        deps: &["fty", "PI"],
-        num_terms: [17, 25],
+        deps: &["fty", "RECIP_2PI"],
+        num_terms: [13, 25],
         gen: Some(crate::trig::gen_cos),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_cos",
+                ref_expr: "x.cos()",
+                rust_expr: "cos(x)",
+                test: TestType::MaxAbs("-PI", "PI", 6.0, 8.0, 237),
+            },
+            TestSpec {
+                test_name: "test_cos2",
+                ref_expr: "x.cos()",
+                rust_expr: "cos(x)",
+                test: TestType::MaxAbs("-PI/2", "PI/2", 2.0, 2.0, 237),
+            },
+            TestSpec {
+                test_name: "test_cos3",
+                ref_expr: "x.cos()",
+                rust_expr: "cos(x)",
+                test: TestType::MaxAbs("-PI/4", "PI/4", 1.0, 1.0, 237),
+            },
+        ],
     },
     Function {
         name: "tan",

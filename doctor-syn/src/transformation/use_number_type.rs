@@ -6,36 +6,35 @@ use syn::{parse_quote, Expr, ExprLit, Lit};
 #[derive(Debug)]
 pub struct UseNumberType<'a> {
     pub(crate) number_type: &'a str,
+    pub(crate) num_bits: usize,
 }
 
 impl<'a> Visitor for UseNumberType<'a> {
     // eg. "1.0"
     fn visit_lit(&self, expr: &ExprLit) -> Result<Expr> {
         match &expr.lit {
-            Lit::Float(litfloat) => {
-                let bd: BigDecimal = litfloat.base10_digits().parse().unwrap();
+            Lit::Float(lit) => {
+                let bd: BigDecimal = lit.base10_digits().parse().unwrap();
                 let bits32 = bd.to_f32().unwrap().to_bits();
                 let bits64 = bd.to_f64().unwrap().to_bits();
-                let e: Expr = match self.number_type {
-                    "f32" => parse_quote!(#litfloat as f32),
-                    "f64" => parse_quote!(#litfloat as f64),
-                    "f32_hex" => parse_quote!(from_bits(#bits32)),
-                    "f32_simd" => parse_quote!(from_bits(#bits32)),
-                    "f64_hex" => parse_quote!(from_bits(#bits64)),
-                    "f64_simd" => parse_quote!(from_bits(#bits64)),
+                let e: Expr = match (self.number_type, self.num_bits) {
+                    ("decimal", 32) => parse_quote!(#lit as f32),
+                    ("decimal", 64) => parse_quote!(#lit as f64),
+                    ("hex", 32) => parse_quote!(f32::from_bits(#bits32)),
+                    ("hex", 64) => parse_quote!(f32::from_bits(#bits64)),
                     _ => expr.clone().into(),
                 };
                 Ok(e)
             }
-            Lit::Int(litint) => {
-                let bd: BigDecimal = litint.base10_digits().parse().unwrap();
+            Lit::Int(lit) => {
+                let bd: BigDecimal = lit.base10_digits().parse().unwrap();
                 let bits32 = bd.to_f32().unwrap().to_bits();
                 let bits64 = bd.to_f64().unwrap().to_bits();
-                let e: Expr = match self.number_type {
-                    "f32_hex" => parse_quote!(from_bits(#bits32)),
-                    "f32_simd" => parse_quote!(from_bits(#bits32)),
-                    "f64_hex" => parse_quote!(from_bits(#bits64)),
-                    "f64_simd" => parse_quote!(from_bits(#bits64)),
+                let e: Expr = match (self.number_type, self.num_bits) {
+                    ("decimal", 32) => parse_quote!(#lit as f32),
+                    ("decimal", 64) => parse_quote!(#lit as f64),
+                    ("hex", 32) => parse_quote!(f32::from_bits(#bits32)),
+                    ("hex", 64) => parse_quote!(f32::from_bits(#bits64)),
                     _ => expr.clone().into(),
                 };
                 Ok(e)

@@ -7,7 +7,7 @@ use quote::{format_ident, quote};
 pub fn gen_PI(_terms: usize, config: &Config) -> TokenStream {
     let value: syn::Expr = expr!(PI).eval(config.num_digits()).unwrap().into();
     quote!(
-        const PI: fty = value;
+        const PI: fty = #value;
     )
 }
 

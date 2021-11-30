@@ -54,7 +54,7 @@ pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 

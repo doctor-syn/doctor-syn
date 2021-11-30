@@ -440,9 +440,12 @@ impl Expression {
     }
 
     /// Change the suffix of floatng point numbers.
-    pub fn use_number_type(&self, number_type: &str) -> Result<Expression> {
-        Ok(UseNumberType { number_type }
-            .visit_expr(&self.inner)?
-            .into())
+    pub fn use_number_type(&self, number_type: &str, num_bits: usize) -> Result<Expression> {
+        Ok(UseNumberType {
+            number_type,
+            num_bits,
+        }
+        .visit_expr(&self.inner)?
+        .into())
     }
 }

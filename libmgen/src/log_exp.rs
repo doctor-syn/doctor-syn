@@ -22,7 +22,7 @@ pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -61,7 +61,7 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -90,7 +90,7 @@ pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -124,7 +124,7 @@ pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 

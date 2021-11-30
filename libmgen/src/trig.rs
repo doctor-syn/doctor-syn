@@ -10,6 +10,7 @@ pub fn _gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
     let xmin = -0.25;
     let xmax = 0.25;
 
+    eprintln!("num_bits={}", config.num_bits());
     let sin_approx = expr!((s * PI).sin())
         .approx(
             num_terms,
@@ -20,7 +21,7 @@ pub fn _gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -34,7 +35,7 @@ pub fn _gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -74,7 +75,7 @@ pub fn _gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -88,7 +89,7 @@ pub fn _gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -124,7 +125,7 @@ pub fn gen_sin(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -152,7 +153,7 @@ pub fn gen_cos(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 
@@ -190,7 +191,7 @@ pub fn gen_tan(num_terms: usize, config: &Config) -> TokenStream {
             config.num_digits(),
         )
         .unwrap()
-        .use_number_type(config.number_type())
+        .use_number_type(config.number_type(), config.num_bits())
         .unwrap()
         .into_inner();
 

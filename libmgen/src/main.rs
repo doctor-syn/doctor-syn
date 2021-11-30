@@ -75,7 +75,7 @@ struct Opt {
     num_bits: usize,
 
     /// Number format - hex or decimal.
-    #[structopt(long, default_value = "f64")]
+    #[structopt(long, default_value = "decimal")]
     number_type: String,
 
     /// Target language. C, C++, rust, fortran.
