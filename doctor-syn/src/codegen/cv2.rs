@@ -70,19 +70,19 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "if {} {{{}}}", pat, expr);
     }
 
-    fn visit_attr_style(&mut self, _node: &'ast AttrStyle) {
+    fn visit_attr_style(&mut self, node: &'ast AttrStyle) {
         self.log("visit_attr_style");
         self.stack.push("<<attr_style>>".to_owned());
         //visit_attr_style(self, node);
     }
 
-    fn visit_attribute(&mut self, _node: &'ast Attribute) {
+    fn visit_attribute(&mut self, node: &'ast Attribute) {
         self.log("visit_attribute");
         self.stack.push("<<attribute>>".to_owned());
         //visit_attribute(self, node);
     }
 
-    fn visit_bare_fn_arg(&mut self, _node: &'ast BareFnArg) {
+    fn visit_bare_fn_arg(&mut self, node: &'ast BareFnArg) {
         self.log("visit_bare_fn_arg");
         self.stack.push("<<bare_fn_arg>>".to_owned());
         //visit_bare_fn_arg(self, node);
@@ -179,7 +179,7 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "{}", op);
     }
 
-    fn visit_binding(&mut self, _node: &'ast Binding) {
+    fn visit_binding(&mut self, node: &'ast Binding) {
         self.log("visit_binding");
         self.stack.push("<<binding>>".to_owned());
         //visit_binding(self, node);
@@ -196,49 +196,49 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "{{\n{}\n}}", stmts.join(";\n"));
     }
 
-    fn visit_bound_lifetimes(&mut self, _node: &'ast BoundLifetimes) {
+    fn visit_bound_lifetimes(&mut self, node: &'ast BoundLifetimes) {
         self.log("visit_bound_lifetimes");
         self.stack.push("<<bound_lifetimes>>".to_owned());
         //visit_bound_lifetimes(self, node);
     }
 
-    fn visit_const_param(&mut self, _node: &'ast ConstParam) {
+    fn visit_const_param(&mut self, node: &'ast ConstParam) {
         self.log("visit_const_param");
         self.stack.push("<<const_param>>".to_owned());
         //visit_const_param(self, node);
     }
 
-    fn visit_constraint(&mut self, _node: &'ast Constraint) {
+    fn visit_constraint(&mut self, node: &'ast Constraint) {
         self.log("visit_constraint");
         self.stack.push("<<constraint>>".to_owned());
         //visit_constraint(self, node);
     }
 
-    fn visit_data(&mut self, _node: &'ast Data) {
+    fn visit_data(&mut self, node: &'ast Data) {
         self.log("visit_data");
         self.stack.push("<<data>>".to_owned());
         //visit_data(self, node);
     }
 
-    fn visit_data_enum(&mut self, _node: &'ast DataEnum) {
+    fn visit_data_enum(&mut self, node: &'ast DataEnum) {
         self.log("visit_data_enum");
         self.stack.push("<<data_enum>>".to_owned());
         //visit_data_enum(self, node);
     }
 
-    fn visit_data_struct(&mut self, _node: &'ast DataStruct) {
+    fn visit_data_struct(&mut self, node: &'ast DataStruct) {
         self.log("visit_data_struct");
         self.stack.push("<<data_struct>>".to_owned());
         //visit_data_struct(self, node);
     }
 
-    fn visit_data_union(&mut self, _node: &'ast DataUnion) {
+    fn visit_data_union(&mut self, node: &'ast DataUnion) {
         self.log("visit_data_union");
         self.stack.push("<<data_union>>".to_owned());
         //visit_data_union(self, node);
     }
 
-    fn visit_derive_input(&mut self, _node: &'ast DeriveInput) {
+    fn visit_derive_input(&mut self, node: &'ast DeriveInput) {
         self.log("visit_derive_input");
         self.stack.push("<<derive_input>>".to_owned());
         //visit_derive_input(self, node);
@@ -285,13 +285,13 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "{} {} {}", left, op, right);
     }
 
-    fn visit_expr_async(&mut self, _node: &'ast ExprAsync) {
+    fn visit_expr_async(&mut self, node: &'ast ExprAsync) {
         self.log("visit_expr_async");
         self.stack.push("<<expr_async>>".to_owned());
         //visit_expr_async(self, node);
     }
 
-    fn visit_expr_await(&mut self, _node: &'ast ExprAwait) {
+    fn visit_expr_await(&mut self, node: &'ast ExprAwait) {
         self.log("visit_expr_await");
         self.stack.push("<<expr_await>>".to_owned());
         //visit_expr_await(self, node);
@@ -312,19 +312,19 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "{} {} {}", lhs, op, rhs);
     }
 
-    fn visit_expr_block(&mut self, _node: &'ast ExprBlock) {
+    fn visit_expr_block(&mut self, node: &'ast ExprBlock) {
         self.log("visit_expr_block");
         self.stack.push("<<expr_block>>".to_owned());
         // visit_expr_block(self, node);
     }
 
-    fn visit_expr_box(&mut self, _node: &'ast ExprBox) {
+    fn visit_expr_box(&mut self, node: &'ast ExprBox) {
         self.log("visit_expr_box");
         self.stack.push("<<expr_box>>".to_owned());
         //visit_expr_box(self, node);
     }
 
-    fn visit_expr_break(&mut self, _node: &'ast ExprBreak) {
+    fn visit_expr_break(&mut self, node: &'ast ExprBreak) {
         self.log("visit_expr_break");
         // self.stack.push("<<expr_break>>".to_owned());
         // visit_expr_break(self, node);
@@ -356,49 +356,49 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "({}){}", ty, expr);
     }
 
-    fn visit_expr_closure(&mut self, _node: &'ast ExprClosure) {
+    fn visit_expr_closure(&mut self, node: &'ast ExprClosure) {
         self.log("visit_expr_closure");
         self.stack.push("<<expr_closure>>".to_owned());
         //visit_expr_closure(self, node);
     }
 
-    fn visit_expr_continue(&mut self, _node: &'ast ExprContinue) {
+    fn visit_expr_continue(&mut self, node: &'ast ExprContinue) {
         self.log("visit_expr_continue");
         self.stack.push("<<expr_continue>>".to_owned());
         //visit_expr_continue(self, node);
     }
 
-    fn visit_expr_field(&mut self, _node: &'ast ExprField) {
+    fn visit_expr_field(&mut self, node: &'ast ExprField) {
         self.log("visit_expr_field");
         self.stack.push("<<expr_field>>".to_owned());
         //visit_expr_field(self, node);
     }
 
-    fn visit_expr_for_loop(&mut self, _node: &'ast ExprForLoop) {
+    fn visit_expr_for_loop(&mut self, node: &'ast ExprForLoop) {
         self.log("visit_expr_for_loop");
         self.stack.push("<<expr_for_loop>>".to_owned());
         //visit_expr_for_loop(self, node);
     }
 
-    fn visit_expr_group(&mut self, _node: &'ast ExprGroup) {
+    fn visit_expr_group(&mut self, node: &'ast ExprGroup) {
         self.log("visit_expr_group");
         self.stack.push("<<expr_group>>".to_owned());
         //visit_expr_group(self, node);
     }
 
-    fn visit_expr_if(&mut self, _node: &'ast ExprIf) {
+    fn visit_expr_if(&mut self, node: &'ast ExprIf) {
         self.log("visit_expr_if");
         self.stack.push("<<expr_if>>".to_owned());
         //visit_expr_if(self, node);
     }
 
-    fn visit_expr_index(&mut self, _node: &'ast ExprIndex) {
+    fn visit_expr_index(&mut self, node: &'ast ExprIndex) {
         self.log("visit_expr_index");
         self.stack.push("<<expr_index>>".to_owned());
         //visit_expr_index(self, node);
     }
 
-    fn visit_expr_let(&mut self, _node: &'ast ExprLet) {
+    fn visit_expr_let(&mut self, node: &'ast ExprLet) {
         self.log("visit_expr_let");
         self.stack.push("<<expr_let>>".to_owned());
         //visit_expr_let(self, node);
@@ -413,19 +413,19 @@ impl<'ast> Visit<'ast> for CVisitor {
         self.visit_lit(&node.lit);
     }
 
-    fn visit_expr_loop(&mut self, _node: &'ast ExprLoop) {
+    fn visit_expr_loop(&mut self, node: &'ast ExprLoop) {
         self.log("visit_expr_loop");
         self.stack.push("<<expr_loop>>".to_owned());
         //visit_expr_loop(self, node);
     }
 
-    fn visit_expr_macro(&mut self, _node: &'ast ExprMacro) {
+    fn visit_expr_macro(&mut self, node: &'ast ExprMacro) {
         self.log("visit_expr_macro");
         self.stack.push("<<expr_macro>>".to_owned());
         //visit_expr_macro(self, node);
     }
 
-    fn visit_expr_match(&mut self, _node: &'ast ExprMatch) {
+    fn visit_expr_match(&mut self, node: &'ast ExprMatch) {
         self.log("visit_expr_match");
         self.stack.push("<<expr_match>>".to_owned());
         //visit_expr_match(self, node);
@@ -478,55 +478,55 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "{}", path);
     }
 
-    fn visit_expr_range(&mut self, _node: &'ast ExprRange) {
+    fn visit_expr_range(&mut self, node: &'ast ExprRange) {
         self.log("visit_expr_range");
         self.stack.push("<<expr_range>>".to_owned());
         //visit_expr_range(self, node);
     }
 
-    fn visit_expr_reference(&mut self, _node: &'ast ExprReference) {
+    fn visit_expr_reference(&mut self, node: &'ast ExprReference) {
         self.log("visit_expr_reference");
         self.stack.push("<<expr_reference>>".to_owned());
         //visit_expr_reference(self, node);
     }
 
-    fn visit_expr_repeat(&mut self, _node: &'ast ExprRepeat) {
+    fn visit_expr_repeat(&mut self, node: &'ast ExprRepeat) {
         self.log("visit_expr_repeat");
         self.stack.push("<<expr_repeat>>".to_owned());
         //visit_expr_repeat(self, node);
     }
 
-    fn visit_expr_return(&mut self, _node: &'ast ExprReturn) {
+    fn visit_expr_return(&mut self, node: &'ast ExprReturn) {
         self.log("visit_expr_return");
         self.stack.push("<<expr_return>>".to_owned());
         //visit_expr_return(self, node);
     }
 
-    fn visit_expr_struct(&mut self, _node: &'ast ExprStruct) {
+    fn visit_expr_struct(&mut self, node: &'ast ExprStruct) {
         self.log("visit_expr_struct");
         self.stack.push("<<expr_struct>>".to_owned());
         //visit_expr_struct(self, node);
     }
 
-    fn visit_expr_try(&mut self, _node: &'ast ExprTry) {
+    fn visit_expr_try(&mut self, node: &'ast ExprTry) {
         self.log("visit_expr_try");
         self.stack.push("<<expr_try>>".to_owned());
         //visit_expr_try(self, node);
     }
 
-    fn visit_expr_try_block(&mut self, _node: &'ast ExprTryBlock) {
+    fn visit_expr_try_block(&mut self, node: &'ast ExprTryBlock) {
         self.log("visit_expr_try_block");
         self.stack.push("<<expr_try_block>>".to_owned());
         //visit_expr_try_block(self, node);
     }
 
-    fn visit_expr_tuple(&mut self, _node: &'ast ExprTuple) {
+    fn visit_expr_tuple(&mut self, node: &'ast ExprTuple) {
         self.log("visit_expr_tuple");
         self.stack.push("<<expr_tuple>>".to_owned());
         //visit_expr_tuple(self, node);
     }
 
-    fn visit_expr_type(&mut self, _node: &'ast ExprType) {
+    fn visit_expr_type(&mut self, node: &'ast ExprType) {
         self.log("visit_expr_type");
         self.stack.push("<<expr_type>>".to_owned());
         //visit_expr_type(self, node);
@@ -541,55 +541,55 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "{}{}", op, expr);
     }
 
-    fn visit_expr_unsafe(&mut self, _node: &'ast ExprUnsafe) {
+    fn visit_expr_unsafe(&mut self, node: &'ast ExprUnsafe) {
         self.log("visit_expr_unsafe");
         self.stack.push("<<expr_unsafe>>".to_owned());
         //visit_expr_unsafe(self, node);
     }
 
-    fn visit_expr_while(&mut self, _node: &'ast ExprWhile) {
+    fn visit_expr_while(&mut self, node: &'ast ExprWhile) {
         self.log("visit_expr_while");
         self.stack.push("<<expr_while>>".to_owned());
         //visit_expr_while(self, node);
     }
 
-    fn visit_expr_yield(&mut self, _node: &'ast ExprYield) {
+    fn visit_expr_yield(&mut self, node: &'ast ExprYield) {
         self.log("visit_expr_yield");
         self.stack.push("<<expr_yield>>".to_owned());
         //visit_expr_yield(self, node);
     }
 
-    fn visit_field(&mut self, _node: &'ast Field) {
+    fn visit_field(&mut self, node: &'ast Field) {
         self.log("visit_field");
         self.stack.push("<<field>>".to_owned());
         //visit_field(self, node);
     }
 
-    fn visit_field_pat(&mut self, _node: &'ast FieldPat) {
+    fn visit_field_pat(&mut self, node: &'ast FieldPat) {
         self.log("visit_field_pat");
         self.stack.push("<<field_pat>>".to_owned());
         //visit_field_pat(self, node);
     }
 
-    fn visit_field_value(&mut self, _node: &'ast FieldValue) {
+    fn visit_field_value(&mut self, node: &'ast FieldValue) {
         self.log("visit_field_value");
         self.stack.push("<<field_value>>".to_owned());
         //visit_field_value(self, node);
     }
 
-    fn visit_fields(&mut self, _node: &'ast Fields) {
+    fn visit_fields(&mut self, node: &'ast Fields) {
         self.log("visit_fields");
         self.stack.push("<<fields>>".to_owned());
         //visit_fields(self, node);
     }
 
-    fn visit_fields_named(&mut self, _node: &'ast FieldsNamed) {
+    fn visit_fields_named(&mut self, node: &'ast FieldsNamed) {
         self.log("visit_fields_named");
         self.stack.push("<<fields_named>>".to_owned());
         //visit_fields_named(self, node);
     }
 
-    fn visit_fields_unnamed(&mut self, _node: &'ast FieldsUnnamed) {
+    fn visit_fields_unnamed(&mut self, node: &'ast FieldsUnnamed) {
         self.log("visit_fields_unnamed");
         self.stack.push("<<fields_unnamed>>".to_owned());
         //visit_fields_unnamed(self, node);
@@ -616,55 +616,55 @@ impl<'ast> Visit<'ast> for CVisitor {
         visit_fn_arg(self, node);
     }
 
-    fn visit_foreign_item(&mut self, _node: &'ast ForeignItem) {
+    fn visit_foreign_item(&mut self, node: &'ast ForeignItem) {
         self.log("visit_foreign_item");
         self.stack.push("<<foreign_item>>".to_owned());
         //visit_foreign_item(self, node);
     }
 
-    fn visit_foreign_item_fn(&mut self, _node: &'ast ForeignItemFn) {
+    fn visit_foreign_item_fn(&mut self, node: &'ast ForeignItemFn) {
         self.log("visit_foreign_item_fn");
         self.stack.push("<<foreign_item_fn>>".to_owned());
         //visit_foreign_item_fn(self, node);
     }
 
-    fn visit_foreign_item_macro(&mut self, _node: &'ast ForeignItemMacro) {
+    fn visit_foreign_item_macro(&mut self, node: &'ast ForeignItemMacro) {
         self.log("visit_foreign_item_macro");
         self.stack.push("<<foreign_item_macro>>".to_owned());
         //visit_foreign_item_macro(self, node);
     }
 
-    fn visit_foreign_item_static(&mut self, _node: &'ast ForeignItemStatic) {
+    fn visit_foreign_item_static(&mut self, node: &'ast ForeignItemStatic) {
         self.log("visit_foreign_item_static");
         self.stack.push("<<foreign_item_static>>".to_owned());
         //visit_foreign_item_static(self, node);
     }
 
-    fn visit_foreign_item_type(&mut self, _node: &'ast ForeignItemType) {
+    fn visit_foreign_item_type(&mut self, node: &'ast ForeignItemType) {
         self.log("visit_foreign_item_type");
         self.stack.push("<<foreign_item_type>>".to_owned());
         //visit_foreign_item_type(self, node);
     }
 
-    fn visit_generic_argument(&mut self, _node: &'ast GenericArgument) {
+    fn visit_generic_argument(&mut self, node: &'ast GenericArgument) {
         self.log("visit_generic_argument");
         self.stack.push("<<generic_argument>>".to_owned());
         //visit_generic_argument(self, node);
     }
 
-    fn visit_generic_method_argument(&mut self, _node: &'ast GenericMethodArgument) {
+    fn visit_generic_method_argument(&mut self, node: &'ast GenericMethodArgument) {
         self.log("visit_generic_method_argument");
         self.stack.push("<<generic_method_argument>>".to_owned());
         //visit_generic_method_argument(self, node);
     }
 
-    fn visit_generic_param(&mut self, _node: &'ast GenericParam) {
+    fn visit_generic_param(&mut self, node: &'ast GenericParam) {
         self.log("visit_generic_param");
         self.stack.push("<<generic_param>>".to_owned());
         //visit_generic_param(self, node);
     }
 
-    fn visit_generics(&mut self, _node: &'ast Generics) {
+    fn visit_generics(&mut self, node: &'ast Generics) {
         self.log("visit_generics");
         self.stack.push("<<generics>>".to_owned());
         //visit_generics(self, node);
@@ -688,37 +688,37 @@ impl<'ast> Visit<'ast> for CVisitor {
         self.stack.push(name);
     }
 
-    fn visit_impl_item(&mut self, _node: &'ast ImplItem) {
+    fn visit_impl_item(&mut self, node: &'ast ImplItem) {
         self.log("visit_impl_item");
         self.stack.push("<<impl_item>>".to_owned());
         //visit_impl_item(self, node);
     }
 
-    fn visit_impl_item_const(&mut self, _node: &'ast ImplItemConst) {
+    fn visit_impl_item_const(&mut self, node: &'ast ImplItemConst) {
         self.log("visit_impl_item_const");
         self.stack.push("<<impl_item_const>>".to_owned());
         //visit_impl_item_const(self, node);
     }
 
-    fn visit_impl_item_macro(&mut self, _node: &'ast ImplItemMacro) {
+    fn visit_impl_item_macro(&mut self, node: &'ast ImplItemMacro) {
         self.log("visit_impl_item_macro");
         self.stack.push("<<impl_item_macro>>".to_owned());
         //visit_impl_item_macro(self, node);
     }
 
-    fn visit_impl_item_method(&mut self, _node: &'ast ImplItemMethod) {
+    fn visit_impl_item_method(&mut self, node: &'ast ImplItemMethod) {
         self.log("visit_impl_item_method");
         self.stack.push("<<impl_item_method>>".to_owned());
         //visit_impl_item_method(self, node);
     }
 
-    fn visit_impl_item_type(&mut self, _node: &'ast ImplItemType) {
+    fn visit_impl_item_type(&mut self, node: &'ast ImplItemType) {
         self.log("visit_impl_item_type");
         self.stack.push("<<impl_item_type>>".to_owned());
         //visit_impl_item_type(self, node);
     }
 
-    fn visit_index(&mut self, _node: &'ast Index) {
+    fn visit_index(&mut self, node: &'ast Index) {
         self.log("visit_index");
         self.stack.push("<<index>>".to_owned());
         //visit_index(self, node);
@@ -748,13 +748,13 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "const {} {} = {};", ty, ident, expr);
     }
 
-    fn visit_item_enum(&mut self, _node: &'ast ItemEnum) {
+    fn visit_item_enum(&mut self, node: &'ast ItemEnum) {
         self.log("visit_item_enum");
         self.stack.push("<<item_enum>>".to_owned());
         //visit_item_enum(self, node);
     }
 
-    fn visit_item_extern_crate(&mut self, _node: &'ast ItemExternCrate) {
+    fn visit_item_extern_crate(&mut self, node: &'ast ItemExternCrate) {
         self.log("visit_item_extern_crate");
         self.stack.push("<<item_extern_crate>>".to_owned());
         //visit_item_extern_crate(self, node);
@@ -775,55 +775,55 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "{} {}", sig, block);
     }
 
-    fn visit_item_foreign_mod(&mut self, _node: &'ast ItemForeignMod) {
+    fn visit_item_foreign_mod(&mut self, node: &'ast ItemForeignMod) {
         self.log("visit_item_foreign_mod");
         self.stack.push("<<item_foreign_mod>>".to_owned());
         //visit_item_foreign_mod(self, node);
     }
 
-    fn visit_item_impl(&mut self, _node: &'ast ItemImpl) {
+    fn visit_item_impl(&mut self, node: &'ast ItemImpl) {
         self.log("visit_item_impl");
         self.stack.push("<<item_impl>>".to_owned());
         //visit_item_impl(self, node);
     }
 
-    fn visit_item_macro(&mut self, _node: &'ast ItemMacro) {
+    fn visit_item_macro(&mut self, node: &'ast ItemMacro) {
         self.log("visit_item_macro");
         self.stack.push("<<item_macro>>".to_owned());
         //visit_item_macro(self, node);
     }
 
-    fn visit_item_macro2(&mut self, _node: &'ast ItemMacro2) {
+    fn visit_item_macro2(&mut self, node: &'ast ItemMacro2) {
         self.log("visit_item_macro2");
         self.stack.push("<<item_macro2>>".to_owned());
         //visit_item_macro2(self, node);
     }
 
-    fn visit_item_mod(&mut self, _node: &'ast ItemMod) {
+    fn visit_item_mod(&mut self, node: &'ast ItemMod) {
         self.log("visit_item_mod");
         self.stack.push("<<item_mod>>".to_owned());
         //visit_item_mod(self, node);
     }
 
-    fn visit_item_static(&mut self, _node: &'ast ItemStatic) {
+    fn visit_item_static(&mut self, node: &'ast ItemStatic) {
         self.log("visit_item_static");
         self.stack.push("<<item_static>>".to_owned());
         //visit_item_static(self, node);
     }
 
-    fn visit_item_struct(&mut self, _node: &'ast ItemStruct) {
+    fn visit_item_struct(&mut self, node: &'ast ItemStruct) {
         self.log("visit_item_struct");
         self.stack.push("<<item_struct>>".to_owned());
         //visit_item_struct(self, node);
     }
 
-    fn visit_item_trait(&mut self, _node: &'ast ItemTrait) {
+    fn visit_item_trait(&mut self, node: &'ast ItemTrait) {
         self.log("visit_item_trait");
         self.stack.push("<<item_trait>>".to_owned());
         //visit_item_trait(self, node);
     }
 
-    fn visit_item_trait_alias(&mut self, _node: &'ast ItemTraitAlias) {
+    fn visit_item_trait_alias(&mut self, node: &'ast ItemTraitAlias) {
         self.log("visit_item_trait_alias");
         self.stack.push("<<item_trait_alias>>".to_owned());
         //visit_item_trait_alias(self, node);
@@ -846,30 +846,30 @@ impl<'ast> Visit<'ast> for CVisitor {
         ret!(self, "typedef {} {};", ty, name);
     }
 
-    fn visit_item_union(&mut self, _node: &'ast ItemUnion) {
+    fn visit_item_union(&mut self, node: &'ast ItemUnion) {
         self.log("visit_item_union");
         self.stack.push("<<item_union>>".to_owned());
         //visit_item_union(self, node);
     }
 
-    fn visit_item_use(&mut self, _node: &'ast ItemUse) {
+    fn visit_item_use(&mut self, node: &'ast ItemUse) {
         self.log("visit_item_use");
         self.stack.push("<<item_use>>".to_owned());
         //visit_item_use(self, node);
     }
 
-    fn visit_label(&mut self, _node: &'ast Label) {
+    fn visit_label(&mut self, node: &'ast Label) {
         self.log("visit_label");
         self.stack.push("<<label>>".to_owned());
         //visit_label(self, node);
     }
-    fn visit_lifetime(&mut self, _node: &'ast Lifetime) {
+    fn visit_lifetime(&mut self, node: &'ast Lifetime) {
         self.log("visit_lifetime");
         self.stack.push("<<lifetime>>".to_owned());
         //visit_lifetime(self, node);
     }
 
-    fn visit_lifetime_def(&mut self, _node: &'ast LifetimeDef) {
+    fn visit_lifetime_def(&mut self, node: &'ast LifetimeDef) {
         self.log("visit_lifetime_def");
         self.stack.push("<<lifetime_def>>".to_owned());
         //visit_lifetime_def(self, node);
@@ -879,22 +879,22 @@ impl<'ast> Visit<'ast> for CVisitor {
         // self.stack.push("<<lit>>".to_owned());
         visit_lit(self, node);
     }
-    fn visit_lit_bool(&mut self, _node: &'ast LitBool) {
+    fn visit_lit_bool(&mut self, node: &'ast LitBool) {
         self.log("visit_lit_bool");
         self.stack.push("<<lit_bool>>".to_owned());
         //visit_lit_bool(self, node);
     }
-    fn visit_lit_byte(&mut self, _node: &'ast LitByte) {
+    fn visit_lit_byte(&mut self, node: &'ast LitByte) {
         self.log("visit_lit_byte");
         self.stack.push("<<lit_byte>>".to_owned());
         //visit_lit_byte(self, node);
     }
-    fn visit_lit_byte_str(&mut self, _node: &'ast LitByteStr) {
+    fn visit_lit_byte_str(&mut self, node: &'ast LitByteStr) {
         self.log("visit_lit_byte_str");
         self.stack.push("<<lit_byte_str>>".to_owned());
         //visit_lit_byte_str(self, node);
     }
-    fn visit_lit_char(&mut self, _node: &'ast LitChar) {
+    fn visit_lit_char(&mut self, node: &'ast LitChar) {
         self.log("visit_lit_char");
         self.stack.push("<<lit_char>>".to_owned());
         //visit_lit_char(self, node);
@@ -907,12 +907,12 @@ impl<'ast> Visit<'ast> for CVisitor {
         }
     }
 
-    fn visit_lit_int(&mut self, _node: &'ast LitInt) {
+    fn visit_lit_int(&mut self, node: &'ast LitInt) {
         self.log("visit_lit_int");
         self.stack.push("<<lit_int>>".to_owned());
         //visit_lit_int(self, node);
     }
-    fn visit_lit_str(&mut self, _node: &'ast LitStr) {
+    fn visit_lit_str(&mut self, node: &'ast LitStr) {
         self.log("visit_lit_str");
         self.stack.push("<<lit_str>>".to_owned());
         //visit_lit_str(self, node);
@@ -937,55 +937,55 @@ impl<'ast> Visit<'ast> for CVisitor {
         }
     }
 
-    fn visit_macro(&mut self, _node: &'ast Macro) {
+    fn visit_macro(&mut self, node: &'ast Macro) {
         self.log("visit_macro");
         self.stack.push("<<macro>>".to_owned());
         //visit_macro(self, node);
     }
 
-    fn visit_macro_delimiter(&mut self, _node: &'ast MacroDelimiter) {
+    fn visit_macro_delimiter(&mut self, node: &'ast MacroDelimiter) {
         self.log("visit_macro_delimiter");
         self.stack.push("<<macro_delimiter>>".to_owned());
         //visit_macro_delimiter(self, node);
     }
 
-    fn visit_member(&mut self, _node: &'ast Member) {
+    fn visit_member(&mut self, node: &'ast Member) {
         self.log("visit_member");
         self.stack.push("<<member>>".to_owned());
         //visit_member(self, node);
     }
 
-    fn visit_meta(&mut self, _node: &'ast Meta) {
+    fn visit_meta(&mut self, node: &'ast Meta) {
         self.log("visit_meta");
         self.stack.push("<<meta>>".to_owned());
         //visit_meta(self, node);
     }
 
-    fn visit_meta_list(&mut self, _node: &'ast MetaList) {
+    fn visit_meta_list(&mut self, node: &'ast MetaList) {
         self.log("visit_meta_list");
         self.stack.push("<<meta_list>>".to_owned());
         //visit_meta_list(self, node);
     }
 
-    fn visit_meta_name_value(&mut self, _node: &'ast MetaNameValue) {
+    fn visit_meta_name_value(&mut self, node: &'ast MetaNameValue) {
         self.log("visit_meta_name_value");
         self.stack.push("<<meta_name_value>>".to_owned());
         //visit_meta_name_value(self, node);
     }
 
-    fn visit_method_turbofish(&mut self, _node: &'ast MethodTurbofish) {
+    fn visit_method_turbofish(&mut self, node: &'ast MethodTurbofish) {
         self.log("visit_method_turbofish");
         self.stack.push("<<method_turbofish>>".to_owned());
         //visit_method_turbofish(self, node);
     }
 
-    fn visit_nested_meta(&mut self, _node: &'ast NestedMeta) {
+    fn visit_nested_meta(&mut self, node: &'ast NestedMeta) {
         self.log("visit_nested_meta");
         self.stack.push("<<nested_meta>>".to_owned());
         //visit_nested_meta(self, node);
     }
 
-    fn visit_parenthesized_generic_arguments(&mut self, _node: &'ast ParenthesizedGenericArguments) {
+    fn visit_parenthesized_generic_arguments(&mut self, node: &'ast ParenthesizedGenericArguments) {
         self.log("visit_parenthesized_generic_arguments");
         self.stack.push("<<parenthesized_generic_arguments>>".to_owned());
         //visit_parenthesized_generic_arguments(self, node);
@@ -996,7 +996,7 @@ impl<'ast> Visit<'ast> for CVisitor {
         visit_pat(self, node);
     }
 
-    fn visit_pat_box(&mut self, _node: &'ast PatBox) {
+    fn visit_pat_box(&mut self, node: &'ast PatBox) {
         self.log("visit_pat_box");
         self.stack.push("<<pat_box>>".to_owned());
         //visit_pat_box(self, node);
@@ -1009,13 +1009,13 @@ impl<'ast> Visit<'ast> for CVisitor {
         self.visit_ident(&node.ident);
     }
 
-    fn visit_pat_lit(&mut self, _node: &'ast PatLit) {
+    fn visit_pat_lit(&mut self, node: &'ast PatLit) {
         self.log("visit_pat_lit");
         self.stack.push("<<pat_lit>>".to_owned());
         //visit_pat_lit(self, node);
     }
 
-    fn visit_pat_macro(&mut self, _node: &'ast PatMacro) {
+    fn visit_pat_macro(&mut self, node: &'ast PatMacro) {
         self.log("visit_pat_macro");
         self.stack.push("<<pat_macro>>".to_owned());
         //visit_pat_macro(self, node);
