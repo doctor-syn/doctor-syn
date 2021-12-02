@@ -79,6 +79,10 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
 pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
     let xmin = 0.0;
     let xmax = 1.0;
+    let one = config.get_one();
+    let escale = config.get_escale();
+    let eshift = config.get_shift();
+    let eoffset = config.get_eoffset();
 
     let approx = expr!((x + 1.0).log2())
         .approx(
@@ -96,11 +100,12 @@ pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn ln_1p(arg: fty) -> fty {
-            //let exponent : uty = (arg_bits >> mkuty(#eshift)) - mkuty(#eoffset);
-            let exponent : ity = ((arg+1.0).to_bits() >> 23) as ity - 0x7f;
-            let x : fty = select(exponent == 0, arg, fty::from_bits(((arg+1.0).to_bits() & 0x7fffff) | 0x3f800000) - 1.0 );
+            let arg_bits : uty = (arg+1.0).to_bits();
+            let exponent : ity = (arg_bits as ity >> #eshift) - (#eoffset) as ity;
+            let x1 : fty = fty::from_bits((arg_bits & (#escale-1) as uty) | (#one) as uty) - (1.5) as fty;
+            let x : fty = select(exponent == 0, arg, x1);
             let y: fty = #approx;
-            (y + (exponent as fty)) * (1.0 / LOG2_E)
+            (y + (exponent as fty)) * RECIP_LOG2_E
         }
     )
 }
@@ -130,9 +135,9 @@ pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn log2(arg: fty) -> fty {
-            let arg_bits : uty = reinterpret_fty_uty(arg);
-            let exponent : uty = (arg_bits >> mkuty(#eshift)) - mkuty(#eoffset);
-            let x : fty = reinterpret_uty_fty((arg_bits & mkuty(#escale-1)) | mkuty(#one)) - f(1.5);
+            let arg_bits : uty = arg.to_bits();
+            let exponent : ity = (arg_bits as ity >> #eshift) - (#eoffset) as ity;
+            let x : fty = fty::from_bits((arg_bits & (#escale-1) as uty) | #one as uty) - (1.5) as fty;
             let y : fty = #approx;
             y + (exponent as fty)
         }
@@ -142,7 +147,7 @@ pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
 pub fn gen_ln(_num_terms: usize, _config: &Config) -> TokenStream {
     quote!(
         pub fn ln(arg: fty) -> fty {
-            log2(arg) * f(1.0 / LOG2_E)
+            log2(arg) * RECIP_LOG2_E
         }
     )
 }
@@ -150,7 +155,7 @@ pub fn gen_ln(_num_terms: usize, _config: &Config) -> TokenStream {
 pub fn gen_log10(_num_terms: usize, _config: &Config) -> TokenStream {
     quote!(
         pub fn log10(arg: fty) -> fty {
-            log2(arg) * (1.0 / LOG2_10)
+            log2(arg) * RECIP_LOG2_10
         }
     )
 }

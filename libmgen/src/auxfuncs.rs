@@ -12,6 +12,30 @@ pub fn gen_PI(_terms: usize, config: &Config) -> TokenStream {
 }
 
 #[allow(non_snake_case)]
+pub fn gen_LOG2_E(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!(1.exp().log(2)).eval(config.num_digits()).unwrap().into();
+    quote!(
+        const LOG2_E: fty = #value;
+    )
+}
+
+#[allow(non_snake_case)]
+pub fn gen_RECIP_LOG2_E(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!(1/1.exp().log(2)).eval(config.num_digits()).unwrap().into();
+    quote!(
+        const RECIP_LOG2_E: fty = #value;
+    )
+}
+
+#[allow(non_snake_case)]
+pub fn gen_RECIP_LOG2_10(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!(1/10.log(2)).eval(config.num_digits()).unwrap().into();
+    quote!(
+        const RECIP_LOG2_10: fty = #value;
+    )
+}
+
+#[allow(non_snake_case)]
 pub fn gen_RECIP_2PI(_terms: usize, config: &Config) -> TokenStream {
     let value: syn::Expr = expr!(1 / (2 * PI))
         .eval(config.num_digits())
@@ -134,6 +158,14 @@ pub fn gen_select(_terms: usize, _config: &Config) -> TokenStream {
             } else {
                 c
             }
+        }
+    )
+}
+
+pub fn gen_iabs(_terms: usize, _config: &Config) -> TokenStream {
+    quote!(
+        fn iabs(arg: ity) -> ity {
+            if arg < 0 { -arg } else { arg }
         }
     )
 }

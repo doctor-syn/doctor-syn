@@ -77,9 +77,9 @@ impl Config {
 
     pub fn get_eoffset(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
-            quote::quote!(0x7f)
+            quote::quote!(127)
         } else {
-            quote::quote!(0x3ff)
+            quote::quote!(1023)
         }
     }
 }
