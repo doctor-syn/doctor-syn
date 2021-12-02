@@ -235,56 +235,160 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &["fty", "ity", "uty"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_exp2),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_exp2_1",
+                ref_expr: "x.exp2()",
+                rust_expr: "exp2(x)",
+                test: TestType::MaxAbs("-1", "0", 1.0, 1.0, 237),
+            },
+            TestSpec {
+                test_name: "test_exp2_2",
+                ref_expr: "x.exp2()",
+                rust_expr: "exp2(x)",
+                test: TestType::MaxAbs("0", "1", 2.0, 2.0, 237),
+            },
+        ],
     },
     Function {
         name: "exp",
         deps: &["fty", "exp2", "LOG2_E"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_exp),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_exp_1",
+                ref_expr: "x.exp()",
+                rust_expr: "exp(x)",
+                test: TestType::MaxAbs("-1", "0", 1.0, 1.0, 237),
+            },
+            TestSpec {
+                test_name: "test_exp_2",
+                ref_expr: "x.exp()",
+                rust_expr: "exp(x)",
+                test: TestType::MaxAbs("0", "1", 4.0, 4.0, 237),
+            },
+            TestSpec {
+                test_name: "test_exp_3",
+                ref_expr: "x.exp()",
+                rust_expr: "exp(x)",
+                test: TestType::MaxAbs("1", "2", 16.0, 16.0, 237),
+            },
+        ],
     },
     Function {
         name: "exp_m1",
         deps: &["fty", "exp2"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_exp_m1),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_exp_m1_1",
+                ref_expr: "x.exp() - 1",
+                rust_expr: "exp_m1(x)",
+                test: TestType::MaxAbs("-1", "0", 1.0, 1.0, 237),
+            },
+            TestSpec {
+                test_name: "test_exp_m1_2",
+                ref_expr: "x.exp() - 1",
+                rust_expr: "exp_m1(x)",
+                test: TestType::MaxAbs("0", "1", 4.0, 4.0, 237),
+            },
+        ],
     },
     Function {
         name: "log2",
         deps: &["fty"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_log2),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_log2_1",
+                ref_expr: "x.log2()",
+                rust_expr: "log2(x)",
+                test: TestType::MaxAbs("0.7", "1.0", 1.5, 1.5, 237),
+            },
+            TestSpec {
+                test_name: "test_log2_2",
+                ref_expr: "x.log2()",
+                rust_expr: "log2(x)",
+                test: TestType::MaxAbs("1.0", "2", 2.0, 2.0, 237),
+            },
+        ],
     },
     Function {
         name: "ln_1p",
         deps: &["fty", "RECIP_LOG2_E", "select"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_ln_1p),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_ln_1p_1",
+                ref_expr: "(1+x).ln()",
+                rust_expr: "ln_1p(x)",
+                test: TestType::MaxAbs("1", "2", 2.0, 2.0, 237),
+            },
+        ],
     },
     Function {
         name: "ln",
         deps: &["log2", "RECIP_LOG2_E"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_ln),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_ln_1",
+                ref_expr: "x.ln()",
+                rust_expr: "ln(x)",
+                test: TestType::MaxAbs("0.7", "1.0", 1.5, 1.5, 237),
+            },
+            TestSpec {
+                test_name: "test_ln_2",
+                ref_expr: "x.ln()",
+                rust_expr: "ln(x)",
+                test: TestType::MaxAbs("1.0", "2", 2.0, 2.0, 237),
+            },
+        ],
     },
     Function {
         name: "log10",
         deps: &["log2", "RECIP_LOG2_10"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_log10),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_log10_1",
+                ref_expr: "x.log10()",
+                rust_expr: "log10(x)",
+                test: TestType::MaxAbs("0.1", "1.0", 1.5, 1.5, 237),
+            },
+            TestSpec {
+                test_name: "test_log10_2",
+                ref_expr: "x.log10()",
+                rust_expr: "log10(x)",
+                test: TestType::MaxAbs("1.0", "10", 2.0, 2.0, 237),
+            },
+        ],
     },
     Function {
         name: "log",
         deps: &["fty", "log2"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_log),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_log_1",
+                ref_expr: "x.log10()",
+                rust_expr: "log(x, 10.0 as fty)",
+                test: TestType::MaxAbs("0.1", "1.0", 1.5, 1.5, 237),
+            },
+            TestSpec {
+                test_name: "test_log_2",
+                ref_expr: "x.log10()",
+                rust_expr: "log(x, 10.0 as fty)",
+                test: TestType::MaxAbs("1.0", "10", 2.0, 2.0, 237),
+            },
+        ],
     },
     Function {
         name: "powf",

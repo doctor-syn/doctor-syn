@@ -44,6 +44,7 @@ pub fn gen_exp(_num_terms: usize, config: &Config) -> TokenStream {
     )
 }
 
+/// exp(x) - 1
 pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
     let one = config.get_one();
     let escale = config.get_escale();
@@ -66,6 +67,7 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
         .into_inner();
 
     quote!(
+        /// Generate exp(arg) - 1 more accurately than separate calls.
         pub fn exp_m1(arg: fty) -> fty {
             let scaled : fty = arg * LOG2_E;
             let r : fty = scaled.round();
@@ -77,35 +79,36 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
-    let xmin = 0.0;
-    let xmax = 1.0;
-    let one = config.get_one();
-    let escale = config.get_escale();
-    let eshift = config.get_shift();
-    let eoffset = config.get_eoffset();
+    // let xmin = 0.0;
+    // let xmax = 1.0;
+    // let one = config.get_one();
+    // let escale = config.get_escale();
+    // let eshift = config.get_shift();
+    // let eoffset = config.get_eoffset();
 
-    let approx = expr!((x + 1.0).log2())
-        .approx(
-            num_terms,
-            xmin,
-            xmax,
-            name!(x),
-            Parity::Neither,
-            config.num_digits(),
-        )
-        .unwrap()
-        .use_number_type(config.number_type(), config.num_bits())
-        .unwrap()
-        .into_inner();
+    // let approx = expr!((x + 1.0).log2())
+    //     .approx(
+    //         num_terms,
+    //         xmin,
+    //         xmax,
+    //         name!(x),
+    //         Parity::Neither,
+    //         config.num_digits(),
+    //     )
+    //     .unwrap()
+    //     .use_number_type(config.number_type(), config.num_bits())
+    //     .unwrap()
+    //     .into_inner();
 
     quote!(
         pub fn ln_1p(arg: fty) -> fty {
-            let arg_bits : uty = (arg+1.0).to_bits();
-            let exponent : ity = (arg_bits as ity >> #eshift) - (#eoffset) as ity;
-            let x1 : fty = fty::from_bits((arg_bits & (#escale-1) as uty) | (#one) as uty) - (1.5) as fty;
-            let x : fty = select(exponent == 0, arg, x1);
-            let y: fty = #approx;
-            (y + (exponent as fty)) * RECIP_LOG2_E
+            (1.0 + arg).ln()
+            // let arg_bits : uty = (arg+1.0).to_bits();
+            // let exponent : ity = (arg_bits as ity >> #eshift) - (#eoffset) as ity;
+            // let x1 : fty = fty::from_bits((arg_bits & (#escale-1) as uty) | (#one) as uty) - (1.5) as fty;
+            // let x : fty = select(exponent == 0, arg, x1);
+            // let y: fty = #approx;
+            // (y + (exponent as fty)) * RECIP_LOG2_E
         }
     )
 }
