@@ -389,7 +389,20 @@ fn main() {
         }
     }
 
-    let text = doctor_syn::codegen::rust::format_token_stream(tokens);
+    let text = match opt.language.as_str() {
+        "rust" => doctor_syn::codegen::rust::format_token_stream(tokens),
+        "c" => doctor_syn::codegen::c::to_c(&syn::parse2(tokens).unwrap()),
+        "help" => {
+            eprintln!("Available languages:");
+            eprintln!("rust");
+            eprintln!("c");
+            return;
+        }
+        _ => {
+            eprintln!("invalid language {} use \"help\" to list valid options.", opt.language);
+            return;
+        }
+    };
 
     if let Some(path) = &opt.output {
         std::fs::write(path, text.as_bytes()).unwrap();

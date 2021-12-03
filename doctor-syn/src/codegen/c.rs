@@ -314,8 +314,11 @@ impl<'ast> Visit<'ast> for CVisitor {
 
     fn visit_expr_block(&mut self, node: &'ast ExprBlock) {
         self.log("visit_expr_block");
-        self.stack.push("<<expr_block>>".to_owned());
-        // visit_expr_block(self, node);
+        // self.stack.push("<<expr_block>>".to_owned());
+        // if let Some(it) = &node.label {
+        //     v.visit_label(it);
+        // };
+        self.visit_block(&node.block);
     }
 
     fn visit_expr_box(&mut self, node: &'ast ExprBox) {
@@ -388,8 +391,18 @@ impl<'ast> Visit<'ast> for CVisitor {
 
     fn visit_expr_if(&mut self, node: &'ast ExprIf) {
         self.log("visit_expr_if");
-        self.stack.push("<<expr_if>>".to_owned());
-        //visit_expr_if(self, node);
+        // self.stack.push("<<expr_if>>".to_owned());
+        self.visit_expr(&*node.cond);
+        let cond = self.tos();
+        self.visit_block(&node.then_branch);
+        let t = self.tos();
+        if let Some(it) = &node.else_branch {
+            self.visit_expr(&*(it).1);
+            let f = self.tos();
+            ret!(self, "({}) ? ({}) : ({})", cond, t, f);
+        } else {
+            ret!(self, "<<if requires an else>>")
+        };
     }
 
     fn visit_expr_index(&mut self, node: &'ast ExprIndex) {
@@ -676,6 +689,7 @@ impl<'ast> Visit<'ast> for CVisitor {
         let name = node.to_string();
 
         let name = match name.as_str() {
+            "bool" => "int".to_owned(),
             "i32" => "int".to_owned(),
             "i64" => "long long".to_owned(),
             "u32" => "unsigned int".to_owned(),
@@ -909,8 +923,12 @@ impl<'ast> Visit<'ast> for CVisitor {
 
     fn visit_lit_int(&mut self, node: &'ast LitInt) {
         self.log("visit_lit_int");
-        self.stack.push("<<lit_int>>".to_owned());
-        //visit_lit_int(self, node);
+        // self.stack.push("<<lit_int>>".to_owned());
+        // visit_lit_int(self, node);
+        let suffix = node.suffix();
+        match suffix {
+            _ => ret!(self, "{}", node.base10_digits())
+        }
     }
     fn visit_lit_str(&mut self, node: &'ast LitStr) {
         self.log("visit_lit_str");

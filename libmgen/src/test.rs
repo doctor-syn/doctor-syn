@@ -55,10 +55,54 @@ fn gen_max_abs(
     )
 }
 
+fn gen_histogram(
+    t: &TestSpec,
+    config: &Config,
+    min: &str,
+    max: &str,
+) -> TokenStream {
+    let nbuckets = 32_usize;
+    let niter = 1000000_usize;
+    let num_digits = config.num_digits();
+    use std::str::FromStr;
+    let refexpr = TokenStream::from_str(&t.ref_expr).unwrap();
+    let refe: Expression = syn::parse2::<syn::Expr>(refexpr.clone()).unwrap().into();
+    let tmin = TokenStream::from_str(min).unwrap();
+    let tmax = TokenStream::from_str(max).unwrap();
+
+    let test_name = format_ident!("{}", t.test_name);
+    let test_name_str = t.test_name;
+    let expr = TokenStream::from_str(&t.rust_expr).unwrap();
+    quote!(
+        #[test]
+        pub fn #test_name() {
+            let mut h = [0; #nbuckets];
+            for i in 0..#niter {
+                let y = #expr as f64;
+                let idx = ((y - #tmin) / (#tmax - #tmin) * #nbuckets as f64).floor() as isize;
+                if idx >= 0 && idx < (#nbuckets) as isize {
+                    h[idx as usize] += 1;
+                }
+            }
+            let dx = (#tmax - #tmin) as f64 / (#nbuckets) as f64;
+            for i in 0..#nbuckets {
+                let x = ((i as f64 + 0.5) / #nbuckets as f64) * (#tmax - #tmin) + #tmin;
+                let pdf = h[i] as f64 / (#niter) as f64 / dx;
+                let pdf_ref = #refexpr;
+                println!("{} {} {}", x, pdf, pdf_ref);
+            }
+            assert!(false);
+        }
+    )
+}
+
 pub fn gen_test(t: &TestSpec, config: &Config) -> TokenStream {
     match t.test {
         TestType::MaxAbs(min, max, bits32, bits64, n) => {
             gen_max_abs(t, config, min, max, bits32, bits64, n)
+        }
+        TestType::Histogram(min, max) => {
+            gen_histogram(t, config, min, max)
         }
     }
 }

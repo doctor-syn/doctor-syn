@@ -4,6 +4,7 @@ use std::f64::consts::PI;
 
 pub enum TestType {
     MaxAbs(&'static str, &'static str, f64, f64, usize),
+    Histogram(&'static str, &'static str),
 }
 
 pub struct TestSpec {
@@ -111,6 +112,13 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &[],
         num_terms: [0, 0],
         gen: Some(crate::auxfuncs::gen_RECIP_2PI),
+        test_specs: &[],
+    },
+    Function {
+        name: "SQRT_RECIP_2PI",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_SQRT_RECIP_2PI),
         test_specs: &[],
     },
     Function {
@@ -437,11 +445,18 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &["fty"],
         num_terms: [0, 0],
         gen: Some(crate::stats_random::gen_runif),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_runif",
+                ref_expr: "1",
+                rust_expr: "runif(i, 0.0, 1.0)",
+                test: TestType::Histogram("0.0", "1.0"),
+            },
+        ],
     },
     Function {
         name: "dnorm",
-        deps: &["fty"],
+        deps: &["fty", "LOG2_E", "SQRT_RECIP_2PI", "recip", "exp2"],
         num_terms: [16, 24],
         gen: Some(crate::stats_norm::gen_dnorm),
         test_specs: &[],
@@ -465,7 +480,14 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &["fty", "runif", "qnorm"],
         num_terms: [16, 24],
         gen: Some(crate::stats_norm::gen_rnorm),
-        test_specs: &[],
+        test_specs: &[
+            // TestSpec {
+            //     test_name: "test_rnorm",
+            //     ref_expr: "dnorm(x, 0.0, 1.0)",
+            //     rust_expr: "rnorm(i, 0.0, 1.0)",
+            //     test: TestType::Histogram("-2.0", "2.0"),
+            // },
+        ],
     },
     Function {
         name: "sin",

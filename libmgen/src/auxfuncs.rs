@@ -44,6 +44,15 @@ pub fn gen_RECIP_2PI(_terms: usize, config: &Config) -> TokenStream {
     quote!( const RECIP_2PI : fty = #value; )
 }
 
+#[allow(non_snake_case)]
+pub fn gen_SQRT_RECIP_2PI(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!((1 / (2 * PI)).sqrt())
+        .eval(config.num_digits())
+        .unwrap()
+        .into();
+    quote!( const SQRT_RECIP_2PI : fty = #value; )
+}
+
 pub fn gen_fty(_terms: usize, config: &Config) -> TokenStream {
     let fty = format_ident!("f{}", config.num_bits());
     quote!(

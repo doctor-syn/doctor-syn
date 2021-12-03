@@ -9,11 +9,10 @@ use crate::Config;
 pub fn gen_dnorm(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn dnorm(arg: fty, mean: fty, sigma: fty) -> fty {
-            let DNORM_CONST: fty = recip_sqrt(PI * 2);
             let rsigma: fty = recip(sigma);
             let y: fty = (arg - mean) * rsigma;
             let e: fty = (0.5 * LOG2_E) * y * y;
-            rsigma * DNORM_CONST * exp2(e)
+            rsigma * SQRT_RECIP_2PI * exp2(e)
         }
     )
 }
