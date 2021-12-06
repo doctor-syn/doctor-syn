@@ -459,7 +459,14 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &["fty", "LOG2_E", "SQRT_RECIP_2PI", "recip", "exp2"],
         num_terms: [16, 24],
         gen: Some(crate::stats_norm::gen_dnorm),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_dnorm_1",
+                ref_expr: "x.dnorm(0, 1)",
+                rust_expr: "dnorm(x, 0.0 as fty, 1.0 as fty)",
+                test: TestType::MaxAbs("-1", "1", 1.0, 1.0, 237),
+            },
+        ],
     },
     Function {
         name: "pnorm",
@@ -470,10 +477,23 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "qnorm",
-        deps: &["fty"],
-        num_terms: [16, 24],
+        deps: &["fty", "sqrt", "log2"],
+        num_terms: [16, 32],
         gen: Some(crate::stats_norm::gen_qnorm),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_qnorm_1",
+                ref_expr: "x.qnorm(0, 1)",
+                rust_expr: "qnorm(x, 0.0 as fty, 1.0 as fty)",
+                test: TestType::MaxAbs("0.25", "0.75", 2.0, 2.0, 237),
+            },
+            TestSpec {
+                test_name: "test_qnorm_2",
+                ref_expr: "x.qnorm(0, 1)",
+                rust_expr: "qnorm(x, 0.0 as fty, 1.0 as fty)",
+                test: TestType::MaxAbs("0.01", "0.25", 2.0, 1.0, 237),
+            },
+        ],
     },
     Function {
         name: "rnorm",
@@ -481,12 +501,12 @@ pub static FUNCTIONS: &[Function] = &[
         num_terms: [16, 24],
         gen: Some(crate::stats_norm::gen_rnorm),
         test_specs: &[
-            // TestSpec {
-            //     test_name: "test_rnorm",
-            //     ref_expr: "dnorm(x, 0.0, 1.0)",
-            //     rust_expr: "rnorm(i, 0.0, 1.0)",
-            //     test: TestType::Histogram("-2.0", "2.0"),
-            // },
+            TestSpec {
+                test_name: "test_rnorm",
+                ref_expr: "dnorm(x, 0.0, 1.0)",
+                rust_expr: "rnorm(i, 0.0, 1.0)",
+                test: TestType::Histogram("-2.0", "2.0"),
+            },
         ],
     },
     Function {
@@ -551,13 +571,13 @@ pub static FUNCTIONS: &[Function] = &[
                 test_name: "test_tan",
                 ref_expr: "x.tan()",
                 rust_expr: "tan(x)",
-                test: TestType::MaxAbs("-0.7", "-0.7", 1.0, 1.0, 237),
+                test: TestType::MaxAbs("-0.7", "0.7", 1.0, 1.0, 237),
             },
             TestSpec {
                 test_name: "test_tan2",
                 ref_expr: "x.tan()",
                 rust_expr: "tan(x)",
-                test: TestType::MaxAbs("-1.1", "-1.1", 2.0, 2.0, 237),
+                test: TestType::MaxAbs("-1.1", "1.1", 2.0, 2.0, 237),
             },
         ],
     },

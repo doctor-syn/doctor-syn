@@ -68,6 +68,13 @@ pub fn one_over_root_two_pi(num_digits: i64) -> BigDecimal {
     sqrt(one() / (two() * pi(num_digits)), num_digits).unwrap()
 }
 
+#[test]
+fn test_bdmath_one_over_root_two_pi() {
+    let c = one_over_root_two_pi(20);
+    use bigdecimal::ToPrimitive;
+    assert_eq!(c.to_f64().unwrap(), 0.3989422804014326);
+}
+
 pub fn sqrt(x: BigDecimal, _num_digits: i64) -> Option<BigDecimal> {
     // TODO: make our own sqrt as this has a fixed num_digits of 100.
     x.sqrt()
@@ -317,6 +324,11 @@ pub fn dnorm(x: BigDecimal, mean: BigDecimal, sd: BigDecimal, num_digits: i64) -
     k1 * exp(-&x * &x * half(), num_digits) / sd
 }
 
+#[test]
+fn test_bdmath_dnorm() {
+    
+}
+
 /// Cumulative normal distribution.
 ///   erfc(x) = 2*pnorm(-sqrt(2)*x)
 ///   erfc(x)/2 = pnorm(-sqrt(2)*x)
@@ -343,8 +355,13 @@ pub fn qnorm(
     num_digits: i64,
 ) -> Option<BigDecimal> {
     // println!("x={}", x);
-    if let Some(logit) = ln(&x / (one() - &x), num_digits) {
-        let mut guess = logit * bigdf(0.6);
+    if let Some(_logit) = ln(&x / (one() - &x), num_digits) {
+        // let mut guess = logit * bigdf(0.6);
+        // let mut guess = logit * bigdf(0.1);
+        // if x.abs() < bigdf(0.01) {
+        //     guess = bigdf(0.0);
+        // }
+        let mut guess = bigdf(0.0);
         loop {
             // println!("guess={}", guess);
             let pnorm = pnorm(guess.clone(), mean.clone(), sd.clone(), num_digits);

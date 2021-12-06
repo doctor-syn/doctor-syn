@@ -5,6 +5,10 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Expr};
 
+/// Generate a set of accurate points within a range and
+/// compare the result with these values. The result should
+/// be accurate to a certain value scaled so that 1.0 is the LSB
+/// of 0.5..1
 fn gen_max_abs(
     t: &TestSpec,
     config: &Config,
@@ -55,6 +59,8 @@ fn gen_max_abs(
     )
 }
 
+/// Generate a histogram for a random function
+/// and check it against the PDF.
 fn gen_histogram(
     t: &TestSpec,
     config: &Config,
@@ -85,13 +91,16 @@ fn gen_histogram(
                 }
             }
             let dx = (#tmax - #tmin) as f64 / (#nbuckets) as f64;
+            let mut max_err : f64 = 0.0;
             for i in 0..#nbuckets {
                 let x = ((i as f64 + 0.5) / #nbuckets as f64) * (#tmax - #tmin) + #tmin;
-                let pdf = h[i] as f64 / (#niter) as f64 / dx;
-                let pdf_ref = #refexpr;
-                println!("{} {} {}", x, pdf, pdf_ref);
+                let pdf_est = h[i] as f64 / ((#niter) as f64 * dx);
+                let pdf_ref = (#refexpr) as f64;
+                println!("{} {} {}", x, pdf_est, pdf_ref);
+                max_err = (pdf_est - pdf_ref).abs();
             }
-            assert!(false);
+            println!("max err = {}", max_err);
+            assert!(max_err < 0.001);
         }
     )
 }
