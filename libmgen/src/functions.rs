@@ -241,7 +241,7 @@ pub static FUNCTIONS: &[Function] = &[
     Function {
         name: "exp2",
         deps: &["fty", "ity", "uty"],
-        num_terms: [16, 24],
+        num_terms: [8, 24],
         gen: Some(crate::log_exp::gen_exp2),
         test_specs: &[
             TestSpec {

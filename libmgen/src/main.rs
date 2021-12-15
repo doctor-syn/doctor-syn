@@ -389,7 +389,12 @@ fn main() {
 
     let text = match config.language() {
         "rust" => doctor_syn::codegen::rust::format_token_stream(tokens),
-        "c" => doctor_syn::codegen::c::to_c(&syn::parse2(tokens).unwrap()),
+        "c" => {
+            let mut options = doctor_syn::codegen::c::Options::default();
+            options.prefix = config.prefix().to_string();
+            options.float_suffix = config.float_suffix().to_string();
+            doctor_syn::codegen::c::to_c(&syn::parse2(tokens).unwrap(), options)
+        }
         "help" => {
             eprintln!("Available languages:");
             eprintln!("rust");

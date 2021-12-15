@@ -53,6 +53,18 @@ impl Config {
         }
     }
 
+    pub fn float_suffix(&self) -> &str {
+        if self.language() == "c" {
+            if self.num_bits() == 32 {
+                "f"
+            } else {
+                ""
+            }
+        } else {
+            ""
+        }
+    }
+
     pub fn get_one(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
             quote::quote!(0x3f800000_u32)
