@@ -16,7 +16,7 @@ pub enum Error {
     CouldNotConvertToExpression(Span),
     CouldNotConvertFromExpression(Span),
     CouldNotParse(String),
-    CouldNotEvaulate(Expression),
+    CouldNotEvaulate(String),
     WrongNumberOfTerms(Span),
 }
 
@@ -43,7 +43,7 @@ impl std::fmt::Display for Error {
                 write!(f, "CouldNotConvertFromExpression {:?}", span)
             }
             CouldNotParse(span) => write!(f, "CouldNotParse {:?}", span),
-            CouldNotEvaulate(span) => write!(f, "CouldNotEvaulate {:?}", span),
+            CouldNotEvaulate(str) => write!(f, "CouldNotEvaulate({})", str),
             WrongNumberOfTerms(span) => write!(f, "WrongNumberOfTerms {:?}", span),
         }
     }

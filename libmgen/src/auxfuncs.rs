@@ -199,7 +199,24 @@ pub fn gen_nextafter(_terms: usize, _config: &Config) -> TokenStream {
 //         }
 //     )
 // }
-pub fn gen_test_function(_terms: usize, _config: &Config) -> TokenStream {
+pub fn gen_test_function(_terms: usize, config: &Config) -> TokenStream {
+    let plot_function = if config.generate_plots() {
+        quote!{
+            fn plot_function<F : Fn(fty) -> fty>(test_name: &str, accurate_values: &[(fty, fty)], f: F) {
+                use std::io::Write;
+                let mut csv = std::fs::File::create(format!("{}.csv", test_name)).unwrap();
+                writeln!(csv, "x, yref, ycalc, eref").unwrap();
+                for &(x , yref) in accurate_values {
+                    let ycalc = f(x);
+                    let eref = (ycalc - yref). abs ();
+                    writeln!(csv, "{}, {}, {}, {}", x, yref, ycalc, eref).unwrap();
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     quote! {
         fn test_function<F : Fn(fty) -> fty>(test_name: &str, accurate_values: &[(fty, fty)], limit: fty, f: F) {
             let mut max_ref_error : fty = 0.0;
@@ -224,5 +241,7 @@ pub fn gen_test_function(_terms: usize, _config: &Config) -> TokenStream {
             assert ! (! max_ref_error . is_nan ());
             assert ! (max_ref_error <= limit);
         }
+
+        #plot_function
     }
 }

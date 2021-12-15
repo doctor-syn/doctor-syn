@@ -27,7 +27,7 @@ fn gen_max_abs(
     let tmin = TokenStream::from_str(min).unwrap();
     let tmax = TokenStream::from_str(max).unwrap();
     for i in 0..n {
-        let xee: Expr = parse_quote!((#i * ((#tmax) - (#tmin)) / (#n) + (#tmin)));
+        let xee: Expr = parse_quote!(((#i * ((#tmax) - (#tmin)) / (#n) + (#tmin))));
         let xeee: Expression = xee.clone().into();
         let x: Expr = xeee.eval(num_digits).unwrap().into();
         let mut vars = VariableList::new();
@@ -35,7 +35,7 @@ fn gen_max_abs(
         let subst = refe.subst(vars).unwrap();
         if let Ok(ye) = subst.eval(num_digits) {
             let ye: Expr = ye.into();
-            let row = quote!((#x as fty,#ye as fty),);
+            let row = quote!((#x as fty, #ye as fty),);
             accurate_values.extend(row.into_iter());
         } else {
             panic!("subst failure building test {}", t.test_name);
@@ -50,11 +50,21 @@ fn gen_max_abs(
     } else {
         bits64 * 2.0_f64.powi(-53)
     };
+
+    let plot_function = if config.generate_plots() {
+        quote!{
+            plot_function(#test_name_str, accurate_values, |x| #expr);
+        }
+    } else {
+        quote! {}
+    };
+
     quote!(
         #[test]
         pub fn #test_name() {
             let accurate_values : &[(fty, fty)] = &[#accurate_values];
             test_function(#test_name_str, accurate_values, #accuracy as fty, |x| #expr);
+            #plot_function
         }
     )
 }

@@ -50,7 +50,7 @@ use structopt::StructOpt;
     name = "libmgen",
     about = "Generate maths and stats functions in many languages."
 )]
-struct Opt {
+pub struct Opt {
     /// Activate debug mode
     #[structopt(short, long)]
     debug: bool,
@@ -58,6 +58,10 @@ struct Opt {
     /// Generate tests.
     #[structopt(long)]
     generate_tests: bool,
+
+    /// Generate error plots from tests.
+    #[structopt(long)]
+    generate_plots: bool,
 
     /// Output file, stdout if not present
     #[structopt(short, long, parse(from_os_str))]
@@ -359,13 +363,7 @@ fn main() {
         .collect::<Vec<_>>();
     let funcs = functions::get_functions_and_deps(&names);
 
-    let config: Config = Config::new(
-        opt.num_bits,
-        &opt.number_type,
-        &opt.language,
-        opt.generate_tests,
-        &opt.function_prefix,
-    );
+    let config: Config = Config::new(opt);
 
     let mut tokens = TokenStream::new();
 
@@ -380,7 +378,7 @@ fn main() {
         }
     }
 
-    if opt.generate_tests {
+    if config.generate_tests() {
         tokens.extend(crate::auxfuncs::gen_test_function(0, &config));
         for f in funcs {
             for t in f.test_specs {
@@ -389,7 +387,7 @@ fn main() {
         }
     }
 
-    let text = match opt.language.as_str() {
+    let text = match config.language() {
         "rust" => doctor_syn::codegen::rust::format_token_stream(tokens),
         "c" => doctor_syn::codegen::c::to_c(&syn::parse2(tokens).unwrap()),
         "help" => {
@@ -399,12 +397,12 @@ fn main() {
             return;
         }
         _ => {
-            eprintln!("invalid language {} use \"help\" to list valid options.", opt.language);
+            eprintln!("invalid language {} use \"help\" to list valid options.", config.language());
             return;
         }
     };
 
-    if let Some(path) = &opt.output {
+    if let Some(path) = &config.output() {
         std::fs::write(path, text.as_bytes()).unwrap();
     } else {
         std::io::stdout().write_all(text.as_bytes()).unwrap();

@@ -1,34 +1,24 @@
+use std::path::PathBuf;
+
 pub struct Config {
-    num_bits: usize,
-    number_type: String,
-    language: String,
-    generate_tests: bool,
-    prefix: String,
+    options: crate::Opt,
 }
 
 impl Config {
     pub fn new(
-        num_bits: usize,
-        number_type: &str,
-        language: &str,
-        generate_tests: bool,
-        prefix: &str,
+        options: crate::Opt,
     ) -> Self {
         Self {
-            num_bits,
-            number_type: number_type.into(),
-            language: language.into(),
-            generate_tests,
-            prefix: prefix.into(),
+            options,
         }
     }
 
     pub fn num_bits(&self) -> usize {
-        self.num_bits
+        self.options.num_bits
     }
 
     pub fn num_digits(&self) -> i64 {
-        if self.num_bits == 32 {
+        if self.num_bits() == 32 {
             20
         } else {
             40
@@ -36,19 +26,31 @@ impl Config {
     }
 
     pub fn number_type(&self) -> &str {
-        self.number_type.as_str()
+        self.options.number_type.as_str()
     }
 
     pub fn language(&self) -> &str {
-        self.language.as_str()
+        self.options.language.as_str()
     }
 
     pub fn generate_tests(&self) -> bool {
-        self.generate_tests
+        self.options.generate_tests
+    }
+
+    pub fn generate_plots(&self) -> bool {
+        self.options.generate_plots
     }
 
     pub fn prefix(&self) -> &str {
-        self.prefix.as_str()
+        if self.language() == "c" {
+            if self.num_bits() == 32 {
+                "ds32_"
+            } else {
+                "ds64_"
+            }
+        } else {
+            ""
+        }
     }
 
     pub fn get_one(&self) -> proc_macro2::TokenStream {
@@ -81,5 +83,9 @@ impl Config {
         } else {
             quote::quote!(1023)
         }
+    }
+
+    pub fn output(&self) -> Option<&std::path::PathBuf> {
+        self.options.output.as_ref()
     }
 }

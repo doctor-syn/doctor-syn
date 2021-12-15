@@ -38,16 +38,10 @@ pub fn gen_rnorm(num_terms: usize, config: &Config) -> TokenStream {
 
 pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
     // Note this function is very similar to tan and logit.
-    // let xmin = -0.499999;
-    // let xmax = 0.499999;
-    let xmin = -0.49;
-    let xmax = 0.49;
-    // 0.514 = 19810.6110677220034168628191502000723641221657
-    // 0.5141 = 1594.1069822877777974169688278883641997314389
-    // 0.51411 = - 227.7383309778894649281744227582699236238237
-    // 0.514109 = - 45.5522049763225547812918940889634997457648
+    let xmin = -0.4999;
+    let xmax = 0.4999;
 
-    let approx = expr!((x + 0.5).qnorm(0, 1) * (x * x - 0.5 * 0.5) * (x * x - 0.5141085 * 0.5141085))
+    let approx = expr!((x + 0.5).qnorm(0, 1) * (x * x - 0.5 * 0.5))
         .approx(
             num_terms,
             xmin,
@@ -66,10 +60,9 @@ pub fn gen_qnorm(num_terms: usize, config: &Config) -> TokenStream {
             // Range reduction
             let scaled : fty = arg - 0.5;
             let x = scaled;
-            const POLE : f64 = 0.5141085;
 
             // Pole elimination
-            let recip : fty = sigma / ((x * x - 0.5 * 0.5) * (x * x - POLE * POLE));
+            let recip : fty = sigma / (x * x - 0.5 * 0.5);
 
             // Polynomial approximation
             let y : fty = #approx ;

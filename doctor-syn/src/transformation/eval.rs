@@ -19,7 +19,7 @@ pub struct Eval {
 }
 
 fn eval_err(e: Expr) -> Error {
-    Error::CouldNotEvaulate(Expression::from(e))
+    Error::CouldNotEvaulate(Expression::from(e).to_string())
 }
 
 impl Visitor for Eval {
@@ -43,7 +43,7 @@ impl Visitor for Eval {
             .map(|a| a.try_into())
             .collect::<Result<Vec<_>>>()?;
 
-        let errfn = || Error::CouldNotEvaulate(Expression::from(Expr::from(expr.clone())));
+        let errfn = || Error::CouldNotEvaulate(Expression::from(Expr::from(expr.clone())).to_string());
         let arg0 = || args[0].clone();
         let arg1 = || args[1].clone();
         // let mkexpr = |e : BigDecimal| Result::Ok(Expr::from(Expression::from(e)));
