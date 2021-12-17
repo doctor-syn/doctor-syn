@@ -1545,7 +1545,8 @@ fn test() {
         }
     };
 
-    println!("res\n{}", to_c(&code));
+    let options = Options::default();
+    println!("res\n{}", to_c(&code, options));
 }
 
 
