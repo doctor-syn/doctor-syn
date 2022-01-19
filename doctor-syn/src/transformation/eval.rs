@@ -148,6 +148,14 @@ impl Visitor for Eval {
             )
             .into()),
 
+            ("ieee", x, 1) => {
+                Ok(Expression::from(to_ieee(x, arg0(), args(self.num_digits)).into())
+            }
+
+            ("ieee_remainder", x, 1) => {
+                Ok(Expression::from(to_ieee(x, arg0(), args(self.num_digits)).into())
+            }
+
             // ("atan2", x, 1) => Ok(x
             //     .atan2(arg0().try_into()?)
             //     .try_into()?
