@@ -14,8 +14,8 @@ cp ../target/release/libmgen $TEMPDIR/test_libmgen
 cd $TEMPDIR/test_libmgen
 mkdir tests
 # ./libmgen --num-bits 32 -f exp -o tests/exp32.rs --language "rust"
-./libmgen --num-bits 32 -f exp -o tests/exp32.c --language "c"
-# ./libmgen --generate-tests --num-bits 64 -f trig -o tests/trig64.rs
+# ./libmgen --num-bits 32 -f exp -o tests/exp32.c --language "c"
+./libmgen --generate-tests --num-bits 64 -f sin -o tests/sin64.rs
 # ./libmgen --generate-tests --num-bits 32 -f trig -o tests/trig32.rs
 # ./libmgen --generate-tests --num-bits 64 -f logexp -o tests/logexp64.rs
 # ./libmgen --generate-tests --num-bits 32 -f logexp -o tests/logexp32.rs

@@ -218,14 +218,14 @@ pub fn gen_test_function(_terms: usize, config: &Config) -> TokenStream {
     };
 
     quote! {
-        fn test_function<F : Fn(fty) -> fty>(test_name: &str, accurate_values: &[(fty, fty)], limit: fty, f: F) {
+        fn test_function<F : Fn(fty) -> fty>(test_name: &str, accurate_values: &[(fty, fty, fty)], limit: fty, f: F) {
             let mut max_ref_error : fty = 0.0;
             let mut bad_ycalc : fty = 0.0;
             let mut bad_yref : fty = 0.0;
             let mut bad_x : fty = 0.0;
-            for &(x , yref) in accurate_values {
+            for &(x , yref, yerr) in accurate_values {
                 let ycalc = f(x);
-                let eref = (ycalc - yref). abs ();
+                let eref = (ycalc - yref - yerr). abs ();
                 if eref > max_ref_error {
                     max_ref_error = eref;
                     bad_ycalc = ycalc;
@@ -234,10 +234,13 @@ pub fn gen_test_function(_terms: usize, config: &Config) -> TokenStream {
                 }
             }
             println!("{}:", test_name);
-            println!("max_ref_error={:25.20}", max_ref_error);
-            println!("x    ={:016x} {:25.20}", bad_x.to_bits(), bad_x);
-            println!("ycalc={:016x} {:25.20}", bad_ycalc.to_bits(), bad_ycalc);
-            println!("yref ={:016x} {:25.20}", bad_yref.to_bits(), bad_yref);
+            println!("max_ref_error          = {:25.20}", max_ref_error);
+            println!("max_ref_error x 2^53   = {:7.2}", max_ref_error * 2.0_f64.powi(53));
+            println!("limit         x 2^53   = {:7.2}", limit * 2.0_f64.powi(53));
+            // println!("max_ref_error x 2^23   = {:25.2}", max_ref_error * 2.0_f64.powi(23));
+            println!("x    ={:016x}            {:25.20}", bad_x.to_bits(), bad_x);
+            println!("ycalc={:016x}            {:25.20}", bad_ycalc.to_bits(), bad_ycalc);
+            println!("yref ={:016x}            {:25.20}", bad_yref.to_bits(), bad_yref);
             assert ! (! max_ref_error . is_nan ());
             assert ! (max_ref_error <= limit);
         }

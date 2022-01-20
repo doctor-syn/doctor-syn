@@ -1,8 +1,10 @@
 //! BigDecimal math support
 //!
 
-pub use bigdecimal::{BigDecimal, FromPrimitive, One, Signed, Zero};
+pub use bigdecimal::{BigDecimal, FromPrimitive, One, Signed, ToPrimitive, Zero};
 pub use num_bigint::BigInt;
+
+use crate::error::{Error, Result};
 
 // BigDecimal's round panics on large numbers.
 // example:
@@ -86,6 +88,10 @@ pub fn bigd(i: i32) -> BigDecimal {
 
 pub fn bigdf(i: f64) -> BigDecimal {
     BigDecimal::from_f64(i).unwrap()
+}
+
+pub fn bigdf32(i: f32) -> BigDecimal {
+    BigDecimal::from_f32(i).unwrap()
 }
 
 pub fn zero() -> BigDecimal {
@@ -324,10 +330,21 @@ pub fn dnorm(x: BigDecimal, mean: BigDecimal, sd: BigDecimal, num_digits: i64) -
     k1 * exp(-&x * &x * half(), num_digits) / sd
 }
 
-#[test]
-fn test_bdmath_dnorm() {
-    
+/// Round to f32 or f64.
+pub fn round_ieee(x: BigDecimal, bits: BigDecimal, _num_digits: i64) -> Result<BigDecimal> {
+    match bits.to_i32() {
+        Some(32) => {
+            Ok(BigDecimal::from_f32(x.to_f32().ok_or(Error::Overflow)?).ok_or(Error::Overflow)?)
+        }
+        Some(64) => {
+            Ok(BigDecimal::from_f64(x.to_f64().ok_or(Error::Overflow)?).ok_or(Error::Overflow)?)
+        }
+        _ => Err(Error::Expected32or64bits),
+    }
 }
+
+#[test]
+fn test_bdmath_dnorm() {}
 
 /// Cumulative normal distribution.
 ///   erfc(x) = 2*pnorm(-sqrt(2)*x)
@@ -559,6 +576,9 @@ fn test_functions() {
 #[test]
 fn test_stats_functions() {
     use crate::expr;
+
+    assert_eq!(round_ieee(pi(40), bigd(64), 40).unwrap(), bigdf(std::f64::consts::PI));
+    assert_eq!(round_ieee(pi(40), bigd(32), 40).unwrap(), bigdf32(std::f32::consts::PI));
 
     // assert_eq!(erf(one(), 20), bigdf(0.8427008));
     // assert_eq!(erf(half(), 20), bigdf(0.52));

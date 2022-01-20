@@ -18,6 +18,8 @@ pub enum Error {
     CouldNotParse(String),
     CouldNotEvaulate(String),
     WrongNumberOfTerms(Span),
+    Expected32or64bits,
+    Overflow,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -45,6 +47,8 @@ impl std::fmt::Display for Error {
             CouldNotParse(span) => write!(f, "CouldNotParse {:?}", span),
             CouldNotEvaulate(str) => write!(f, "CouldNotEvaulate({})", str),
             WrongNumberOfTerms(span) => write!(f, "WrongNumberOfTerms {:?}", span),
+            Overflow => write!(f, "Overflow"),
+            Expected32or64bits => write!(f, "Expected 32 or 64 bits"),
         }
     }
 }

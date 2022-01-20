@@ -26,16 +26,31 @@ fn gen_max_abs(
     let mut accurate_values = TokenStream::new();
     let tmin = TokenStream::from_str(min).unwrap();
     let tmax = TokenStream::from_str(max).unwrap();
+    let bits = config.num_bits();
     for i in 0..n {
-        let xee: Expr = parse_quote!(((#i * ((#tmax) - (#tmin)) / (#n) + (#tmin))));
+        // let xee1: Expr = parse_quote!(((#i * ((#tmax) - (#tmin)) / (#n) + (#tmin))));
+        // let xeee1: Expression = xee1.clone().into();
+        // let x1: Expr = xeee1.eval(num_digits).unwrap().into();
+        let xee: Expr = parse_quote!(((#i * ((#tmax) - (#tmin)) / (#n) + (#tmin))).round_ieee(#bits));
         let xeee: Expression = xee.clone().into();
         let x: Expr = xeee.eval(num_digits).unwrap().into();
         let mut vars = VariableList::new();
         vars.add_var(variable.clone(), xee.into());
         let subst = refe.subst(vars).unwrap();
         if let Ok(ye) = subst.eval(num_digits) {
-            let ye: Expr = ye.into();
-            let row = quote!((#x as fty, #ye as fty),);
+            let yexpr: Expr = ye.into();
+
+            let yround: Expr = parse_quote!(#yexpr.round_ieee(#bits));
+            let yrounde: Expression = yround.clone().into();
+            let y: Expr = yrounde.eval(num_digits).unwrap().into();
+
+            let yerr: Expr = parse_quote!(#yexpr - #yexpr.round_ieee(#bits));
+            let yerre: Expression = yerr.clone().into();
+            let ye: Expr = yerre.eval(num_digits).unwrap().into();
+
+            // println!("{} {}", y.to_token_stream(), ye.to_token_stream());
+
+            let row = quote!((#x, #y, #ye),);
             accurate_values.extend(row.into_iter());
         } else {
             panic!("subst failure building test {}", t.test_name);
@@ -62,7 +77,7 @@ fn gen_max_abs(
     quote!(
         #[test]
         pub fn #test_name() {
-            let accurate_values : &[(fty, fty)] = &[#accurate_values];
+            let accurate_values : &[(fty, fty, fty)] = &[#accurate_values];
             test_function(#test_name_str, accurate_values, #accuracy as fty, |x| #expr);
             #plot_function
         }
