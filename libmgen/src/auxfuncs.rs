@@ -202,13 +202,13 @@ pub fn gen_nextafter(_terms: usize, _config: &Config) -> TokenStream {
 pub fn gen_test_function(_terms: usize, config: &Config) -> TokenStream {
     let plot_function = if config.generate_plots() {
         quote!{
-            fn plot_function<F : Fn(fty) -> fty>(test_name: &str, accurate_values: &[(fty, fty)], f: F) {
+            fn plot_function<F : Fn(fty) -> fty>(test_name: &str, accurate_values: &[(fty, fty, fty)], f: F) {
                 use std::io::Write;
                 let mut csv = std::fs::File::create(format!("{}.csv", test_name)).unwrap();
                 writeln!(csv, "x, yref, ycalc, eref").unwrap();
-                for &(x , yref) in accurate_values {
+                for &(x , yref, yerr) in accurate_values {
                     let ycalc = f(x);
-                    let eref = (ycalc - yref). abs ();
+                    let eref = (ycalc - yref - yerr). abs ();
                     writeln!(csv, "{}, {}, {}, {}", x, yref, ycalc, eref).unwrap();
                 }
             }
@@ -235,8 +235,8 @@ pub fn gen_test_function(_terms: usize, config: &Config) -> TokenStream {
             }
             println!("{}:", test_name);
             println!("max_ref_error          = {:25.20}", max_ref_error);
-            println!("max_ref_error x 2^53   = {:7.2}", max_ref_error * 2.0_f64.powi(53));
-            println!("limit         x 2^53   = {:7.2}", limit * 2.0_f64.powi(53));
+            println!("max_ref_error x 2^53   = {:7.2}", max_ref_error * (2.0 as fty).powi(53));
+            println!("limit         x 2^53   = {:7.2}", limit * (2.0 as fty).powi(53));
             // println!("max_ref_error x 2^23   = {:25.2}", max_ref_error * 2.0_f64.powi(23));
             println!("x    ={:016x}            {:25.20}", bad_x.to_bits(), bad_x);
             println!("ycalc={:016x}            {:25.20}", bad_ycalc.to_bits(), bad_ycalc);

@@ -22,18 +22,24 @@ pub struct Function {
     pub test_specs: &'static [TestSpec],
 }
 
-pub fn get_functions_and_deps(names: &Vec<String>) -> Vec<&Function> {
+pub fn get_functions_and_deps<'a>(names: &'a Vec<String>, exclude: &'a Vec<String>) -> Vec<&'a Function> {
     let mut res: Vec<&Function> = Vec::new();
     let mut stack = names.clone();
     while !stack.is_empty() {
         let name = stack.pop().unwrap();
-        if let Some(f) = FUNCTIONS.iter().find(|f| f.name == name) {
+        if exclude.contains(&name) {
+            println!("ignoring {}", name);
+            continue;
+        }
+        if let Some(f) = FUNCTIONS.iter()
+            .find(|f| f.name == name) {
             if !res.iter().any(|f| f.name == name) {
                 // New function, push it.
                 res.push(f);
 
                 // Add its dependencies.
-                stack.extend(f.deps.iter().map(|d| d.to_string()));
+                stack.extend(f.deps.iter()
+                    .map(|d| d.to_string()));
             }
         } else {
             eprintln!("function {} not found", name);

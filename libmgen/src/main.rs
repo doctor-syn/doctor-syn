@@ -74,6 +74,12 @@ pub struct Opt {
     #[structopt(short, long, default_value = "")]
     functions: String,
 
+    /// List of functions and groups of functions to not generate.
+    ///
+    /// Examples: select, PI
+    #[structopt(short = "x", long, default_value = "")]
+    exclude: String,
+
     /// Number of floating point bits: 32 or 64.
     #[structopt(long, default_value = "64")]
     num_bits: usize,
@@ -361,7 +367,12 @@ fn main() {
         .split(',')
         .map(str::to_string)
         .collect::<Vec<_>>();
-    let funcs = functions::get_functions_and_deps(&names);
+    let exclude = opt
+        .exclude
+        .split(',')
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    let funcs = functions::get_functions_and_deps(&names, &exclude);
 
     let config: Config = Config::new(opt);
 
