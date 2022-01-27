@@ -1,10 +1,9 @@
 #!/bin/bash
 set -e -o pipefail
 
-DEST=$1
-
-mkdir -p core_simd
+# Note this is a work in progress.
 
 clear
 cargo build --release
-../target/release/libmgen --num-bits 32 -f trig -o core_simd/trig32.rs
+../target/release/libmgen --num-bits 32 --language portable-simd -f trig -x select -o ~/atomicincrement/stdsimd/crates/std_float/src/libm32.rs
+rustfmt ~/atomicincrement/stdsimd/crates/std_float/src/libm32.rs

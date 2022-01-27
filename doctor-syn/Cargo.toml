@@ -13,7 +13,7 @@ description = "Computer algebra system for Rust expressions."
 [lib]
 
 [dependencies]
-syn = { version = "1.0", features = ["full", "extra-traits", "visit"] }
+syn = { version = "1.0", features = ["full", "extra-traits", "visit", "visit-mut"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 num-traits = "0.2"

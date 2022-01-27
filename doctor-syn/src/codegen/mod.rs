@@ -4,3 +4,4 @@
 
 pub mod c;
 pub mod rust;
+pub mod portable_simd;

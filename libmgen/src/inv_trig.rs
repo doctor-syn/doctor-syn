@@ -27,14 +27,14 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
     // TODO: calculate the recipocal without a divide.
     quote!(
         pub fn atan2(y: fty, x: fty) -> fty {
-            let offset180 : fty = select(y < 0.0, -PI, PI );
-            let x1 : fty = select(x < 0.0, -x, x );
-            let y1 : fty = select(x < 0.0, -y, y );
-            let offset1 : fty = select(x < 0.0, offset180, 0.0 );
-            let offset90 : fty = select(y < 0.0, -PI/2.0, PI/2.0 );
-            let x2 : fty = select(y1.abs() > x1, y1, x1 );
-            let y2 : fty = select(y1.abs() > x1, -x1, y1 );
-            let offset2 : fty = select(y1.abs() > x1, offset1 + offset90, offset1 );
+            let offset180 : fty = if y < 0.0 { -PI } else { PI };
+            let x1 : fty = if x < 0.0 { -x } else { x };
+            let y1 : fty = if x < 0.0 { -y } else { y };
+            let offset1 : fty = if x < 0.0 { offset180 } else { 0.0 };
+            let offset90 : fty = if y < 0.0 { -PI_BY_2 } else { PI_BY_2 };
+            let x2 : fty = if y1.abs() > x1 { y1 } else { x1 };
+            let y2 : fty = if y1.abs() > x1 { -x1 } else { y1 };
+            let offset2 : fty = if y1.abs() > x1 { offset1 + offset90 } else { offset1 };
             let x3 : fty = y2 / x2;
             let y3 : fty = #approx ;
             y3 + offset2
@@ -61,12 +61,12 @@ pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn asin(arg: fty) -> fty {
-            const LIM : fty = #lim;
-            let c : fty = select(arg < 0.0, -PI/2.0, PI/2.0 );
-            let s : fty = select(arg < 0.0 , -1.0, 1.0  );
-            let x : fty = select(arg * arg < LIM * LIM, arg, (1.0-arg*arg).sqrt() );
+            let LIM : fty = #lim;
+            let c : fty = if arg < 0.0 { -PI_BY_2 } else { PI_BY_2 };
+            let s : fty = if arg < 0.0 { -1.0 } else { 1.0  };
+            let x : fty = if arg * arg < LIM * LIM { arg } else { (1.0-arg*arg).sqrt() };
             let y : fty = #approx ;
-            select(arg*arg < LIM * LIM, y, c - y * s)
+            if arg*arg < LIM * LIM { y } else { c - y * s }
         }
     )
 }
@@ -90,12 +90,12 @@ pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn acos(arg: fty) -> fty {
-            const LIM : fty = #lim;
-            let c : fty = select(arg < 0.0, PI, 0.0 );
-            let s : fty = select(arg < 0.0, 1.0, -1.0  );
-            let x : fty = select(arg * arg < LIM * LIM, arg, (1.0-arg*arg).sqrt() );
+            let LIM : fty = #lim;
+            let c : fty = if arg < 0.0 { PI } else { 0.0 };
+            let s : fty = if arg < 0.0 { 1.0 } else { -1.0  };
+            let x : fty = if arg * arg < LIM * LIM { arg } else { (1.0-arg*arg).sqrt() };
             let y : fty = #approx ;
-            select(arg*arg < LIM * LIM, PI/2.0 - y, c - y * s )
+            if arg*arg < LIM * LIM { PI_BY_2 - y } else { c - y * s }
         }
     )
 }
@@ -119,13 +119,11 @@ pub fn gen_atan(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn atan(arg: fty) -> fty {
-            const LIM : fty = #lim;
-
-            let c : fty = select(arg < 0.0, -PI/2.0, PI/2.0);
-            let small : bool = arg.abs() < LIM;
-            let x : fty = select(small, arg, arg.recip());
+            let LIM : fty = #lim;
+            let c : fty = if arg < 0.0 { -PI_BY_2 } else { PI_BY_2 };
+            let x : fty = if arg.abs() < LIM { arg } else { arg.recip() };
             let y : fty = #approx ;
-            select(small, y, c - y)
+            if arg.abs() < LIM { y } else { c - y }
         }
     )
 }

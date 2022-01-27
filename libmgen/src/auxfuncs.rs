@@ -12,6 +12,14 @@ pub fn gen_PI(_terms: usize, config: &Config) -> TokenStream {
 }
 
 #[allow(non_snake_case)]
+pub fn gen_PI_BY_2(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!(PI/2).eval(config.num_digits()).unwrap().into();
+    quote!(
+        const PI_BY_2: fty = #value;
+    )
+}
+
+#[allow(non_snake_case)]
 pub fn gen_LOG2_E(_terms: usize, config: &Config) -> TokenStream {
     let value: syn::Expr = expr!(1.exp().log(2)).eval(config.num_digits()).unwrap().into();
     quote!(
@@ -33,6 +41,15 @@ pub fn gen_RECIP_LOG2_10(_terms: usize, config: &Config) -> TokenStream {
     quote!(
         const RECIP_LOG2_10: fty = #value;
     )
+}
+
+#[allow(non_snake_case)]
+pub fn gen_RECIP_PI(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!(1 / PI)
+        .eval(config.num_digits())
+        .unwrap()
+        .into();
+    quote!( const RECIP_PI : fty = #value; )
 }
 
 #[allow(non_snake_case)]

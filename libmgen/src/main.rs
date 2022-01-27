@@ -26,6 +26,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 
 use std::io::Write;
 
@@ -406,14 +407,27 @@ fn main() {
             options.float_suffix = config.float_suffix().to_string();
             doctor_syn::codegen::c::to_c(&syn::parse2(tokens).unwrap(), options)
         }
+        "portable-simd" => {
+            let mut options = doctor_syn::codegen::portable_simd::Options::default();
+            options.num_bits = config.num_bits();
+            let file : syn::File = syn::parse2(tokens).unwrap();
+            let new_file = doctor_syn::codegen::portable_simd::to_simd(&file, options);
+            let mut tokens = TokenStream::new();
+            new_file.to_tokens(&mut tokens);
+            doctor_syn::codegen::rust::format_token_stream(tokens)
+        }
         "help" => {
             eprintln!("Available languages:");
-            eprintln!("rust");
-            eprintln!("c");
+            eprintln!("    rust");
+            eprintln!("    c");
+            eprintln!("    portable-simd");
             return;
         }
         _ => {
-            eprintln!("invalid language {} use \"help\" to list valid options.", config.language());
+            eprintln!(
+                "invalid language {} use \"help\" to list valid options.",
+                config.language()
+            );
             return;
         }
     };

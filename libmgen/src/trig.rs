@@ -41,7 +41,7 @@ pub fn _gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn sin(arg: fty) -> fty {
-            let scaled = arg * (1.0 / PI);
+            let scaled = arg * RECIP_PI;
             let xh = x + 0.5;
             let xr = x.round();
             let xhr = xh.round();
@@ -95,7 +95,7 @@ pub fn _gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn cos(arg: fty) -> fty {
-            let x = arg * (1.0 / PI);
+            let x = arg * RECIP_PI;
             let xh = x + 0.5;
             let xr = x.round();
             let xhr = xh.round();
@@ -198,7 +198,7 @@ pub fn gen_tan(num_terms: usize, config: &Config) -> TokenStream {
     // TODO: calculate the recipocal without a divide.
     quote!(
         pub fn tan(arg: fty) -> fty {
-            let scaled : fty = arg * (1.0 / PI);
+            let scaled : fty = arg * RECIP_PI;
             let x : fty = scaled - scaled.round();
             let recip : fty = 1.0 / (x*x - 0.25);
             let y : fty = #approx ;
