@@ -4,7 +4,7 @@
 use quote::format_ident;
 use quote::ToTokens;
 use syn::punctuated::Punctuated;
-use syn::visit_mut::{visit_expr_mut, visit_ident_mut, VisitMut};
+use syn::visit_mut::{visit_expr_mut, visit_ident_mut, VisitMut, visit_signature_mut};
 use syn::{parse_quote, Expr, Ident, Item, ItemConst, Token, Visibility};
 
 pub struct Options {
@@ -58,7 +58,7 @@ fn deblock2(expr: &Expr) -> &Expr {
 impl VisitMut for SimdVisitor {
     fn visit_ident_mut(&mut self, i: &mut Ident) {
         match i {
-            i if i == "arg" => *i = Ident::new("self", i.span()),
+            // i if i == "arg" => *i = Ident::new("self", i.span()),
             i if i == "fty" => *i = Ident::new("Self", i.span()),
             _ => {
                 self.idents_used.push(i.clone());
@@ -178,8 +178,19 @@ pub fn to_simd(file: &syn::File, options: Options) -> syn::File {
             }
             Fn(item) => {
                 let mut new_sig = item.sig.clone();
+                visit_signature_mut(&mut cv, &mut new_sig);
+                let first_arg = item.sig.inputs.iter().next().unwrap();
+                let pat = &**match first_arg {
+                    syn::FnArg::Typed(syn::PatType{pat, ..}) => pat,
+                    _ => unreachable!("expected typed arg"),
+                };
+                let ident = match pat {
+                    syn::Pat::Ident(id) => &id.ident,
+                    _ => unreachable!("expected identifier"),
+                };
                 cv.visit_signature_mut(&mut new_sig);
                 let mut new_block = (*item.block).clone();
+                new_block.stmts.insert(0, parse_quote! {let #ident = self;});
                 cv.visit_block_mut(&mut new_block);
                 for c in cv.consts.clone() {
                     let ident = &c.ident;

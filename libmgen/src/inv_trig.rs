@@ -37,7 +37,6 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
             let offset2 : fty = if y1.abs() > x1 { offset1 + offset90 } else { offset1 };
             let x3 : fty = y2 / x2;
             let y3 : fty = #approx ;
-            println!("x3={:20.8} y3={:20.8}", x3, y3);
             y3 + offset2
         }
     )
