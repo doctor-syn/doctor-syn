@@ -157,7 +157,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "sqrt_approx",
-        deps: &["fty"],
+        deps: &["fty", "uty"],
         num_terms: [0, 0],
         gen: Some(crate::auxfuncs::gen_sqrt_approx),
         test_specs: &[],
@@ -224,18 +224,18 @@ pub static FUNCTIONS: &[Function] = &[
         test_specs: &[],
     },
     Function {
-        name: "atan2",
-        deps: &["fty"],
-        num_terms: [16, 24],
-        gen: Some(crate::inv_trig::gen_atan2),
-        test_specs: &[],
-    },
-    Function {
         name: "asin",
-        deps: &["fty", "PI_BY_2"],
-        num_terms: [16, 24],
+        deps: &["fty", "PI_BY_2", "atan2"],
+        num_terms: [8, 24],
         gen: Some(crate::inv_trig::gen_asin),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_asin",
+                ref_expr: "x.asin()",
+                rust_expr: "asin(x)",
+                test: TestType::MaxAbs("-0.5", "0.5", 9.0, 9.0, 1024),
+            },
+        ],
     },
     Function {
         name: "acos",
@@ -253,7 +253,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "atan2",
-        deps: &["fty"],
+        deps: &["fty", "PI", "PI_BY_2"],
         num_terms: [16, 24],
         gen: Some(crate::inv_trig::gen_atan2),
         test_specs: &[],
@@ -622,7 +622,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "invtrig",
-        deps: &["fty", "asin", "acos", "atan"],
+        deps: &["fty", "asin", "acos", "atan", "atan2"],
         num_terms: [16, 24],
         gen: None,
         test_specs: &[],

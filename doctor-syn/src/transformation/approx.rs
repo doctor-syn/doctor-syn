@@ -93,8 +93,7 @@ pub fn approx(
         vars.add_var(variable.clone(), mkexpr(&x).into());
         let subst = expr.subst(vars)?;
         let y: BigDecimal = subst.eval(num_digits)?.try_into()?;
-        // println!("{} {}", y, subst);
-        // println!("x={:16} y={:16} s={:16}", x, y, x.sin());
+        println!("x={:16} y={:16} {}", x, y, subst);
         xvalues.push(x);
         yvalues.push(y);
     }

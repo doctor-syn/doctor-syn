@@ -37,39 +37,89 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
             let offset2 : fty = if y1.abs() > x1 { offset1 + offset90 } else { offset1 };
             let x3 : fty = y2 / x2;
             let y3 : fty = #approx ;
+            println!("x3={:20.8} y3={:20.8}", x3, y3);
             y3 + offset2
         }
     )
 }
 
+// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
+//     let lim = quote!(0.70710678118654752440);
+
+//     let approx = expr!(x.asin())
+//         .approx(
+//             num_terms,
+//             -0.70710678118654752440,
+//             0.70710678118654752440,
+//             name!(x),
+//             Parity::Odd,
+//             config.num_digits(),
+//         )
+//         .unwrap()
+//         .use_number_type(config.number_type(), config.num_bits())
+//         .unwrap()
+//         .into_inner();
+
+//     quote!(
+//         pub fn asin(arg: fty) -> fty {
+//             let LIM : fty = #lim;
+//             let c : fty = if arg < 0.0 { -PI_BY_2 } else { PI_BY_2 };
+//             let s : fty = if arg < 0.0 { -1.0 } else { 1.0  };
+//             let x : fty = if arg * arg < LIM * LIM { arg } else { (1.0-arg*arg).sqrt() };
+//             let y : fty = #approx ;
+//             if arg*arg < LIM * LIM { y } else { c - y * s }
+//         }
+//     )
+// }
+
+// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
+
+//     let approx = expr!((1-x*x).asin())
+//         .approx(
+//             num_terms,
+//             0.,
+//             1.,
+//             name!(x),
+//             Parity::Neither,
+//             config.num_digits(),
+//         )
+//         .unwrap()
+//         .use_number_type(config.number_type(), config.num_bits())
+//         .unwrap()
+//         .into_inner();
+
+//     quote!(
+//         pub fn asin(arg: fty) -> fty {
+//             let x = (1.0 - arg.abs()).sqrt();
+//             let y = #approx;
+//             // let val = y.copysign(arg);
+//             // println!("arg={} z={} x={} val={} asin={}", arg, z, x, val, arg.asin());
+//             y.copysign(arg)
+//         }
+//     )
+// }
+
 pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
-    let lim = quote!(0.9);
-
-    let approx = expr!(x.asin())
-        .approx(
-            num_terms,
-            -0.9,
-            0.9,
-            name!(x),
-            Parity::Odd,
-            config.num_digits(),
-        )
-        .unwrap()
-        .use_number_type(config.number_type(), config.num_bits())
-        .unwrap()
-        .into_inner();
-
     quote!(
         pub fn asin(arg: fty) -> fty {
-            let LIM : fty = #lim;
-            let c : fty = if arg < 0.0 { -PI_BY_2 } else { PI_BY_2 };
-            let s : fty = if arg < 0.0 { -1.0 } else { 1.0  };
-            let x : fty = if arg * arg < LIM * LIM { arg } else { (1.0-arg*arg).sqrt() };
-            let y : fty = #approx ;
-            if arg*arg < LIM * LIM { y } else { c - y * s }
+            atan2(arg, (1.0 - arg*arg).sqrt())
         }
     )
 }
+
+// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
+//     quote!(
+//         pub fn asin(arg: fty) -> fty {
+//             #[doc("guess")]
+//             let x = ((1.0 - (1.0 - arg.abs()).sqrt()) * PI_BY_2).copysign(arg);
+//             #[doc("newton-raphson")]
+//             let x = x - (x.sin() - arg)/x.cos();
+//             let x = x - (x.sin() - arg)/x.cos();
+//             let x = x - (x.sin() - arg)/x.cos();
+//             x
+//         }
+//     )
+// }
 
 pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
     let lim = quote!(0.9);

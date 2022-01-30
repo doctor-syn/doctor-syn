@@ -3,6 +3,7 @@
 
 pub use bigdecimal::{BigDecimal, FromPrimitive, One, Signed, ToPrimitive, Zero};
 pub use num_bigint::BigInt;
+use num_traits::signum;
 
 use crate::error::{Error, Result};
 
@@ -188,7 +189,8 @@ pub fn tan(x: BigDecimal, num_digits: i64) -> BigDecimal {
 pub fn asin(x: BigDecimal, num_digits: i64) -> BigDecimal {
     if x.abs() > half() {
         // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
-        atan((one() + &x * &x).sqrt().unwrap() / (one() + &x), num_digits) * two() * x.signum()
+        // atan(&x / (one() + (one() - &x * &x).sqrt().unwrap()), num_digits) * two() * x.signum()
+        (pi(num_digits) * bigdf(0.5) - atan((one() - &x * &x).sqrt().unwrap() / x.abs(), num_digits))*x.signum()
     } else {
         let mut numer = BigDecimal::one();
         let mut denom = BigDecimal::one();
@@ -213,12 +215,13 @@ pub fn acos(x: BigDecimal, num_digits: i64) -> BigDecimal {
 
 pub fn atan(x: BigDecimal, num_digits: i64) -> BigDecimal {
     if x.abs() > half() {
+        // pi(num_digits) * half() * signum(x.clone()) - atan(one() / x, num_digits)
         // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
         atan(
-            one() / (one() + (one() + &x * &x).sqrt().unwrap()),
+            &x / (one() + (one() + &x * &x).sqrt().unwrap()),
             num_digits,
         ) * two()
-            * x.signum()
+            // * x.signum()
     } else {
         maclaurin(x, num_digits, |i, tot, power, _factorial| {
             if (i & 1) != 0 {
@@ -342,9 +345,6 @@ pub fn round_ieee(x: BigDecimal, bits: BigDecimal, _num_digits: i64) -> Result<B
         _ => Err(Error::Expected32or64bits),
     }
 }
-
-#[test]
-fn test_bdmath_dnorm() {}
 
 /// Cumulative normal distribution.
 ///   erfc(x) = 2*pnorm(-sqrt(2)*x)
@@ -580,6 +580,11 @@ fn test_stats_functions() {
     assert_eq!(round_ieee(pi(40), bigd(64), 40).unwrap(), bigdf(std::f64::consts::PI));
     assert_eq!(round_ieee(pi(40), bigd(32), 40).unwrap(), bigdf32(std::f32::consts::PI));
 
+    // println!("{}", asin(one(), 40));
+    assert!((asin(one(), 40)-pi(40)*bigdf(0.5)).abs() < bigdf(1e-20));
+    assert!(asin(zero(), 40) < bigdf(1e-20));
+    assert!((asin(-one(), 40)+pi(40)*bigdf(0.5)).abs() < bigdf(1e-20));
+
     // assert_eq!(erf(one(), 20), bigdf(0.8427008));
     // assert_eq!(erf(half(), 20), bigdf(0.52));
 
@@ -630,4 +635,60 @@ fn test_stats_functions() {
             .unwrap(),
         expr!(true)
     );
+}
+
+#[cfg(test)]
+macro_rules! test_func{
+    (
+        min: $min : expr,
+        max: $max : expr,
+        test_func: $test_func: expr,
+        ref_func: $ref_func: expr,
+    ) => {
+        {
+            let num_digits = 20;
+            let min = bigdf($min);
+            let max = bigdf($max);
+            let n = 16;
+            let b = (max - &min) / bigd(n);
+            let a = min;
+            for i in 0..=n {
+                let x = &a + &b * bigd(i);
+                let y = ($test_func)(x.clone(), num_digits);
+                let yref = ($ref_func)(x.to_f64().unwrap());
+                let ycalc = y.to_f64().unwrap();
+                println!("ycalc={:20.16} yref={:20.16} diff={}", ycalc, yref, (ycalc - yref).abs());
+                assert!((ycalc - yref).abs() < 1e-6);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_atan() {
+    test_func!{
+        min: -1.0,
+        max: 1.0,
+        test_func: |x, num_digits| atan(x, num_digits),
+        ref_func: |x : f64| x.atan(),
+    };
+}
+
+#[test]
+fn test_asin() {
+    test_func!{
+        min: -1.0,
+        max: 1.0,
+        test_func: |x, num_digits| asin(x, num_digits),
+        ref_func: |x : f64| x.asin(),
+    };
+}
+#[test]
+fn test_acos() {
+    test_func!{
+        min: -1.0,
+        max: 1.0,
+        test_func: |x, num_digits| acos(x, num_digits),
+        ref_func: |x : f64| x.acos(),
+    };
 }
