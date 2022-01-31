@@ -1,8 +1,7 @@
 //! Convert a file of functions into a set of methods
 //! suitable for rust-lang/portable-simd
 
-use quote::format_ident;
-use quote::ToTokens;
+use quote::{format_ident, ToTokens};
 use syn::punctuated::Punctuated;
 use syn::visit_mut::{visit_expr_mut, visit_ident_mut, VisitMut, visit_signature_mut};
 use syn::{parse_quote, Expr, Ident, Item, ItemConst, Token, Visibility};
@@ -58,8 +57,9 @@ fn deblock2(expr: &Expr) -> &Expr {
 impl VisitMut for SimdVisitor {
     fn visit_ident_mut(&mut self, i: &mut Ident) {
         match i {
-            // i if i == "arg" => *i = Ident::new("self", i.span()),
             i if i == "fty" => *i = Ident::new("Self", i.span()),
+            i if i == "uty" => *i = Ident::new("UintType", i.span()),
+            i if i == "ity" => *i = Ident::new("IntType", i.span()),
             _ => {
                 self.idents_used.push(i.clone());
                 visit_ident_mut(self, i);
@@ -76,65 +76,28 @@ impl VisitMut for SimdVisitor {
 
     // Convert `lit as f32` etc. to splats.
     fn visit_expr_mut(&mut self, expr: &mut syn::Expr) {
+        // println!("{} {:?}", expr.to_token_stream(), expr);
         visit_expr_mut(self, expr);
 
-        match expr {
+        match &*expr {
             syn::Expr::Cast(cast) => {
-                *expr = (&*cast.expr).clone();
-                return;
-                // if let syn::Expr::Lit(lit) = &*cast.expr {
-                //     *expr = parse_quote! { Self::splat(-#lit) };
-                //     return;
-                // }
-                // if let syn::Expr::Unary(unary) = &*cast.expr {
-                //     if let syn::UnOp::Neg(_) = &unary.op {
-                //         if let syn::Expr::Lit(lit) = &*unary.expr {
-                //             *expr = parse_quote! { Self::splat(-#lit) };
-                //             return;
-                //         }
-                //     }
-                // }
+                *expr = convert_cast(cast)
             }
             syn::Expr::Binary(binary) => {
-                use syn::BinOp::*;
-                if let Some(op) = match binary.op {
-                    Eq(_) => Some("lanes_eq"),
-                    Lt(_) => Some("lanes_lt"),
-                    Le(_) => Some("lanes_le"),
-                    Ne(_) => Some("lanes_ne"),
-                    Ge(_) => Some("lanes_ge"),
-                    Gt(_) => Some("lanes_gt"),
-                    _ => None,
-                } {
-                    let id = format_ident!("{}", op);
-                    let lhs = binary.left.clone();
-                    let rhs = binary.right.clone();
-                    *expr = parse_quote! { (#lhs).#id(#rhs) };
-                    return;
-                }
+                *expr = convert_binary(binary)
             }
             syn::Expr::Call(call) => {
-                if call.func.to_token_stream().to_string() == "select" {
-                    let mut args = call.args.iter();
-                    let arg0 = args.next().unwrap();
-                    let rest = args.cloned().collect::<Punctuated<Expr, Token![,]>>();
-                    *expr = parse_quote! { (#arg0).select(#rest) };
-                    return;
-                }
+                *expr = convert_call(call);
             }
             syn::Expr::Lit(syn::ExprLit { lit, ..} ) => {
-                if let syn::Lit::Float(f) = lit {
-                    match self.options.num_bits {
-                        32 => {
-                            let rounded: f32 = f.base10_parse().unwrap();
-                            *expr = parse_quote! { Self::splat(#rounded) };
-                        }
-                        64 => {
-                            let rounded: f64 = f.base10_parse().unwrap();
-                            *expr = parse_quote! { Self::splat(#rounded) };
-                        }
-                        _ => {}
+                match lit {
+                    syn::Lit::Float(f) => {
+                        *expr = convert_lit_float(f);
                     }
+                    syn::Lit::Int(f) => {
+                        *expr = convert_lit_int(f);
+                    }
+                    _ => {}
                 }
             },
             syn::Expr::If(exprif) => {
@@ -147,20 +110,79 @@ impl VisitMut for SimdVisitor {
             },
             _ => {}
         }
-        // if let syn::Expr::
-        // if let syn::Lit::Float(f) = lit {
-        //     match self.options.num_bits {
-        //         32 => {
-        //             let rounded: f32 = f.base10_parse().unwrap();
-        //             *lit = parse_quote! { Self::splat(#rounded) };
-        //         }
-        //         64 => {
-        //             let rounded: f64 = f.base10_parse().unwrap();
-        //             *lit = parse_quote! { Self::splat(#rounded) };
-        //         }
-        //         _ => {}
-        //     }
-        // }
+    }
+
+}
+
+fn convert_cast(cast: &syn::ExprCast) -> Expr {
+    let expr = &*cast.expr;
+    let ty = &*cast.ty;
+    match ty.to_token_stream().to_string().as_str() {
+        "UintType" => parse_quote!{ unsafe{#expr.to_uint_unchecked()} },
+        "IntType" => parse_quote!{ unsafe{#expr.to_int_unchecked()} },
+        _ => cast.clone().into()
+    }
+}
+
+fn convert_binary(binary: &syn::ExprBinary) -> Expr {
+    use syn::BinOp::*;
+    if let Some(op) = match binary.op {
+        Eq(_) => Some("lanes_eq"),
+        Lt(_) => Some("lanes_lt"),
+        Le(_) => Some("lanes_le"),
+        Ne(_) => Some("lanes_ne"),
+        Ge(_) => Some("lanes_ge"),
+        Gt(_) => Some("lanes_gt"),
+        _ => None,
+    } {
+        let id = format_ident!("{}", op);
+        let lhs = binary.left.clone();
+        let rhs = binary.right.clone();
+        parse_quote! { (#lhs).#id(#rhs) }
+    } else {
+        binary.clone().into()
+    }
+}
+
+fn convert_call(call: &syn::ExprCall) -> Expr {
+    let mut args = call.args.iter();
+    let arg0 = args.next().unwrap();
+    match call.func.to_token_stream().to_string().as_str() {
+        "sin" | "cos" | "tan" | "exp2" => {
+            let func = &*call.func;
+            let rest = args.cloned().collect::<Punctuated<Expr, Token![,]>>();
+            parse_quote! { (#arg0).#func(#rest) }
+        }
+
+        _ => call.clone().into()
+    }
+}
+
+fn convert_lit_float(f: &syn::LitFloat) -> Expr {
+    match f.suffix() {
+        "u32" | "u64" => {
+            parse_quote! { UintType::splat(#f) }
+        }
+        "i32" | "i64" => {
+            parse_quote! { IntType::splat(#f) }
+        }
+        "f32" | "f64" | _ => {
+            parse_quote! { Self::splat(#f) }
+        }
+    }
+}
+
+fn convert_lit_int(f: &syn::LitInt) -> Expr {
+    match f.suffix() {
+        "u32" | "u64" => {
+            parse_quote! { UintType::splat(#f) }
+        }
+        "i32" | "i64" => {
+            parse_quote! { IntType::splat(#f) }
+        }
+        "f32" | "f64" | _ => {
+            parse_quote! { Self::splat(#f) }
+        }
     }
 }
 
@@ -217,6 +239,7 @@ pub fn to_simd(file: &syn::File, options: Options) -> syn::File {
 
     parse_quote! {
         #![allow(non_snake_case)]
+        #![doc("This code is automatically generated, do not edit.")]
 
         use super ::StdLibm ;
         use super ::StdFloat ;
@@ -228,13 +251,18 @@ pub fn to_simd(file: &syn::File, options: Options) -> syn::File {
         where
             LaneCount<N>: SupportedLaneCount,
         {
-           #(#methods)*
+            type IntType = Simd<i32, N>;
+            type UintType = Simd<u32, N>;
+
+            #(#methods)*
         }
     }
 }
 
 #[test]
 fn test() {
+    use quote::ToTokens;
+
     let code: syn::File = parse_quote! {
         #[allow (non_camel_case_types)]
         type fty =f64 ;

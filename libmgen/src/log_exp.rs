@@ -29,7 +29,7 @@ pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn exp2(arg: fty) -> fty {
             let r: fty = arg.round();
-            let mul: fty = fty::from_bits((r.mul_add(#escale as fty, #one as fty)) as uty);
+            let mul: fty = fty::from_bits((r.mul_add(#escale, #one)) as uty);
             let x: fty = arg - r;
             #approx * mul
         }
@@ -71,7 +71,7 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
         pub fn exp_m1(arg: fty) -> fty {
             let scaled : fty = arg * LOG2_E;
             let r : fty = scaled.round();
-            let mul : fty = fty::from_bits((r.mul_add(#escale as fty, #one as fty)) as uty);
+            let mul : fty = fty::from_bits((r.mul_add(#, #one)) as uty);
             let x : fty = scaled - r;
             #approx * mul + (mul - 1.0)
         }

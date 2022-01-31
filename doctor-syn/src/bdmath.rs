@@ -3,7 +3,6 @@
 
 pub use bigdecimal::{BigDecimal, FromPrimitive, One, Signed, ToPrimitive, Zero};
 pub use num_bigint::BigInt;
-use num_traits::signum;
 
 use crate::error::{Error, Result};
 

@@ -42,34 +42,34 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
     )
 }
 
-// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
-//     let lim = quote!(0.70710678118654752440);
+pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
+    let lim = quote!(0.70710678118654752440);
 
-//     let approx = expr!(x.asin())
-//         .approx(
-//             num_terms,
-//             -0.70710678118654752440,
-//             0.70710678118654752440,
-//             name!(x),
-//             Parity::Odd,
-//             config.num_digits(),
-//         )
-//         .unwrap()
-//         .use_number_type(config.number_type(), config.num_bits())
-//         .unwrap()
-//         .into_inner();
+    let approx = expr!(x.asin())
+        .approx(
+            num_terms,
+            -0.70710678118654752440,
+            0.70710678118654752440,
+            name!(x),
+            Parity::Odd,
+            config.num_digits(),
+        )
+        .unwrap()
+        .use_number_type(config.number_type(), config.num_bits())
+        .unwrap()
+        .into_inner();
 
-//     quote!(
-//         pub fn asin(arg: fty) -> fty {
-//             let LIM : fty = #lim;
-//             let c : fty = if arg < 0.0 { -PI_BY_2 } else { PI_BY_2 };
-//             let s : fty = if arg < 0.0 { -1.0 } else { 1.0  };
-//             let x : fty = if arg * arg < LIM * LIM { arg } else { (1.0-arg*arg).sqrt() };
-//             let y : fty = #approx ;
-//             if arg*arg < LIM * LIM { y } else { c - y * s }
-//         }
-//     )
-// }
+    quote!(
+        pub fn asin(arg: fty) -> fty {
+            let LIM : fty = #lim;
+            let c : fty = if arg < 0.0 { -PI_BY_2 } else { PI_BY_2 };
+            let s : fty = if arg < 0.0 { -1.0 } else { 1.0  };
+            let x : fty = if arg * arg < LIM * LIM { arg } else { (1.0-arg*arg).sqrt() };
+            let y : fty = #approx ;
+            if arg*arg < LIM * LIM { y } else { c - y * s }
+        }
+    )
+}
 
 // pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
 
@@ -98,13 +98,13 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
 //     )
 // }
 
-pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
-    quote!(
-        pub fn asin(arg: fty) -> fty {
-            atan2(arg, (1.0 - arg*arg).sqrt())
-        }
-    )
-}
+// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
+//     quote!(
+//         pub fn asin(arg: fty) -> fty {
+//             atan2(arg, (1.0 - arg*arg).sqrt())
+//         }
+//     )
+// }
 
 // pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
 //     quote!(

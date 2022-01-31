@@ -1,4 +1,3 @@
-use crate::Expression;
 use proc_macro2::Span;
 
 #[derive(Debug)]

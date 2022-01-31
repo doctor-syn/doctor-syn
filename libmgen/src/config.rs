@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+use quote::ToTokens;
+use quote::quote;
+
 pub struct Config {
     options: crate::Opt,
 }
@@ -67,17 +70,19 @@ impl Config {
 
     pub fn get_one(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
-            quote::quote!(0x3f800000_u32)
+            //let val = 0x3f800000 as f32;
+            quote!(1065353216.0f32)
         } else {
-            quote::quote!(0x3ff0000000000000_u64)
+            //let val = 0x3ff0000000000000_u64 as f64;
+            quote!(4607182418800017408.0f64)
         }
     }
 
     pub fn get_escale(&self) -> proc_macro2::TokenStream {
         if self.num_bits() == 32 {
-            quote::quote!(0x00800000_u32)
+            quote!(8388608.0f32)
         } else {
-            quote::quote!(0x0010000000000000_u64)
+            quote!(4503599627370496.0f64)
         }
     }
 
