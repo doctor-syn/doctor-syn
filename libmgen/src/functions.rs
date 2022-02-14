@@ -86,6 +86,48 @@ pub static FUNCTIONS: &[Function] = &[
         test_specs: &[],
     },
     Function {
+        name: "LOG2_SHIFT",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_LOG2_SHIFT),
+        test_specs: &[],
+    },
+    Function {
+        name: "LOG2_OFFSET",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_LOG2_OFFSET),
+        test_specs: &[],
+    },
+    Function {
+        name: "ONE_MASK",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_ONE_MASK),
+        test_specs: &[],
+    },
+    Function {
+        name: "ONE_BITS",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_ONE_BITS),
+        test_specs: &[],
+    },
+    Function {
+        name: "EXP2_ONE",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_EXP2_ONE),
+        test_specs: &[],
+    },
+    Function {
+        name: "EXP2_SCALE",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_EXP2_SCALE),
+        test_specs: &[],
+    },
+    Function {
         name: "PI",
         deps: &[],
         num_terms: [0, 0],
@@ -225,15 +267,21 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "asin",
-        deps: &["fty", "PI_BY_2", "atan2"],
-        num_terms: [8, 24],
+        deps: &["fty", "PI_BY_2"],
+        num_terms: [16, 24],
         gen: Some(crate::inv_trig::gen_asin),
         test_specs: &[
             TestSpec {
                 test_name: "test_asin",
                 ref_expr: "x.asin()",
                 rust_expr: "asin(x)",
-                test: TestType::MaxAbs("-0.5", "0.5", 9.0, 9.0, 1024),
+                test: TestType::MaxAbs("-0.5", "0.5", 2.0, 2.0, 1024),
+            },
+            TestSpec {
+                test_name: "test_asin2",
+                ref_expr: "x.asin()",
+                rust_expr: "asin(x)",
+                test: TestType::MaxAbs("-1.0", "1.0", 6.0, 6.0, 1024),
             },
         ],
     },
@@ -242,7 +290,20 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &["fty", "PI_BY_2", "PI"],
         num_terms: [16, 24],
         gen: Some(crate::inv_trig::gen_acos),
-        test_specs: &[],
+        test_specs: &[
+            TestSpec {
+                test_name: "test_acos",
+                ref_expr: "x.acos()",
+                rust_expr: "acos(x)",
+                test: TestType::MaxAbs("-1", "1", 6.0, 6.0, 1024),
+            },
+            TestSpec {
+                test_name: "test_acos2",
+                ref_expr: "x.acos()",
+                rust_expr: "acos(x)",
+                test: TestType::MaxAbs("-0.5", "0.5", 3.0, 3.0, 1024),
+            },
+        ],
     },
     Function {
         name: "atan",
@@ -260,7 +321,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "exp2",
-        deps: &["fty", "ity", "uty"],
+        deps: &["fty", "ity", "uty", "EXP2_SCALE", "EXP2_ONE"],
         num_terms: [8, 24],
         gen: Some(crate::log_exp::gen_exp2),
         test_specs: &[
@@ -326,8 +387,8 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "log2",
-        deps: &["fty"],
-        num_terms: [16, 24],
+        deps: &["fty", "LOG2_SHIFT", "LOG2_OFFSET", "ONE_MASK", "ONE_BITS"],
+        num_terms: [10, 12],
         gen: Some(crate::log_exp::gen_log2),
         test_specs: &[
             TestSpec {

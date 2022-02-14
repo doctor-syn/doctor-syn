@@ -1,9 +1,9 @@
 //! Convert a file of functions into a set of methods
 //! suitable for rust-lang/portable-simd
 
-use quote::{format_ident, ToTokens};
+use quote::{quote, format_ident, ToTokens};
 use syn::punctuated::Punctuated;
-use syn::visit_mut::{visit_expr_mut, visit_ident_mut, VisitMut, visit_signature_mut};
+use syn::visit_mut::{visit_expr_mut, visit_ident_mut, VisitMut, visit_signature_mut, visit_local_mut};
 use syn::{parse_quote, Expr, Ident, Item, ItemConst, Token, Visibility};
 
 pub struct Options {
@@ -16,6 +16,7 @@ impl Default for Options {
     }
 }
 
+#[allow(dead_code)]
 pub struct SimdVisitor {
     options: Options,
     consts: Vec<ItemConst>,
@@ -56,10 +57,12 @@ fn deblock2(expr: &Expr) -> &Expr {
 
 impl VisitMut for SimdVisitor {
     fn visit_ident_mut(&mut self, i: &mut Ident) {
+        self.idents_used.push(i.clone());
+        visit_ident_mut(self, i);
         match i {
             i if i == "fty" => *i = Ident::new("Self", i.span()),
-            i if i == "uty" => *i = Ident::new("UintType", i.span()),
-            i if i == "ity" => *i = Ident::new("IntType", i.span()),
+            // i if i == "uty" => *i = Ident::new("Self::UintType", i.span()),
+            // i if i == "ity" => *i = Ident::new("Self::IntType", i.span()),
             _ => {
                 self.idents_used.push(i.clone());
                 visit_ident_mut(self, i);
@@ -81,7 +84,7 @@ impl VisitMut for SimdVisitor {
 
         match &*expr {
             syn::Expr::Cast(cast) => {
-                *expr = convert_cast(cast)
+                *expr = convert_cast(cast, self.options.num_bits)
             }
             syn::Expr::Binary(binary) => {
                 *expr = convert_binary(binary)
@@ -112,14 +115,26 @@ impl VisitMut for SimdVisitor {
         }
     }
 
+    fn visit_local_mut(&mut self, local: &mut syn::Local) {
+        visit_local_mut(self, local);
+        if let syn::Pat::Type(pat_type) = &local.pat {
+            local.pat = *pat_type.pat.clone();
+        }
+    }
 }
 
-fn convert_cast(cast: &syn::ExprCast) -> Expr {
+fn convert_cast(cast: &syn::ExprCast, num_bits: usize) -> Expr {
     let expr = &*cast.expr;
     let ty = &*cast.ty;
+    let (uty, ity, fty) = if num_bits == 32 {
+        (quote!(u32), quote!(i32), quote!(f32))
+    } else {
+        (quote!(u64), quote!(i64), quote!(f64))
+    };
     match ty.to_token_stream().to_string().as_str() {
-        "UintType" => parse_quote!{ unsafe{#expr.to_uint_unchecked()} },
-        "IntType" => parse_quote!{ unsafe{#expr.to_int_unchecked()} },
+        "uty" | "Self :: UintType" => parse_quote!{ #expr.cast::<#uty>() },
+        "ity" | "Self :: IntType" => parse_quote!{ #expr.cast::<#ity>() },
+        "fty" | "Self" => parse_quote!{ #expr.cast::<#fty>() },
         _ => cast.clone().into()
     }
 }
@@ -175,16 +190,31 @@ fn convert_lit_float(f: &syn::LitFloat) -> Expr {
 fn convert_lit_int(f: &syn::LitInt) -> Expr {
     match f.suffix() {
         "u32" | "u64" => {
-            parse_quote! { UintType::splat(#f) }
+            parse_quote! { Self::UintType::splat(#f) }
         }
         "i32" | "i64" => {
-            parse_quote! { IntType::splat(#f) }
+            parse_quote! { Self::IntType::splat(#f) }
         }
         "f32" | "f64" | _ => {
             parse_quote! { Self::splat(#f) }
         }
     }
 }
+
+// fn convert_path(f: &syn::Path) -> Expr {
+//     // match f.to_token_stream().to_string().as_str() {
+//     //     "uty" => {
+//     //         *expr = parse_quote! { Self::UintType }
+//     //     }
+//     //     "ity" => {
+//     //         *expr = parse_quote! { Self::IntType }
+//     //     }
+//     //     "fty" | _ => {
+//     //         *expr = parse_quote! { Self }
+//     //     }
+//     // }
+//     f.into()
+// }
 
 pub fn to_simd(file: &syn::File, options: Options) -> syn::File {
     let mut methods = Vec::new();

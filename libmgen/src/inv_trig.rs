@@ -42,6 +42,10 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
     )
 }
 
+/// The function `asin` has four regions:
+/// arg         |  x      |
+/// ============|=========|
+/// -1 .. -LIM  | 
 pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
     let lim = quote!(0.70710678118654752440);
 
@@ -71,63 +75,14 @@ pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
     )
 }
 
-// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
-
-//     let approx = expr!((1-x*x).asin())
-//         .approx(
-//             num_terms,
-//             0.,
-//             1.,
-//             name!(x),
-//             Parity::Neither,
-//             config.num_digits(),
-//         )
-//         .unwrap()
-//         .use_number_type(config.number_type(), config.num_bits())
-//         .unwrap()
-//         .into_inner();
-
-//     quote!(
-//         pub fn asin(arg: fty) -> fty {
-//             let x = (1.0 - arg.abs()).sqrt();
-//             let y = #approx;
-//             // let val = y.copysign(arg);
-//             // println!("arg={} z={} x={} val={} asin={}", arg, z, x, val, arg.asin());
-//             y.copysign(arg)
-//         }
-//     )
-// }
-
-// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
-//     quote!(
-//         pub fn asin(arg: fty) -> fty {
-//             atan2(arg, (1.0 - arg*arg).sqrt())
-//         }
-//     )
-// }
-
-// pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
-//     quote!(
-//         pub fn asin(arg: fty) -> fty {
-//             #[doc("guess")]
-//             let x = ((1.0 - (1.0 - arg.abs()).sqrt()) * PI_BY_2).copysign(arg);
-//             #[doc("newton-raphson")]
-//             let x = x - (x.sin() - arg)/x.cos();
-//             let x = x - (x.sin() - arg)/x.cos();
-//             let x = x - (x.sin() - arg)/x.cos();
-//             x
-//         }
-//     )
-// }
-
 pub fn gen_acos(num_terms: usize, config: &Config) -> TokenStream {
-    let lim = quote!(0.9);
+    let lim = quote!(0.70710678118654752440);
 
     let approx = expr!(x.asin())
         .approx(
             num_terms,
-            -0.9,
-            0.9,
+            -0.70710678118654752440,
+            0.70710678118654752440,
             name!(x),
             Parity::Odd,
             config.num_digits(),

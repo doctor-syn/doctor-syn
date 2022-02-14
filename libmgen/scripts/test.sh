@@ -15,6 +15,7 @@ cd $TEMPDIR/test_libmgen
 mkdir tests
 # ./libmgen --num-bits 32 -f exp -o tests/exp32.rs --language "rust"
 # ./libmgen --num-bits 32 -f exp -o tests/exp32.c --language "c"
+./libmgen --generate-tests --num-bits 32 -f acos -o tests/cos32.rs
 ./libmgen --generate-tests --num-bits 32 -f asin -o tests/sin32.rs
 # ./libmgen --generate-tests --num-bits 32 -f trig -o tests/trig32.rs
 # ./libmgen --generate-tests --num-bits 64 -f logexp -o tests/logexp64.rs

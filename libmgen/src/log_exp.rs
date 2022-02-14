@@ -6,9 +6,6 @@ use quote::quote;
 use crate::Config;
 
 pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
-    let one = config.get_one();
-    let escale = config.get_escale();
-
     let xmin = -0.5;
     let xmax = 0.5;
 
@@ -29,7 +26,7 @@ pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn exp2(arg: fty) -> fty {
             let r: fty = arg.round();
-            let mul: fty = fty::from_bits((r.mul_add(#escale, #one)) as uty);
+            let mul: fty = fty::from_bits((r.mul_add(EXP2_SCALE, EXP2_ONE)) as uty);
             let x: fty = arg - r;
             #approx * mul
         }
@@ -46,9 +43,6 @@ pub fn gen_exp(_num_terms: usize, config: &Config) -> TokenStream {
 
 /// exp(x) - 1
 pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
-    let one = config.get_one();
-    let escale = config.get_escale();
-
     let xmin = -0.5;
     let xmax = 0.5;
 
@@ -71,7 +65,7 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
         pub fn exp_m1(arg: fty) -> fty {
             let scaled : fty = arg * LOG2_E;
             let r : fty = scaled.round();
-            let mul : fty = fty::from_bits((r.mul_add(#, #one)) as uty);
+            let mul : fty = fty::from_bits((r.mul_add(EXP2_SCALE, EXP2_ONE)) as uty);
             let x : fty = scaled - r;
             #approx * mul + (mul - 1.0)
         }
@@ -114,10 +108,10 @@ pub fn gen_ln_1p(num_terms: usize, config: &Config) -> TokenStream {
 }
 
 pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
-    let one = config.get_one();
-    let escale = config.get_escale();
-    let eshift = config.get_shift();
-    let eoffset = config.get_eoffset();
+    // let one_uty = config.get_one_uty();
+    // let emask = config.get_emask();
+    // let eshift = config.get_shift();
+    // let eoffset = config.get_eoffset();
 
     let xmin = -0.5;
     let xmax = 0.5;
@@ -139,8 +133,8 @@ pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn log2(arg: fty) -> fty {
             let arg_bits : uty = arg.to_bits();
-            let exponent : ity = (arg_bits as ity >> #eshift) - (#eoffset) as ity;
-            let x : fty = fty::from_bits((arg_bits & (#escale-1) as uty) | #one as uty) - (1.5) as fty;
+            let exponent : ity = (arg_bits as ity >> LOG2_SHIFT) - LOG2_OFFSET;
+            let x : fty = fty::from_bits((arg_bits & ONE_MASK) | ONE_BITS) - 1.5;
             let y : fty = #approx;
             y + (exponent as fty)
         }

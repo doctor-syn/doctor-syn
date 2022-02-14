@@ -4,6 +4,89 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 #[allow(non_snake_case)]
+pub fn gen_ONE_BITS(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const ONE_BITS: fty = 0x3f800000_u32;
+        )
+    
+    } else {
+        quote!(
+            const ONE_BITS: fty = 0x3ff0000000000000_u64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_ONE_MASK(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const ONE_MASK: fty = 0x007fffff_u32;
+        )
+    
+    } else {
+        quote!(
+            const ONE_MASK: fty = 0x000fffffffffffff_u64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_EXP2_ONE(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const EXP2_ONE: fty = 1065353216.0f32;
+        )
+    
+    } else {
+        quote!(
+            const EXP2_ONE: fty = 4607182418800017408.0f64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_EXP2_SCALE(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const EXP2_SCALE: fty = 8388608.0f32;
+        )
+    
+    } else {
+        quote!(
+            const EXP2_SCALE: fty = 4503599627370496.0f64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_LOG2_SHIFT(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const LOG2_SHIFT: ity = 23_i32;
+        )
+    
+    } else {
+        quote!(
+            const LOG2_SHIFT: ity = 52_i32;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_LOG2_OFFSET(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const LOG2_OFFSET: ity = 127_i32;
+        )
+    } else {
+        quote!(
+            const LOG2_OFFSET: ity = 1023_i64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
 pub fn gen_PI(_terms: usize, config: &Config) -> TokenStream {
     let value: syn::Expr = expr!(PI).eval(config.num_digits()).unwrap().into();
     quote!(
@@ -142,13 +225,11 @@ fn gen_power_scale(
     offset: TokenStream,
     correction: TokenStream,
 ) -> TokenStream {
-    let one = config.get_one();
-
     // A very approximate x.recip() used for estimates +/- 0.1
     quote!(
         pub fn #name(x: fty) -> fty {
             let y  : fty = fty::from_bits(
-                (((x.abs().to_bits() as fty).mul_add(#scale, #one as fty * #offset))) as uty
+                (((x.abs().to_bits() as fty).mul_add(#scale, EXP2_ONE * #offset))) as uty
             );
             #correction
         }

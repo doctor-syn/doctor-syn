@@ -68,39 +68,55 @@ impl Config {
         }
     }
 
-    pub fn get_one(&self) -> proc_macro2::TokenStream {
-        if self.num_bits() == 32 {
-            //let val = 0x3f800000 as f32;
-            quote!(1065353216.0f32)
-        } else {
-            //let val = 0x3ff0000000000000_u64 as f64;
-            quote!(4607182418800017408.0f64)
-        }
-    }
+    // pub fn get_one(&self) -> proc_macro2::TokenStream {
+    //     if self.num_bits() == 32 {
+    //         //let val = 0x3f800000 as f32;
+    //         quote!(1065353216.0f32)
+    //     } else {
+    //         //let val = 0x3ff0000000000000_u64 as f64;
+    //         quote!(4607182418800017408.0f64)
+    //     }
+    // }
 
-    pub fn get_escale(&self) -> proc_macro2::TokenStream {
-        if self.num_bits() == 32 {
-            quote!(8388608.0f32)
-        } else {
-            quote!(4503599627370496.0f64)
-        }
-    }
+    // pub fn get_one_uty(&self) -> proc_macro2::TokenStream {
+    //     if self.num_bits() == 32 {
+    //         quote!(0x3f800000_u32)
+    //     } else {
+    //         quote!(0x3ff0000000000000_u64)
+    //     }
+    // }
 
-    pub fn get_shift(&self) -> proc_macro2::TokenStream {
-        if self.num_bits() == 32 {
-            quote::quote!(23)
-        } else {
-            quote::quote!(52)
-        }
-    }
+    // pub fn get_escale(&self) -> proc_macro2::TokenStream {
+    //     if self.num_bits() == 32 {
+    //         quote!(8388608.0f32)
+    //     } else {
+    //         quote!(4503599627370496.0f64)
+    //     }
+    // }
 
-    pub fn get_eoffset(&self) -> proc_macro2::TokenStream {
-        if self.num_bits() == 32 {
-            quote::quote!(127)
-        } else {
-            quote::quote!(1023)
-        }
-    }
+    // pub fn get_emask(&self) -> proc_macro2::TokenStream {
+    //     if self.num_bits() == 32 {
+    //         quote!(0x007fffff_u32)
+    //     } else {
+    //         quote!(0x000fffffffffffff_u64)
+    //     }
+    // }
+
+    // pub fn get_shift(&self) -> proc_macro2::TokenStream {
+    //     if self.num_bits() == 32 {
+    //         quote::quote!(23)
+    //     } else {
+    //         quote::quote!(52)
+    //     }
+    // }
+
+    // pub fn get_eoffset(&self) -> proc_macro2::TokenStream {
+    //     if self.num_bits() == 32 {
+    //         quote::quote!(127)
+    //     } else {
+    //         quote::quote!(1023)
+    //     }
+    // }
 
     pub fn output(&self) -> Option<&std::path::PathBuf> {
         self.options.output.as_ref()
