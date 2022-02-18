@@ -54,3 +54,28 @@ cargo install --path . --bin libmgen
 
 This can then be run as `libmgen` to generate
 a libm for various precisions, languages and data types.
+
+## Roadmap
+
+Currently, Doctor Syn exists purely for libmgen but it would be nice to build
+syntax transformation passes and mathematical transformations as independent
+units.
+
+* Drop `Expression` and work solely on naked syn types.
+* Use syn visitors where possible.
+
+Planned new crates:
+
+* ds_makeimpl -> convert items to a trait.
+* ds_prettyprint -> pretty print syn trees (like rustfmt).
+* ds_subst -> match and substitute expressions and syntax elements.
+* ds_tosimd -> convert scalar to vector functions.
+* ds_differentiate -> differentiate rust expressions.
+* ds_typeinfetence -> annotate items and expressions with types.
+* ds_eval -> evaluate expressions with various number types.
+* ds_toc -> convert simple rust to C.
+* ds_toasm -> convert simple rust to asm.
+* ds_tostatemachine -> convert simple rust to a state machine.
+* ds_toverilog -> convert simple rust to verilog.
+* ds_exec -> execute simple rust code by converting to machine code.
+* ds_approx -> approximate functions.
