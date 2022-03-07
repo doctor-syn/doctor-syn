@@ -191,6 +191,13 @@ pub static FUNCTIONS: &[Function] = &[
         test_specs: &[],
     },
     Function {
+        name: "TAN_PI_BY_8",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_TAN_PI_BY_8),
+        test_specs: &[],
+    },
+    Function {
         name: "LOG2_E",
         deps: &[],
         num_terms: [0, 0],
@@ -317,7 +324,7 @@ pub static FUNCTIONS: &[Function] = &[
     Function {
         name: "asin",
         deps: &["fty", "PI_BY_2"],
-        num_terms: [16, 24],
+        num_terms: [16, 36],
         gen: Some(crate::inv_trig::gen_asin),
         test_specs: &[
             TestSpec {
@@ -337,7 +344,7 @@ pub static FUNCTIONS: &[Function] = &[
     Function {
         name: "acos",
         deps: &["fty", "PI_BY_2", "PI"],
-        num_terms: [16, 24],
+        num_terms: [16, 34],
         gen: Some(crate::inv_trig::gen_acos),
         test_specs: &[
             TestSpec {
@@ -357,14 +364,14 @@ pub static FUNCTIONS: &[Function] = &[
     Function {
         name: "atan",
         deps: &["fty"],
-        num_terms: [16, 24],
+        num_terms: [16, 36],
         gen: Some(crate::inv_trig::gen_atan),
         test_specs: &[],
     },
     Function {
         name: "atan2",
-        deps: &["fty", "PI", "PI_BY_2"],
-        num_terms: [16, 24],
+        deps: &["fty", "PI", "PI_BY_2", "TAN_PI_BY_8"],
+        num_terms: [16, 40],
         gen: Some(crate::inv_trig::gen_atan2),
         test_specs: &[],
     },
@@ -437,7 +444,7 @@ pub static FUNCTIONS: &[Function] = &[
     Function {
         name: "log2",
         deps: &["fty", "LOG2_SHIFT", "LOG2_OFFSET", "ONE_MASK", "ONE_BITS", "MIN_POSITIVE", "NAN", "INFINITY"],
-        num_terms: [10, 12],
+        num_terms: [10, 20],
         gen: Some(crate::log_exp::gen_log2),
         test_specs: &[
             TestSpec {

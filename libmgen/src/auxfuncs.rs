@@ -138,7 +138,7 @@ pub fn gen_LOG2_SHIFT(_terms: usize, config: &Config) -> TokenStream {
     
     } else {
         quote!(
-            const LOG2_SHIFT: ity = 52_i32;
+            const LOG2_SHIFT: ity = 52_i64;
         )
     }
 }
@@ -165,7 +165,7 @@ pub fn gen_ONE_THIRD(_terms: usize, config: &Config) -> TokenStream {
     
     } else {
         quote!(
-            const ONE_THIRD: fty = 0.333333333333333333f642;
+            const ONE_THIRD: fty = 0.333333333333333333f64;
         )
     }
 }
@@ -179,7 +179,7 @@ pub fn gen_TWO_THIRDS(_terms: usize, config: &Config) -> TokenStream {
     
     } else {
         quote!(
-            const TWO_THIRDS: fty = 0.666666666666666667f642;
+            const TWO_THIRDS: fty = 0.666666666666666667f64;
         )
     }
 }
@@ -195,6 +195,14 @@ pub fn gen_PI(_terms: usize, config: &Config) -> TokenStream {
 #[allow(non_snake_case)]
 pub fn gen_PI_BY_2(_terms: usize, config: &Config) -> TokenStream {
     let value: syn::Expr = expr!(PI/2).eval(config.num_digits()).unwrap().into();
+    quote!(
+        const PI_BY_2: fty = #value;
+    )
+}
+
+#[allow(non_snake_case)]
+pub fn gen_TAN_PI_BY_8(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!(PI/8.tan()).eval(config.num_digits()).unwrap().into();
     quote!(
         const PI_BY_2: fty = #value;
     )

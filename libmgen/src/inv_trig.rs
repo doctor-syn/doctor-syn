@@ -7,16 +7,30 @@ use crate::test::gen_test;
 use crate::Config;
 
 pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
-    let xmin = -1.0;
-    let xmax = 1.0;
+    // let xmin = -1.0;
+    // let xmax = 1.0;
 
-    let approx = expr!(x3.atan())
+    // let approx = expr!(x3.atan())
+    //     .approx(
+    //         num_terms,
+    //         xmin,
+    //         xmax,
+    //         name!(x3),
+    //         Parity::Odd,
+    //         config.num_digits(),
+    //     )
+    //     .unwrap()
+    //     .use_number_type(config.number_type(), config.num_bits())
+    //     .unwrap()
+    //     .into_inner();
+
+    let approx = expr!(z.atan())
         .approx(
             num_terms,
-            xmin,
-            xmax,
-            name!(x3),
-            Parity::Odd,
+            0.0,
+            1.0,
+            name!(z),
+            Parity::Neither,
             config.num_digits(),
         )
         .unwrap()
@@ -24,20 +38,56 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
         .unwrap()
         .into_inner();
 
-    // TODO: calculate the recipocal without a divide.
     quote!(
+        //  q2        y       q1
+        //     \      |      /
+        //       \    |    /     . pi/8
+        //         \  |  /   .
+        //           \|/ .
+        //    --------*--------x    
+        //           /|\ .
+        //         /  |  \   .
+        //       /    |    \     . -pi/8
+        //     /      |      \
+        //   q3               q4
+        //
         pub fn atan2(y: fty, x: fty) -> fty {
-            let offset180 : fty = if y < 0.0 { -PI } else { PI };
-            let x1 : fty = if x < 0.0 { -x } else { x };
-            let y1 : fty = if x < 0.0 { -y } else { y };
-            let offset1 : fty = if x < 0.0 { offset180 } else { 0.0 };
-            let offset90 : fty = if y < 0.0 { -PI_BY_2 } else { PI_BY_2 };
-            let x2 : fty = if y1.abs() > x1 { y1 } else { x1 };
-            let y2 : fty = if y1.abs() > x1 { -x1 } else { y1 };
-            let offset2 : fty = if y1.abs() > x1 { offset1 + offset90 } else { offset1 };
-            let x3 : fty = y2 / x2;
-            let y3 : fty = #approx ;
-            y3 + offset2
+            // Both positive (q1)
+            let x1 = x.abs();
+            let y1 = y.abs();
+
+            // x > y by swapping.
+            let x2 = if x1 > y1 { x1 } else { y1 };
+            let y2 = if x1 > y1 { y1 } else { x1 };
+
+            // rotate by PI/8 to get atan(-pi/8) <= z <= atan(pi/8) (0.3741967)
+            let x3 : fty = -TAN_PI_BY_8.mul_add(x2, y2);
+            let y3 : fty = TAN_PI_BY_8.mul_add(y2, x2);
+
+            // 0 <= z <= 1
+            let z = y2 / x2;
+            
+            // Approximate atan(y/x)
+            let a : fty = #approx;
+
+            // Reverse reflections.
+            let q1 : fty = if x1 > y1 { a } else { PI_BY_2 - a };
+            let q12 : fty = if x >= 0.0 { q1 } else { PI - q1 };
+            if y >= 0.0 { q12 } else { -q12 }
+
+            // // Rotate by PI if y , 0 so that y > 0
+            // let offset180 : fty = if y < 0.0 { -PI } else { PI };
+            // let x1 : fty = if x < 0.0 { -x } else { x };
+            // let y1 : fty = if x < 0.0 { -y } else { y };
+            // // Rotate by PI/2 if x < 0
+            // let offset1 : fty = if x < 0.0 { offset180 } else { 0.0 };
+            // let offset90 : fty = if y < 0.0 { -PI_BY_2 } else { PI_BY_2 };
+            // let x2 : fty = if y1.abs() > x1 { y1 } else { x1 };
+            // let y2 : fty = if y1.abs() > x1 { -x1 } else { y1 };
+            // let offset2 : fty = if y1.abs() > x1 { offset1 + offset90 } else { offset1 };
+            // let x3 : fty = y2 / x2;
+            // let y3 : fty = #approx ;
+            // y3 + offset2
         }
     )
 }

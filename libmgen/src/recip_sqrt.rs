@@ -41,10 +41,11 @@ pub fn gen_cbrt(_num_terms: usize, _config: &Config) -> TokenStream {
         pub fn cbrt(x: fty) -> fty {
             // initial estimate.
             let r : fty = fty::from_bits(
-                (((x.abs().to_bits() as fty).mul_add(ONE_THIRD, EXP2_ONE * TWO_THIRDS))) as uty
+                ((x.abs().to_bits() as fty).mul_add(ONE_THIRD, EXP2_ONE * TWO_THIRDS)) as uty
             );
 
             // Newton-Raphson step.
+            let r: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
             let r: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
             let r: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
             let r: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);

@@ -241,6 +241,10 @@ fn convert_lit_int(f: &syn::LitInt) -> Expr {
 pub fn to_simd(file: &syn::File, options: Options) -> syn::File {
     let mut methods = Vec::new();
 
+    let fty = if options.num_bits == 32 { quote!(f32) } else { quote!(f64) };
+    let ity = if options.num_bits == 32 { quote!(i32) } else { quote!(i64) };
+    let uty = if options.num_bits == 32 { quote!(u32) } else { quote!(u64) };
+
     let mut cv = SimdVisitor::new(options);
 
     for it in &file.items {
@@ -291,7 +295,9 @@ pub fn to_simd(file: &syn::File, options: Options) -> syn::File {
 
     parse_quote! {
         #![allow(non_snake_case)]
-        #![doc("This code is automatically generated, do not edit.")]
+        #![allow(clippy::excessive_precision)]
+        #![allow(clippy::approx_constant)]
+        //#![doc("This code is automatically generated, do not edit.")]
 
         use super ::StdLibm ;
         use super ::StdFloat ;
@@ -299,12 +305,12 @@ pub fn to_simd(file: &syn::File, options: Options) -> syn::File {
           LaneCount ,Simd ,SupportedLaneCount 
         };
 
-        impl<const N: usize> StdLibm for Simd<f32, N>
+        impl<const N: usize> StdLibm for Simd<#fty, N>
         where
             LaneCount<N>: SupportedLaneCount,
         {
-            type IntType = Simd<i32, N>;
-            type UintType = Simd<u32, N>;
+            type IntType = Simd<#ity, N>;
+            type UintType = Simd<#uty, N>;
 
             #(#methods)*
         }
