@@ -71,20 +71,20 @@ pub static FUNCTIONS: &[Function] = &[
         gen: Some(crate::auxfuncs::gen_ity),
         test_specs: &[],
     },
-    Function {
-        name: "select",
-        deps: &[],
-        num_terms: [0, 0],
-        gen: Some(crate::auxfuncs::gen_select),
-        test_specs: &[],
-    },
-    Function {
-        name: "iabs",
-        deps: &[],
-        num_terms: [0, 0],
-        gen: Some(crate::auxfuncs::gen_iabs),
-        test_specs: &[],
-    },
+    // Function {
+    //     name: "select",
+    //     deps: &[],
+    //     num_terms: [0, 0],
+    //     gen: Some(crate::auxfuncs::gen_select),
+    //     test_specs: &[],
+    // },
+    // Function {
+    //     name: "iabs",
+    //     deps: &[],
+    //     num_terms: [0, 0],
+    //     gen: Some(crate::auxfuncs::gen_iabs),
+    //     test_specs: &[],
+    // },
     Function {
         name: "LOG2_SHIFT",
         deps: &[],
@@ -97,6 +97,27 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &[],
         num_terms: [0, 0],
         gen: Some(crate::auxfuncs::gen_LOG2_OFFSET),
+        test_specs: &[],
+    },
+    Function {
+        name: "NAN",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_NAN),
+        test_specs: &[],
+    },
+    Function {
+        name: "INFINITY",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_INF),
+        test_specs: &[],
+    },
+    Function {
+        name: "MIN_POSITIVE",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_MIN_POSITIVE),
         test_specs: &[],
     },
     Function {
@@ -125,6 +146,34 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &[],
         num_terms: [0, 0],
         gen: Some(crate::auxfuncs::gen_EXP2_SCALE),
+        test_specs: &[],
+    },
+    Function {
+        name: "EXP2_MIN",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_EXP2_MIN),
+        test_specs: &[],
+    },
+    Function {
+        name: "EXP2_MAX",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_EXP2_MAX),
+        test_specs: &[],
+    },
+    Function {
+        name: "ONE_THIRD",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_ONE_THIRD),
+        test_specs: &[],
+    },
+    Function {
+        name: "TWO_THIRDS",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_TWO_THIRDS),
         test_specs: &[],
     },
     Function {
@@ -246,21 +295,21 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "asinh",
-        deps: &["fty"],
+        deps: &["fty", "ln"],
         num_terms: [16, 24],
         gen: Some(crate::hyperbolic::gen_asinh),
         test_specs: &[],
     },
     Function {
         name: "acosh",
-        deps: &["fty"],
+        deps: &["fty", "NAN", "ln"],
         num_terms: [16, 24],
         gen: Some(crate::hyperbolic::gen_acosh),
         test_specs: &[],
     },
     Function {
         name: "atanh",
-        deps: &["fty"],
+        deps: &["fty", "ln"],
         num_terms: [16, 24],
         gen: Some(crate::hyperbolic::gen_atanh),
         test_specs: &[],
@@ -321,8 +370,8 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "exp2",
-        deps: &["fty", "ity", "uty", "EXP2_SCALE", "EXP2_ONE"],
-        num_terms: [8, 24],
+        deps: &["fty", "ity", "uty", "EXP2_SCALE", "EXP2_ONE", "EXP2_MIN", "EXP2_MAX"],
+        num_terms: [8, 12],
         gen: Some(crate::log_exp::gen_exp2),
         test_specs: &[
             TestSpec {
@@ -368,7 +417,7 @@ pub static FUNCTIONS: &[Function] = &[
     Function {
         name: "exp_m1",
         deps: &["fty", "exp2"],
-        num_terms: [16, 24],
+        num_terms: [8, 12],
         gen: Some(crate::log_exp::gen_exp_m1),
         test_specs: &[
             TestSpec {
@@ -387,7 +436,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "log2",
-        deps: &["fty", "LOG2_SHIFT", "LOG2_OFFSET", "ONE_MASK", "ONE_BITS"],
+        deps: &["fty", "LOG2_SHIFT", "LOG2_OFFSET", "ONE_MASK", "ONE_BITS", "MIN_POSITIVE", "NAN", "INFINITY"],
         num_terms: [10, 12],
         gen: Some(crate::log_exp::gen_log2),
         test_specs: &[
@@ -407,7 +456,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "ln_1p",
-        deps: &["fty", "RECIP_LOG2_E", "select"],
+        deps: &["fty", "RECIP_LOG2_E"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_ln_1p),
         test_specs: &[
@@ -488,7 +537,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "powi",
-        deps: &["fty", "log2", "exp2", "select", "recip", "iabs"],
+        deps: &["fty", "log2", "exp2"],
         num_terms: [16, 24],
         gen: Some(crate::log_exp::gen_powi),
         test_specs: &[],
@@ -502,7 +551,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "cbrt",
-        deps: &["fty", "cbrt_approx"],
+        deps: &["fty", "ONE_THIRD", "TWO_THIRDS"],
         num_terms: [16, 24],
         gen: Some(crate::recip_sqrt::gen_cbrt),
         test_specs: &[],

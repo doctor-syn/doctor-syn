@@ -39,9 +39,16 @@ pub fn gen_cbrt(_num_terms: usize, _config: &Config) -> TokenStream {
 
     quote!(
         pub fn cbrt(x: fty) -> fty {
-            let r: fty = cbrt_approx(x.abs());
-            let y: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
-            y.copysign(x)
+            // initial estimate.
+            let r : fty = fty::from_bits(
+                (((x.abs().to_bits() as fty).mul_add(ONE_THIRD, EXP2_ONE * TWO_THIRDS))) as uty
+            );
+
+            // Newton-Raphson step.
+            let r: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
+            let r: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
+            let r: fty = r + (x.abs() - r * r * r) / (3.0 * r * r);
+            r.copysign(x)
         }
     )
 }
@@ -73,13 +80,9 @@ pub fn gen_hypot(_num_terms: usize, _config: &Config) -> TokenStream {
     quote!(
         pub fn hypot(x: fty, y: fty) -> fty {
             let xgty: bool = x.abs() > y.abs();
-            let x2: fty = select(xgty, x, y);
-            let y2: fty = select(xgty, y, x);
-            select(
-                x2.abs() <= MIN_POSITIVE,
-                x2,
-                x2.abs() * (1.0 + (y2 / x2) * (y2 / x2)).sqrt(),
-            )
+            let x2: fty = if xgty { x } else { y };
+            let y2: fty = if xgty { y } else { x };
+            if x2.abs() <= MIN_POSITIVE { x2 } else { x2.abs() * (1.0 + (y2 / x2) * (y2 / x2)).sqrt() }
         }
     )
 }

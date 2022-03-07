@@ -71,10 +71,20 @@ impl VisitMut for SimdVisitor {
     }
 
     fn visit_signature_mut(&mut self, sig: &mut syn::Signature) {
+        visit_signature_mut(self, sig);
         // Patch the first argument to self
         let arg0 = sig.inputs.iter_mut().next().unwrap();
         *arg0 = parse_quote! {self};
         sig.output = parse_quote! {-> Self};
+    }
+
+    fn visit_type_path_mut(&mut self, type_path: &mut syn::TypePath) {
+        match type_path.to_token_stream().to_string().as_str() {
+            "uty" => *type_path = parse_quote!(Self::UintType),
+            "ity" => *type_path = parse_quote!(Self::IntType),
+            "fty" => *type_path = parse_quote!(Self),
+            _ => {},
+        }
     }
 
     // Convert `lit as f32` etc. to splats.
@@ -109,6 +119,18 @@ impl VisitMut for SimdVisitor {
                 if let Some((_, else_branch)) = &exprif.else_branch {
                     let else_branch = deblock2(&*else_branch);
                     *expr = parse_quote! { (#cond).select(#then_branch, #else_branch) };
+                }
+            },
+            syn::Expr::Path(exprpath) => {
+                // println!("HERE: {}", exprpath.to_token_stream().to_string().as_str())
+                match exprpath.to_token_stream().to_string().as_str() {
+                    "f32 :: NAN" => *expr = parse_quote! { Self::splat(f32::NAN) },
+                    "f64 :: NAN" => *expr = parse_quote! { Self::splat(f64::NAN) },
+                    "f32 :: INFINITY" => *expr = parse_quote! { Self::splat(f32::INFINITY) },
+                    "f64 :: INFINITY" => *expr = parse_quote! { Self::splat(f64::INFINITY) },
+                    "f32 :: MIN_POSITIVE" => *expr = parse_quote! { Self::splat(f32::MIN_POSITIVE) },
+                    "f64 :: MIN_POSITIVE" => *expr = parse_quote! { Self::splat(f64::MIN_POSITIVE) },
+                    _ => (),
                 }
             },
             _ => {}
@@ -163,7 +185,7 @@ fn convert_call(call: &syn::ExprCall) -> Expr {
     let mut args = call.args.iter();
     let arg0 = args.next().unwrap();
     match call.func.to_token_stream().to_string().as_str() {
-        "sin" | "cos" | "tan" | "exp2" => {
+        "sin" | "cos" | "tan" | "exp2" | "powf" | "log2" | "ln" => {
             let func = &*call.func;
             let rest = args.cloned().collect::<Punctuated<Expr, Token![,]>>();
             parse_quote! { (#arg0).#func(#rest) }

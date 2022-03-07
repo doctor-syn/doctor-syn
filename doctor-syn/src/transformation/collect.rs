@@ -8,6 +8,7 @@ use crate::name::Name;
 
 #[derive(Debug)]
 pub struct Collect {
+    #[allow(dead_code)]
     pub(crate) variable: Name,
 }
 

@@ -47,7 +47,7 @@ pub fn gen_asinh(_num_terms: usize, _config: &Config) -> TokenStream {
 pub fn gen_acosh(_num_terms: usize, _config: &Config) -> TokenStream {
     quote!(
         pub fn acosh(x: fty) -> fty {
-            ln(x + (x * x - 1.0).sqrt())
+            if x < 1.0 { NAN } else { ln(x + (x * x - 1.0).sqrt()) }
         }
     )
 }

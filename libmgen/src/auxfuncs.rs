@@ -4,6 +4,48 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 #[allow(non_snake_case)]
+pub fn gen_MIN_POSITIVE(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const MIN_POSITIVE: fty = f32::MIN_POSITIVE;
+        )
+    
+    } else {
+        quote!(
+            const MIN_POSITIVE: fty = f64::MIN_POSITIVE;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_NAN(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const NAN: fty = f32::NAN;
+        )
+    
+    } else {
+        quote!(
+            const NAN: fty = f64::NAN;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_INF(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const INFINITY: fty = f32::INFINITY;
+        )
+    
+    } else {
+        quote!(
+            const INFINITY: fty = f64::INFINITY;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
 pub fn gen_ONE_BITS(_terms: usize, config: &Config) -> TokenStream {
     if config.num_bits() == 32 {
         quote!(
@@ -60,6 +102,34 @@ pub fn gen_EXP2_SCALE(_terms: usize, config: &Config) -> TokenStream {
 }
 
 #[allow(non_snake_case)]
+pub fn gen_EXP2_MIN(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const EXP2_MIN: fty = -127.0f32;
+        )
+    
+    } else {
+        quote!(
+            const EXP2_MIN: fty = -1023.0f64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_EXP2_MAX(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const EXP2_MAX: fty = 127.0f32;
+        )
+    
+    } else {
+        quote!(
+            const EXP2_MAX: fty = 1023.0f64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
 pub fn gen_LOG2_SHIFT(_terms: usize, config: &Config) -> TokenStream {
     if config.num_bits() == 32 {
         quote!(
@@ -82,6 +152,34 @@ pub fn gen_LOG2_OFFSET(_terms: usize, config: &Config) -> TokenStream {
     } else {
         quote!(
             const LOG2_OFFSET: ity = 1023_i64;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_ONE_THIRD(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const ONE_THIRD: fty = 0.33333333f32;
+        )
+    
+    } else {
+        quote!(
+            const ONE_THIRD: fty = 0.333333333333333333f642;
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn gen_TWO_THIRDS(_terms: usize, config: &Config) -> TokenStream {
+    if config.num_bits() == 32 {
+        quote!(
+            const TWO_THIRDS: fty = 0.66666667f32;
+        )
+    
+    } else {
+        quote!(
+            const TWO_THIRDS: fty = 0.666666666666666667f642;
         )
     }
 }

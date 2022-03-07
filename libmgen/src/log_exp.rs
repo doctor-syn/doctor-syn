@@ -28,7 +28,9 @@ pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
             let r: fty = arg.round();
             let mul: fty = fty::from_bits((r.mul_add(EXP2_SCALE, EXP2_ONE)) as uty);
             let x: fty = arg - r;
-            #approx * mul
+            let y: fty = #approx * mul;
+            let y1 = if arg > EXP2_MAX { INFINITY } else { y };
+            if r < EXP2_MIN { 0.0 } else { y1 }
         }
     )
 }
@@ -136,7 +138,11 @@ pub fn gen_log2(num_terms: usize, config: &Config) -> TokenStream {
             let exponent : ity = (arg_bits as ity >> LOG2_SHIFT) - LOG2_OFFSET;
             let x : fty = fty::from_bits((arg_bits & ONE_MASK) | ONE_BITS) - 1.5;
             let y : fty = #approx;
-            y + (exponent as fty)
+            if arg < 0.0 {
+                -NAN
+            } else {
+                if arg < MIN_POSITIVE { -INFINITY } else { y + (exponent as fty) }
+            }
         }
     )
 }
@@ -177,22 +183,23 @@ pub fn gen_powi(_num_terms: usize, _config: &Config) -> TokenStream {
     // Note, for constant values under 16, the code path is very short.
     quote!(
         pub fn powi(x: fty, y: ity) -> fty {
-            // do 0..15 as multiplies.
-            let a: fty = x;
-            let p: ity = iabs(y);
-            let b: fty = select((p & (1 << 0)) != 0, a, 1.0);
-            let a1: fty = a * a;
-            let b1: fty = select((p & (1 << 1)) != 0, b * a1, b);
-            let a2: fty = a1 * a1;
-            let b2: fty = select((p & (1 << 2)) != 0, b1 * a2, b1);
-            let a3: fty = a2 * a2;
-            let b3: fty = select((p & (1 << 3)) != 0, b2 * a3, b2);
+            // // do 0..15 as multiplies.
+            // let a: fty = x;
+            // let p : ity = if y < 0 { -y } else { y };
+            // let b: fty = if (p & 1) != 0 { a } else { 1.0 };
+            // let a1: fty = a * a;
+            // let b1: fty = if (p & 2) != 0 { b * a1 } else { b };
+            // let a2: fty = a1 * a1;
+            // let b2: fty = if (p & 4) != 0 { b1 * a2 } else { b1 };
+            // let a3: fty = a2 * a2;
+            // let b3: fty = if (p & 8) != 0 { b2 * a3 } else { b2 };
 
-            // do 16.. as logs.
-            let b4: fty = select(p < 16, b3, powf(x, p as fty));
+            // // do 16.. as logs.
+            // let b4: fty = if p < 16 { b3 } else { powf(x, p as fty) };
 
-            // negative powers are reciprocals.
-            select(y < 0, recip(b4), b4)
+            // // negative powers are reciprocals.
+            // if y < 0 { b4.recip() } else { b4 }
+            powf(x, y as fty)
         }
     )
 }
