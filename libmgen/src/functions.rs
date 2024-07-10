@@ -71,6 +71,13 @@ pub static FUNCTIONS: &[Function] = &[
         gen: Some(crate::auxfuncs::gen_ity),
         test_specs: &[],
     },
+    Function {
+        name: "round",
+        deps: &["fty", "ity"],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_round),
+        test_specs: &[],
+    },
     // Function {
     //     name: "select",
     //     deps: &[],
@@ -195,6 +202,13 @@ pub static FUNCTIONS: &[Function] = &[
         deps: &[],
         num_terms: [0, 0],
         gen: Some(crate::auxfuncs::gen_TAN_PI_BY_8),
+        test_specs: &[],
+    },
+    Function {
+        name: "PI_BY_8",
+        deps: &[],
+        num_terms: [0, 0],
+        gen: Some(crate::auxfuncs::gen_PI_BY_8),
         test_specs: &[],
     },
     Function {
@@ -370,8 +384,8 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "atan2",
-        deps: &["fty", "PI", "PI_BY_2", "TAN_PI_BY_8"],
-        num_terms: [16, 40],
+        deps: &["fty", "PI_BY_8", "PI_BY_2", "TAN_PI_BY_8"],
+        num_terms: [16, 36],
         gen: Some(crate::inv_trig::gen_atan2),
         test_specs: &[],
     },
@@ -654,7 +668,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "sin",
-        deps: &["fty", "RECIP_2PI"],
+        deps: &["fty", "round", "RECIP_2PI"],
         num_terms: [12, 24],
         gen: Some(crate::trig::gen_sin),
         test_specs: &[
@@ -686,7 +700,7 @@ pub static FUNCTIONS: &[Function] = &[
     },
     Function {
         name: "cos",
-        deps: &["fty", "RECIP_2PI"],
+        deps: &["fty", "round", "RECIP_2PI"],
         num_terms: [13, 25],
         gen: Some(crate::trig::gen_cos),
         test_specs: &[

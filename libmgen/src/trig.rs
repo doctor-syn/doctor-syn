@@ -43,8 +43,8 @@ pub fn _gen_quadrant_sin(num_terms: usize, config: &Config) -> TokenStream {
         pub fn sin(arg: fty) -> fty {
             let scaled = arg * RECIP_PI;
             let xh = x + 0.5;
-            let xr = x.round();
-            let xhr = xh.round();
+            let xr = round(x);
+            let xhr = round(xh);
             let s = x - xr;
             let c = xh - xhr;
             let sr = #sin_approx;
@@ -97,8 +97,8 @@ pub fn _gen_quadrant_cos(num_terms: usize, config: &Config) -> TokenStream {
         pub fn cos(arg: fty) -> fty {
             let x = arg * RECIP_PI;
             let xh = x + 0.5;
-            let xr = x.round();
-            let xhr = xh.round();
+            let xr = round(x);
+            let xhr = round(xh);
             let c = x - xr;
             let s = xh - xhr;
             let sr = #sin_approx;
@@ -132,7 +132,7 @@ pub fn gen_sin(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn sin(arg: fty) -> fty {
             let scaled : fty = arg * RECIP_2PI;
-            let x : fty = scaled - scaled.round();
+            let x : fty = scaled - round(scaled);
             #approx
         }
     )
@@ -160,7 +160,7 @@ pub fn gen_cos(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn cos(arg: fty) -> fty {
             let scaled : fty = arg * RECIP_2PI;
-            let x : fty = scaled - scaled.round();
+            let x : fty = scaled - round(scaled);
             #approx
         }
     )
@@ -199,7 +199,7 @@ pub fn gen_tan(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn tan(arg: fty) -> fty {
             let scaled : fty = arg * RECIP_PI;
-            let x : fty = scaled - scaled.round();
+            let x : fty = scaled - round(scaled);
             let recip : fty = 1.0 / (x*x - 0.25);
             let y : fty = #approx ;
             y * recip

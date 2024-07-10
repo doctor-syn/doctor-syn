@@ -201,10 +201,18 @@ pub fn gen_PI_BY_2(_terms: usize, config: &Config) -> TokenStream {
 }
 
 #[allow(non_snake_case)]
-pub fn gen_TAN_PI_BY_8(_terms: usize, config: &Config) -> TokenStream {
-    let value: syn::Expr = expr!(PI/8.tan()).eval(config.num_digits()).unwrap().into();
+pub fn gen_PI_BY_8(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!(PI/8).eval(config.num_digits()).unwrap().into();
     quote!(
-        const PI_BY_2: fty = #value;
+        const PI_BY_8: fty = #value;
+    )
+}
+
+#[allow(non_snake_case)]
+pub fn gen_TAN_PI_BY_8(_terms: usize, config: &Config) -> TokenStream {
+    let value: syn::Expr = expr!((PI/8).tan()).eval(config.num_digits()).unwrap().into();
+    quote!(
+        const TAN_PI_BY_8: fty = #value;
     )
 }
 
@@ -305,6 +313,18 @@ pub fn _gen_negate_on_odd_test(_config: &Config) -> TokenStream {
             assert_eq!(negate_on_odd(1.0, 1.0), -1.0);
             assert_eq!(negate_on_odd(2.0, 1.0), 1.0);
             assert_eq!(negate_on_odd(3.0, 1.0), -1.0);
+        }
+    )
+}
+
+// A bit of a compromise as *anything* is better than calling glibc.
+// In practice on sse4+ vrndscalepd $3 is much better
+// but hard to get from many compilers.
+pub fn gen_round(_terms: usize, config: &Config) -> TokenStream {
+    quote!(
+        fn round(x: fty) -> fty {
+            let half = (0.5) as fty;
+            (x + half.copysign(x)) as ity as fty
         }
     )
 }

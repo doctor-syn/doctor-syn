@@ -25,7 +25,7 @@ pub fn gen_exp2(num_terms: usize, config: &Config) -> TokenStream {
 
     quote!(
         pub fn exp2(arg: fty) -> fty {
-            let r: fty = arg.round();
+            let r: fty = round(arg);
             let mul: fty = fty::from_bits((r.mul_add(EXP2_SCALE, EXP2_ONE)) as uty);
             let x: fty = arg - r;
             let y: fty = #approx * mul;
@@ -66,7 +66,7 @@ pub fn gen_exp_m1(num_terms: usize, config: &Config) -> TokenStream {
         /// Generate exp(arg) - 1 more accurately than separate calls.
         pub fn exp_m1(arg: fty) -> fty {
             let scaled : fty = arg * LOG2_E;
-            let r : fty = scaled.round();
+            let r : fty = round(scaled);
             let mul : fty = fty::from_bits((r.mul_add(EXP2_SCALE, EXP2_ONE)) as uty);
             let x : fty = scaled - r;
             #approx * mul + (mul - 1.0)

@@ -32,7 +32,7 @@ impl CVisitor {
     }
 
     fn log(&mut self, msg: &str) {
-        eprintln!("log: {}", msg);
+        // eprintln!("log: {}", msg);
     }
 
     fn tos(&mut self) -> String {
@@ -41,7 +41,7 @@ impl CVisitor {
 
     fn push<S: Into<String>>(&mut self, s: S) {
         self.stack.push(s.into());
-        eprintln!("  push {:?}", self.stack);
+        // eprintln!("  push {:?}", self.stack);
     }
 }
 

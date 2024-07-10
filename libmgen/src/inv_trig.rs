@@ -7,30 +7,13 @@ use crate::test::gen_test;
 use crate::Config;
 
 pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
-    // let xmin = -1.0;
-    // let xmax = 1.0;
-
-    // let approx = expr!(x3.atan())
-    //     .approx(
-    //         num_terms,
-    //         xmin,
-    //         xmax,
-    //         name!(x3),
-    //         Parity::Odd,
-    //         config.num_digits(),
-    //     )
-    //     .unwrap()
-    //     .use_number_type(config.number_type(), config.num_bits())
-    //     .unwrap()
-    //     .into_inner();
-
     let approx = expr!(z.atan())
         .approx(
             num_terms,
-            0.0,
-            1.0,
+            (-std::f64::consts::PI / 8.0).tan(),
+            (std::f64::consts::PI / 8.0).tan(),
             name!(z),
-            Parity::Neither,
+            Parity::Odd,
             config.num_digits(),
         )
         .unwrap()
@@ -60,15 +43,18 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
             let x2 = if x1 > y1 { x1 } else { y1 };
             let y2 = if x1 > y1 { y1 } else { x1 };
 
-            // rotate by PI/8 to get atan(-pi/8) <= z <= atan(pi/8) (0.3741967)
-            let x3 : fty = -TAN_PI_BY_8.mul_add(x2, y2);
-            let y3 : fty = TAN_PI_BY_8.mul_add(y2, x2);
+            // rotate by PI/8 to get -pi/8 <= atan(z) <= pi/8 (0.3741967)
+            // Note sin(pi/8)/cos(pi/8) = tan(pi/8)
+            let x3 : fty = TAN_PI_BY_8 * y2 + x2;
+            let y3 : fty = (-TAN_PI_BY_8) * x2 + y2;
 
             // 0 <= z <= 1
-            let z = y2 / x2;
-            
+            let z = y3 / x3;
+
             // Approximate atan(y/x)
-            let a : fty = #approx;
+            let a : fty = #approx + PI_BY_8;
+
+            // panic!("x={:?} y={:?} x3={:?} y3={:?} z={:?} a={:?}", x, y, x3, y3, z, a);
 
             // Reverse reflections.
             let q1 : fty = if x1 > y1 { a } else { PI_BY_2 - a };
@@ -92,11 +78,8 @@ pub fn gen_atan2(num_terms: usize, config: &Config) -> TokenStream {
     )
 }
 
-/// The function `asin` has four regions:
-/// arg         |  x      |
-/// ============|=========|
-/// -1 .. -LIM  | 
 pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
+    // 1/sqrt(2) so that (1.0-lim*lim).sqrt() = lim
     let lim = quote!(0.70710678118654752440);
 
     let approx = expr!(x.asin())
@@ -116,8 +99,11 @@ pub fn gen_asin(num_terms: usize, config: &Config) -> TokenStream {
     quote!(
         pub fn asin(arg: fty) -> fty {
             let LIM : fty = #lim;
+            // The middle is linear, but the edges require a flip.
             let c : fty = if arg < 0.0 { -PI_BY_2 } else { PI_BY_2 };
             let s : fty = if arg < 0.0 { -1.0 } else { 1.0  };
+
+            // Use arg in the middle and (1.0-arg*arg).sqrt() at the edges.
             let x : fty = if arg * arg < LIM * LIM { arg } else { (1.0-arg*arg).sqrt() };
             let y : fty = #approx ;
             if arg*arg < LIM * LIM { y } else { c - y * s }
