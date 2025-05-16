@@ -52,7 +52,7 @@ pub fn sin (arg : fty)->fty {
 
 ## Milestones
 
-[ ] Rust codegen complete for all IEEE functions.
-[ ] C/C++ codegen complete.
-[ ] Fortran codegen.
+- [ ] Rust codegen complete for all IEEE functions.
+- [ ] C/C++ codegen complete.
+- [ ] Fortran codegen.
 
